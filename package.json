@@ -8,6 +8,7 @@
   "serviceFile": "service/index.js",
   "files": [
     "index.html",
+    "home-shortcut.js",
     "tizenbrew.html",
     "css",
     "js",
