@@ -7,7 +7,7 @@
 (function () {
   'use strict';
 
-  var HOME = 'gh/romangazdik-web/mojeTV';
+  var HOME = 'gh/romangazdik-web/nyminds-tv';
   var DOUBLE_MS = 520;
   var DUPLICATE_MS = 110;
   var pendingTimer = null;
