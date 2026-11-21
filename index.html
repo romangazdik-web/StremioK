@@ -7,8 +7,8 @@
     <script src="home-shortcut.js?v=20261119"></script>
     <link rel="stylesheet" href="css/style.css?v=2.4.3">
     <link rel="stylesheet" href="css/modern.css?v=2.4.3">
-    <!-- Nymind Premium TV: CSS only, Modern home screen; leaves player untouched. -->
-    <link rel="stylesheet" href="css/nymind-premium.css?v=2.4.4">
+    <!-- Nymind Red: Netflix-inspired home screen for both Classic and Modern. -->
+    <link rel="stylesheet" href="css/netflix-home.css?v=2.4.5">
 </head>
 <body>
     <!-- CSS-applied sentinel (kept off-screen); app.js waits for its width before rendering -->
@@ -56,7 +56,7 @@
     <div id="spinner" class="hidden"><div class="spin"></div><div id="spinner-msg"></div></div>
 
     <!-- Load order matters: polyfills -> util -> iptv -> data -> input -> tvapps -> player parts -> player -> ytplay -> view parts -> views -> app -->
-    <!-- JavaScript is unchanged at 2.4.3; only the new Premium stylesheet uses v=2.4.4. -->
+    <!-- Player scripts stay at 2.4.3; only Home layout and Netflix-style CSS use v=2.4.5. -->
     <script src="js/polyfills.js?v=2.4.3"></script>
     <script src="js/profiles.js?v=2.4.3"></script>
     <script src="js/lang/languages.js?v=2.4.3"></script>
@@ -92,7 +92,7 @@
     <script src="js/nuvio-sync.js?v=2.4.3"></script>
     <script src="js/stremio-sync.js?v=2.4.3"></script>
     <script src="js/view-core.js?v=2.4.3"></script>
-    <script src="js/view-home.js?v=2.4.3"></script>
+    <script src="js/view-home.js?v=2.4.5"></script>
     <script src="js/view-guide.js?v=2.4.3"></script>
     <script src="js/view-detail.js?v=2.4.3"></script>
     <script src="js/view-search.js?v=2.4.3"></script>
