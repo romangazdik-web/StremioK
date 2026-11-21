@@ -1,0 +1,137 @@
+/* StremioK | Nymind Premium TV — Home skin v1
+   Optimized for Samsung Tizen 3.0 / Chromium 47.
+   Scope: Modern look HOME screen only. No player, detail, settings or navigation code.
+   No CSS variables, blur, animations, custom fonts or layout reflow. */
+
+body.look-modern #screen-home {
+    background: #0b121d;
+}
+
+/* Cinematic poster backdrop: existing StremioK image, just a calmer gradient. */
+body.look-modern #screen-home .home-bg {
+    background: #0b121d;
+}
+body.look-modern #screen-home .home-bg .hb-shade {
+    background:
+        linear-gradient(90deg, #0b121d 12%, rgba(11,18,29,.94) 25%,
+            rgba(11,18,29,.64) 46%, rgba(11,18,29,.08) 76%),
+        linear-gradient(0deg, #0b121d 15%, rgba(11,18,29,.82) 37%,
+            rgba(11,18,29,0) 72%),
+        linear-gradient(180deg, rgba(11,18,29,.55) 0%, rgba(11,18,29,0) 18%);
+}
+
+/* Apple TV-inspired navigation: restrained glass *color*, no backdrop-filter. */
+body.look-modern #screen-home .home-header {
+    background: rgba(11,18,29,.22);
+}
+body.look-modern #screen-home .home-header .tabbar-inline {
+    background: rgba(24,35,49,.88);
+    border: 1px solid rgba(216,233,243,.17);
+    border-radius: 30px;
+    padding: 3px;
+}
+body.look-modern #screen-home .brand {
+    color: #f6f9fc;
+    font-size: 34px;
+    letter-spacing: .2px;
+}
+body.look-modern #screen-home .brand .dot {
+    color: #98d5e1;
+}
+body.look-modern #screen-home .tab-pill,
+body.look-modern #screen-home .header .hchip {
+    color: #d1dae5;
+    border-radius: 25px;
+    border-color: transparent;
+    font-size: 22px;
+}
+body.look-modern #screen-home .tab-pill.active,
+body.look-modern #screen-home .home-header .hchip.active {
+    color: #fff;
+    background: rgba(191,214,230,.18);
+}
+body.look-modern #screen-home .tab-pill.focusable.focused,
+body.look-modern #screen-home .header .hchip.focusable.focused {
+    color: #0d1b2a;
+    background: #edf7fd;
+    border-color: #edf7fd;
+    box-shadow: 0 0 0 3px rgba(176,222,239,.28);
+}
+
+/* Netflix-inspired hero: show one strong title over the unchanged photo. */
+body.look-modern #screen-home .home-info.hero .home-info-title {
+    color: #fff;
+    font-size: 68px;
+    line-height: 1.08;
+    letter-spacing: -1.3px;
+    text-shadow: 0 2px 14px rgba(0,0,0,.35);
+}
+body.look-modern #screen-home .home-info.hero .home-info-meta {
+    color: #b5dce7;
+    font-size: 24px;
+}
+body.look-modern #screen-home .home-info.hero .home-info-desc {
+    color: #e0e7ed;
+    font-size: 24px;
+    line-height: 35px;
+    text-shadow: 0 2px 9px rgba(0,0,0,.24);
+}
+body.look-modern #screen-home .home-info.hero .home-info-logo {
+    max-width: 620px;
+}
+
+/* Google TV-inspired rows: preserve dimensions and scroll math exactly. */
+body.look-modern #screen-home .row-title {
+    font-size: 29px;
+    color: #f5f8fb;
+    letter-spacing: -.3px;
+    text-shadow: 0 2px 9px rgba(0,0,0,.4);
+}
+body.look-modern #screen-home .card {
+    border: 0;
+    border-radius: 19px;
+    background: #1b2a39;
+    box-shadow: 0 7px 19px rgba(0,0,0,.22);
+    /* Keep stock width, height, spacing and focus movement calculations. */
+}
+body.look-modern #screen-home .card .cap {
+    color: #fff;
+    font-size: 19px;
+    line-height: 23px;
+    background: linear-gradient(rgba(6,12,20,0),rgba(6,12,20,.96));
+}
+body.look-modern #screen-home .card .prog {
+    height: 6px;
+    background: #9bdbe7;
+}
+body.look-modern #screen-home .card.focusable.focused {
+    border: 0;
+    -webkit-transform: scale(1.035);
+    transform: scale(1.035);
+    box-shadow: 0 0 0 4px #effaff, 0 0 0 7px rgba(129,199,223,.35);
+    z-index: 5;
+}
+/* Don't interfere with the application's explicit card-reordering state. */
+body.look-modern #screen-home .card.focusable.moving {
+    border: 0;
+    box-shadow: 0 0 0 4px #ffcd71;
+}
+
+/* Tizen 3: forced LIGHT motion profile, regardless of Effects preference.
+   Disable only Home's heavy backdrop blur and focused-card transitions. */
+body.look-modern.fx-full #screen-home .home-header .tabbar-inline,
+body.look-modern.fx-full #screen-home .home-header .menu-scroll > .hchip {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+body.look-modern.fx-full #screen-home .card,
+body.look-modern.fx-full #screen-home .home-bg .hb {
+    -webkit-transition: none;
+    transition: none;
+}
+
+/* Never apply dark Premium overrides over the app's intentionally light look. */
+body.look-modern.bg-light #screen-home,
+body.look-modern.bg-light #screen-home .home-bg {
+    background: #f5f5f5;
+}
