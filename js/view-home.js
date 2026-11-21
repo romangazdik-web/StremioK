@@ -1737,7 +1737,8 @@
         function add(n) {
             var end = Math.min(c.metas.length, at + n), first = scroller.firstChild, nav = first && first.__navDOWN;
             for (; at < end; at++) {
-                var card = posterCard(c.metas[at], c.type);
+                var m = c.metas[at], wide = c.type === 'movie' || c.type === 'series';
+                var card = posterCard(wide ? Object.assign({}, m, { _wideHome: true }) : m, c.type);
                 if (nav) { card.__navDOWN = nav; }   // (the rows below it, as its neighbors)
                 scroller.appendChild(card);
             }
