@@ -349,7 +349,7 @@ body.zoom-140 #screen-home .nf-action { height: 46px; line-height: 39px; font-si
 
 /* Visible version marker: assures the TV received new embedded CSS. */
 body #screen-home .brand::after {
- content: " CINEMA 2.4.7";
+ content: " CINEMA 2.4.8";
  display: inline-block;
  margin-left: 12px;
  color: #f4f4f4;
@@ -379,6 +379,117 @@ body #screen-home .nf-action {
 body #screen-home .nf-actions {
  white-space: nowrap;
 }
+
+
+/* NYMIND CINEMA 2.4.8 — fit for 2017 Samsung 1080p TV.
+   Visual refinements only: preserve all focusable elements, events and player. */
+body #screen-home .home-header {
+    height: 89px;
+    padding: 16px 74px 0;
+}
+body #screen-home .brand {
+    font-size: 36px;
+    margin-right: 31px;
+}
+body #screen-home .tab-pill,
+body #screen-home .home-header .hchip {
+    font-size: 20px;
+    line-height: 25px;
+    padding: 7px 11px;
+    margin-right: 1px;
+}
+body #screen-home .home-header .menu-scroll > .hchip {
+    margin-left: 7px;
+}
+body #screen-home .home-bg .hb {
+    height: 69%;
+    background-position: center 30%;
+}
+body #screen-home .home-bg .hb-shade {
+    background:
+      linear-gradient(90deg, #080808 5%, rgba(8,8,8,.97) 21%, rgba(8,8,8,.83) 38%, rgba(8,8,8,.18) 82%),
+      linear-gradient(0deg, #080808 19%, rgba(8,8,8,.90) 34%, rgba(8,8,8,.03) 65%),
+      linear-gradient(180deg,rgba(8,8,8,.70),rgba(8,8,8,0) 22%);
+}
+body #screen-home .home-info.hero,
+body #screen-home .home-info.hero.on {
+    top: 108px;
+    height: 352px;
+    width: 880px;
+    left: 78px;
+}
+body #screen-home .home-info.hero .home-info-title {
+    font-size: 59px;
+    max-height: 113px;
+    line-height: 1.06;
+}
+body #screen-home .home-info.hero .home-info-logo {
+    max-width: 510px;
+    max-height: 111px;
+}
+body #screen-home .home-info.hero .home-info-meta {
+    font-size: 19px;
+    line-height: 26px;
+    margin: 8px 0 5px;
+}
+body #screen-home .home-info.hero .home-info-desc {
+    font-size: 20px;
+    line-height: 28px;
+    max-height: 63px;
+}
+body #screen-home .nf-actions {
+    margin-top: 12px;
+    height: 49px;
+}
+body #screen-home .nf-action {
+    height: 47px;
+    line-height: 40px;
+    min-width: 150px;
+    padding: 0 20px;
+    font-size: 19px;
+}
+body #screen-home .home-info.hero + .rows {
+    top: 495px;
+}
+body #screen-home .row {
+    margin-bottom: 6px;
+}
+body #screen-home .row-title {
+    margin: 0 0 3px 78px;
+    font-size: 27px;
+    line-height: 34px;
+}
+body #screen-home .row-title::before {
+    height: 19px;
+}
+body #screen-home .row-scroller,
+body #screen-home .card-grid {
+    padding: 16px 80px 21px;
+}
+body #screen-home .card.landscape {
+    width: 347px;
+    height: 197px;
+    margin-right: 18px;
+}
+body #screen-home .card .cap {
+    font-size: 18px;
+    line-height: 22px;
+    padding: 22px 11px 9px;
+}
+body #screen-home .nf-library-empty {
+    margin: 25px 78px;
+    font-size: 24px;
+    color: #d2d2d2;
+    max-width: 1200px;
+}
+body.zoom-110 #screen-home .home-info.hero { top: 100px; height: 322px; }
+body.zoom-110 #screen-home .home-info.hero + .rows { top: 468px; }
+body.zoom-120 #screen-home .home-info.hero { top: 96px; height: 285px; }
+body.zoom-120 #screen-home .home-info.hero + .rows { top: 425px; }
+body.zoom-130 #screen-home .home-info.hero { top: 91px; height: 252px; }
+body.zoom-130 #screen-home .home-info.hero + .rows { top: 387px; }
+body.zoom-140 #screen-home .home-info.hero { top: 84px; height: 211px; }
+body.zoom-140 #screen-home .home-info.hero + .rows { top: 347px; }
 
     </style>
 </head>
@@ -463,8 +574,8 @@ body #screen-home .nf-actions {
     <script src="js/nuvio-import.js?v=2.4.3"></script>
     <script src="js/nuvio-sync.js?v=2.4.3"></script>
     <script src="js/stremio-sync.js?v=2.4.3"></script>
-    <script src="js/view-core.js?v=2.4.6"></script>
-    <script src="js/view-home.js?v=2.4.6"></script>
+    <script src="js/view-core.js?v=2.4.8"></script>
+    <script src="js/view-home.js?v=2.4.8"></script>
     <script src="js/view-guide.js?v=2.4.3"></script>
     <script src="js/view-detail.js?v=2.4.3"></script>
     <script src="js/view-search.js?v=2.4.3"></script>

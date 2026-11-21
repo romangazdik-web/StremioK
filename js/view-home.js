@@ -25,6 +25,7 @@
         { key: 'calendar', icon: '📅', label: U.t('Calendar') },   // (coming up, and what you watched: see calendarRows)
         { key: 'movie', icon: '🎬', label: U.t('Movies') },
         { key: 'series', icon: '📺', label: U.t('Series') },
+        { key: 'library', icon: '♥', label: 'Knihovna' }, // Local favorites, linked libraries and Continue Watching
         { key: 'tv', icon: '📡', label: 'IPTV' },
         { key: 'guide', icon: '☰', label: U.t('Guide') },   // (the IPTV channels' TV guide as a grid, once one is read: see js/view-guide.js)
         { key: 'radio', icon: '📻', label: U.t('Radio') },
@@ -80,7 +81,7 @@
             return HOME_TABS.filter(function (t) { return shown(t) && (t.key !== 'local' || hasLocal()); });
         }
         return HOME_TABS.filter(function (t) {
-            return shown(t) && (t.key === 'continue' || t.key === 'calendar' || t.key === 'guide' || (t.key === 'local' ? hasLocal() : catsForTab(t.key).length > 0));
+            return shown(t) && (t.key === 'continue' || t.key === 'calendar' || t.key === 'guide' || t.key === 'library' || (t.key === 'local' ? hasLocal() : catsForTab(t.key).length > 0));
         });
     }
 
@@ -1252,6 +1253,56 @@
     // refreshed in the background don't move focus.
     var CW_TITLE = U.t('Continue Watching');   // (holding OK: the corner's "Hold OK for more" says so)
     var UPCOMING_TITLE = U.t('Upcoming');
+    // Real Knihovna tab: local profile favorites, connected provider library
+    // catalogs already downloaded by StremioK, and current playback progress.
+    // No extra network calls and no parallel player.
+    function buildLibraryRows(rows) {
+        var total = 0, library = U.store.get('stremiok.nymind.favorites', {}) || {}, list = [];
+        if (library && typeof library === 'object') {
+            Object.keys(library).forEach(function (key) {
+                var m = library[key];
+                if (!m || !m.id || (m.type !== 'movie' && m.type !== 'series')) { return; }
+                list.push(m);
+            });
+        }
+        list.sort(function (a, b) { return (b.added || 0) - (a.added || 0); });
+        if (list.length) {
+            rows.appendChild(buildRow('♥ Moje oblíbené', list.slice(0, 60).map(function (m) {
+                return posterCard({
+                    id: m.id, type: m.type, name: m.name,
+                    poster: m.poster, background: m.background, _wideHome: true
+                }, m.type);
+            })));
+            total++;
+        }
+        // Linked Stremio/Nuvio libraries and Trakt watchlists are already part
+        // of StremioK's normal cached Home catalog feed (no new API).
+        var sources = (_homeCatalogs || []).filter(function (cat) {
+            if (!cat || !cat.metas || !cat.metas.length) { return false; }
+            if (cat.type !== 'movie' && cat.type !== 'series') { return false; }
+            return /Stremio Library|Nuvio Library|Watchlist|Knihovna|Moje knihovna|Biblioteca/i.test(cat.name || '');
+        });
+        sources.slice(0, 8).forEach(function (cat) {
+            rows.appendChild(buildRow(cat.name + ' · ' + (cat.type === 'movie' ? 'Filmy' : 'Seriály'),
+                cat.metas.slice(0, 45).map(function (m) {
+                    return posterCard(Object.assign({}, m, { _wideHome: true }), cat.type);
+                })));
+            total++;
+        });
+        // Recent unfinished items from the existing resume system, not a copy.
+        var current = continueEntries();
+        if (current.length) {
+            var art = homeArt();
+            rows.appendChild(buildRow('▶ Pokračovat ve sledování', current.slice(0, 30).map(function (e) {
+                return continueCard(e, art);
+            })));
+            total++;
+        }
+        if (!total) {
+            rows.appendChild(U.el('div', 'row-empty nf-library-empty',
+                'Knihovna je zatím prázdná. U filmu nebo seriálu podrž OK a vyber Přidat do oblíbených.'));
+        }
+    }
     function renderHome(prevFocus) {
         _moving = null;   // (a move not left yet: as it was)
         var s = scr('home');
@@ -1314,7 +1365,7 @@
         // Rows for the active tab, from the once-per-session catalog cache. Catalog tabs
         // keep their built rows, so switching back doesn't rebuild every card; Continue
         // Watching is small and changes after every playback, so it's always rebuilt.
-        var rows = (_homeTab !== 'continue' && _homeTab !== 'local' && _homeTab !== 'calendar' && _homeTab !== 'guide') ? _tabRows[_homeTab] : null;
+        var rows = (_homeTab !== 'continue' && _homeTab !== 'library' && _homeTab !== 'local' && _homeTab !== 'calendar' && _homeTab !== 'guide') ? _tabRows[_homeTab] : null;
         if (_homeTab !== 'calendar' && _calCancel) { _calCancel.cancel(); _calCancel = null; }   // (its titles' details still coming: not wanted)
         if (rows) {
             s.appendChild(rows);
@@ -1328,6 +1379,8 @@
                 calendarRows(rows);
             } else if (_homeTab === 'guide') {
                 V.guideGrid(rows);
+            } else if (_homeTab === 'library') {
+                buildLibraryRows(rows);
             } else if (_homeTab === 'continue') {
                 var entries = continueEntries();
                 if (entries.length) {
