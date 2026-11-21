@@ -8,7 +8,379 @@
     <link rel="stylesheet" href="css/style.css?v=2.4.3">
     <link rel="stylesheet" href="css/modern.css?v=2.4.3">
     <!-- Nymind Red: Netflix-inspired home screen for both Classic and Modern. -->
-    <link rel="stylesheet" href="css/netflix-immersive.css?v=2.4.6">
+    <!-- Nymind Cinema 2.4.7: inline styles avoid separate CSS CDN cache on older Tizen. -->
+    <style id="nymind-cinema-embedded-v247">
+/*
+  NYMIND CINEMA | NETFLIX-INSPIRED HOME V2.4.6
+  Isolated to #screen-home; no player, details, OSD, subs or settings changes.
+  Existing metadata, selected-title image loader and arrow-key navigation.
+  Samsung Tizen 3.0 / Chromium 47: CSS2/3, no blur, no CSS variables.
+*/
+body #screen-home {
+  background: #080808 !important;
+  color: #f8f8f8;
+  font-family: 'SK Roboto', Arial, sans-serif;
+}
+
+/* Featured artwork spans the upper screen; shade gives Netflix-like contrast. */
+body #screen-home .home-bg {
+  display: block !important;
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  z-index: 0;
+  width: 100%; height: 100%;
+  background: #080808 !important;
+  overflow: hidden;
+  pointer-events: none;
+}
+body #screen-home .home-bg .hb {
+  position: absolute;
+  top: 0; right: 0; bottom: auto;
+  width: 84%; height: 76%;
+  background-position: center 28%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  opacity: 0;
+  -webkit-transition: none !important;
+  transition: none !important;
+}
+body #screen-home .home-bg .hb.on { opacity: 1; }
+body #screen-home .home-bg .hb-shade {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    linear-gradient(90deg, #080808 3%, rgba(8,8,8,.94) 16%, rgba(8,8,8,.72) 38%, rgba(8,8,8,.03) 86%),
+    linear-gradient(0deg, #080808 18%, rgba(8,8,8,.86) 35%, rgba(8,8,8,.10) 75%),
+    linear-gradient(180deg, rgba(8,8,8,.72) 0%, rgba(8,8,8,0) 20%);
+}
+
+/* Netflix-like floating top navigation.
+   Original StremioK builds [menu, logo]; reverse the flex row, not the DOM. */
+body #screen-home .home-header {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: row-reverse;
+  flex-direction: row-reverse;
+  -webkit-justify-content: flex-end;
+  justify-content: flex-end;
+  -webkit-align-items: center;
+  align-items: center;
+  position: relative;
+  z-index: 8;
+  height: 98px;
+  padding: 22px 76px 0;
+  background: linear-gradient(180deg,rgba(0,0,0,.79),rgba(0,0,0,.0));
+}
+body #screen-home .home-header::before { display: none !important; }
+body #screen-home .brand {
+  color: #e50914 !important;
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: -1.2px;
+  text-transform: uppercase;
+  font-weight: bold;
+  flex-shrink: 0;
+  margin: 0 51px 0 0;
+  text-shadow: 0 2px 14px rgba(0,0,0,.6);
+}
+body #screen-home .brand .dot { color: #e50914 !important; }
+body #screen-home .home-header .menu-scroll {
+  -webkit-flex: 1 1 auto; flex: 1 1 auto;
+  min-width: 0;
+  margin-right: 0;
+  background: transparent;
+}
+body #screen-home .home-header .tabbar-inline {
+  background: transparent !important;
+  border: none;
+  border-radius: 0;
+  padding: 2px 0;
+}
+body #screen-home .home-header .menu-scroll > :first-child { margin-left: 0; }
+body #screen-home .home-header .menu-scroll > :last-child { margin-right: 0; }
+body #screen-home .tab-ic { display: none; }
+body #screen-home .tab-pill,
+body #screen-home .home-header .hchip {
+  display: inline-block;
+  font-family: Arial, sans-serif;
+  color: #ddd;
+  font-size: 23px;
+  line-height: 28px;
+  font-weight: normal;
+  background: transparent !important;
+  border: 2px solid transparent;
+  border-radius: 5px;
+  padding: 9px 16px;
+  margin: 0 4px 0 0;
+  white-space: nowrap;
+}
+body #screen-home .home-header .menu-scroll > .hchip {
+  background: transparent !important;
+  margin-left: 15px;
+}
+body #screen-home .tab-pill.active,
+body #screen-home .home-header .hchip.active {
+  color: #fff;
+  border-bottom: 3px solid #e50914;
+  background: rgba(255,255,255,.12) !important;
+}
+body #screen-home .tab-pill.focusable.focused,
+body #screen-home .header .hchip.focusable.focused {
+  background: #e50914 !important;
+  color: #fff;
+  border: 2px solid #fff;
+  box-shadow: none;
+}
+
+/* True content-focused banner: title, metadata, overview and two actionable buttons.
+   Rows start just below the hero rather than the old 140px bar. */
+body #screen-home .home-info.hero,
+body #screen-home .home-info.hero.on {
+  position: absolute;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  -webkit-justify-content: flex-end;
+  justify-content: flex-end;
+  left: 81px;
+  right: auto;
+  top: 119px;
+  width: 915px;
+  height: 418px;
+  padding: 0 0 8px;
+  z-index: 3;
+  background: transparent !important;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+}
+body #screen-home .home-info.hero .home-info-title {
+  display: block;
+  font-family: Arial, sans-serif;
+  font-size: 72px;
+  font-weight: bold;
+  line-height: 1.05;
+  letter-spacing: -1px;
+  color: #fff;
+  height: auto;
+  max-height: 148px;
+  white-space: normal;
+  text-shadow: 0 3px 18px rgba(0,0,0,.5);
+  -webkit-flex: none; flex: none;
+}
+body #screen-home .home-info.hero .home-info-logo {
+  max-width: 620px;
+  max-height: 125px;
+}
+body #screen-home .home-info.hero .home-info-meta {
+  display: block;
+  font-size: 22px;
+  color: #f1f1f1;
+  line-height: 29px;
+  margin: 15px 0 7px;
+  height: auto;
+  white-space: normal;
+  -webkit-flex: none; flex: none;
+  text-shadow: 0 2px 8px #000;
+}
+body #screen-home .home-info.hero .home-info-desc {
+  display: block;
+  max-width: 850px;
+  max-height: 72px;
+  font-size: 23px;
+  line-height: 31px;
+  color: #eee;
+  overflow: hidden;
+  -webkit-flex: none; flex: none;
+  text-shadow: 0 2px 7px #000;
+}
+body #screen-home .nf-actions {
+  display: none;
+  -webkit-flex-direction: row;
+  flex-direction: row;
+  margin-top: 20px;
+  height: 55px;
+  -webkit-flex: none; flex: none;
+}
+body #screen-home .nf-action {
+  display: inline-block;
+  vertical-align: top;
+  height: 53px;
+  line-height: 47px;
+  min-width: 169px;
+  padding: 0 24px;
+  margin-right: 14px;
+  background: rgba(115,115,115,.7);
+  color: #fff;
+  border: 3px solid transparent;
+  border-radius: 5px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: bold;
+  cursor: pointer;
+}
+body #screen-home .nf-action.nf-play {
+  background: #f5f5f5;
+  color: #131313;
+}
+body #screen-home .nf-action.focusable.focused {
+  background: #e50914;
+  color: #fff;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 2px rgba(255,255,255,.3);
+}
+body #screen-home .home-info.hero + .rows { top: 590px; }
+
+/* Keep the guide, IPTV, radio and local tabs usable, not oversized. */
+body #screen-home .home-info:not(.hero) {
+  border-left: 4px solid #e50914;
+  border-radius: 6px;
+  background: rgba(10,10,10,.83);
+}
+body #screen-home .home-info.on:not(.hero) {
+  background: linear-gradient(90deg,rgba(44,4,7,.9),rgba(8,8,8,.7));
+}
+body #screen-home .home-info:not(.hero) + .rows { top: 274px; }
+
+/* Horizontal Netflix rows: this also turns the old Watching GRID into carousels. */
+body #screen-home .rows { z-index: 4; }
+body #screen-home .row { margin-bottom: 11px; }
+body #screen-home .row-title {
+  margin: 0 0 6px 80px;
+  font-size: 29px;
+  line-height: 39px;
+  font-weight: bold;
+  color: #fafafa;
+  text-shadow: 0 2px 7px #000;
+}
+body #screen-home .row-title::before {
+  display: inline-block;
+  content: '';
+  vertical-align: middle;
+  width: 5px;
+  height: 22px;
+  margin-right: 15px;
+  background: #e50914;
+}
+body #screen-home .row-scroller,
+body #screen-home .card-grid {
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  padding: 22px 82px 25px;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+body #screen-home .card-grid {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-wrap: nowrap;
+  flex-wrap: nowrap;
+  -webkit-align-content: flex-start;
+  align-content: flex-start;
+}
+body #screen-home .card-grid .card {
+  -webkit-flex: 0 0 auto;
+  flex: 0 0 auto;
+  margin: 0 20px 0 0;
+}
+body #screen-home .card {
+  width: 212px;
+  height: 312px;
+  border: 0;
+  border-radius: 5px;
+  margin-right: 20px;
+  background: #252525;
+  box-shadow: 0 7px 14px rgba(0,0,0,.3);
+  -webkit-transition: none !important;
+  transition: none !important;
+}
+body #screen-home .card.landscape {
+  width: 394px;
+  height: 225px;
+}
+body #screen-home .card .poster { display: block; width: 100%; height: 100%; object-fit: cover; }
+body #screen-home .card .cap {
+  font-size: 20px;
+  line-height: 24px;
+  max-height: 84px;
+  padding: 27px 12px 10px;
+  color: #fff;
+  text-shadow: 0 2px 5px #000;
+  background: linear-gradient(transparent,rgba(0,0,0,.92));
+}
+body #screen-home .card .prog {
+  background: #e50914;
+  height: 6px;
+}
+body #screen-home .card.focusable.focused {
+  border: 0;
+  -webkit-transform: scale(1.03);
+  transform: scale(1.03);
+  box-shadow: 0 0 0 4px #fff;
+  z-index: 5;
+}
+body #screen-home .card.focusable.moving {
+  border: 0;
+  box-shadow: 0 0 0 4px #e50914;
+}
+body #screen-home .card-new {
+  background: #e50914;
+  border-radius: 3px;
+}
+body #screen-home .row-empty { margin-left: 82px; }
+
+/* Scaling variants retained for optional 110–140% zoom mode. */
+body.zoom-110 #screen-home .home-info.hero { top: 107px; height: 370px; }
+body.zoom-110 #screen-home .home-info.hero + .rows { top: 507px; }
+body.zoom-120 #screen-home .home-info.hero { top: 102px; height: 329px; }
+body.zoom-120 #screen-home .home-info.hero + .rows { top: 461px; }
+body.zoom-130 #screen-home .home-info.hero { top: 96px; height: 283px; }
+body.zoom-130 #screen-home .home-info.hero + .rows { top: 410px; }
+body.zoom-140 #screen-home .home-info.hero { top: 90px; height: 236px; }
+body.zoom-140 #screen-home .home-info.hero + .rows { top: 350px; }
+body.zoom-130 #screen-home .home-info.hero .home-info-title,
+body.zoom-140 #screen-home .home-info.hero .home-info-title { font-size: 49px; }
+body.zoom-130 #screen-home .nf-actions,
+body.zoom-140 #screen-home .nf-actions { height: 47px; margin-top: 8px; }
+body.zoom-130 #screen-home .nf-action,
+body.zoom-140 #screen-home .nf-action { height: 46px; line-height: 39px; font-size: 19px; }
+
+
+/* Visible version marker: assures the TV received new embedded CSS. */
+body #screen-home .brand::after {
+ content: " CINEMA 2.4.7";
+ display: inline-block;
+ margin-left: 12px;
+ color: #f4f4f4;
+ font-size: 13px;
+ line-height: 16px;
+ font-weight: 400;
+ letter-spacing: 2px;
+ vertical-align: middle;
+}
+/* Clear override even when users have a previously saved blue theme. */
+body #screen-home,
+body.bg-light #screen-home,
+body.look-modern #screen-home {
+ background-color: #080808 !important;
+ color: #f8f8f8 !important;
+}
+body #screen-home .home-info.hero,
+body #screen-home .home-info.hero.on,
+body.look-modern #screen-home .home-info.hero {
+ background: transparent !important;
+ border: 0 !important;
+}
+body #screen-home .nf-action {
+ display: inline-block !important;
+ box-sizing: border-box;
+}
+body #screen-home .nf-actions {
+ white-space: nowrap;
+}
+
+    </style>
 </head>
 <body>
     <!-- CSS-applied sentinel (kept off-screen); app.js waits for its width before rendering -->
