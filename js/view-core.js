@@ -688,7 +688,7 @@ var ViewParts = {};
     function titleType(t) { return t === 'anime.movie' ? 'movie' : t === 'anime.series' ? 'series' : t; }
 
     function posterCard(meta, fallbackType) {
-        var landscape = Stremio.getPrefs().posterShape === 'landscape';
+        var landscape = meta._wideHome === true || Stremio.getPrefs().posterShape === 'landscape';
         var c = U.el('div', 'card focusable' + (landscape ? ' landscape' : ''));
         c.setAttribute('data-id', meta.id || '');   // lets Home put focus back on it after a rebuild
         var src = meta._cardImage || (landscape ? (meta.background || meta.thumbnail || meta.poster) : (meta.poster || meta.background));   // (_cardImage: DeArrow's, for either shape)
