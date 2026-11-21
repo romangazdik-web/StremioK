@@ -1005,8 +1005,45 @@ var ViewParts = {};
     function nowPlayingLabel(type, id) { return inNowPlaying(type, id) ? U.t('✓  In Continue Watching') : U.t('+  Add to Continue Watching'); }
     // Your Stremio account's Library (Settings › Integrations › Stremio account): a title in it or not.
     // The Libraries this profile has: its Stremio account's (connected), its Nuvio profile's (kept in step).
+    // Profile-scoped local favorites work without signing in to Stremio, Nuvio or Trakt.
+    // These records contain display metadata only; never store playback URLs or credentials.
+    var NYMIND_FAV_KEY = 'stremiok.nymind.favorites';
+    function nymindFavorites() {
+        var all = U.store.get(NYMIND_FAV_KEY, {});
+        return all && typeof all === 'object' && !Array.isArray(all) ? all : {};
+    }
+    function hasNymindFavorite(type, id) {
+        return !!nymindFavorites()[type + ':' + id];
+    }
+    function setNymindFavorite(type, meta, on) {
+        if ((type !== 'movie' && type !== 'series') || !meta || !meta.id) { return; }
+        var all = Object.assign({}, nymindFavorites()), key = type + ':' + meta.id;
+        if (on) {
+            all[key] = {
+                id: String(meta.id).slice(0, 180), type: type,
+                name: String(meta.name || meta.title || meta.id).slice(0, 180),
+                poster: typeof meta.poster === 'string' ? meta.poster.slice(0, 650) : '',
+                background: typeof meta.background === 'string' ? meta.background.slice(0, 650) : '',
+                added: Date.now()
+            };
+        } else {
+            delete all[key];
+        }
+        U.store.set(NYMIND_FAV_KEY, all);
+        if (V.markHomeDirty) { V.markHomeDirty(); }
+    }
     function libraries() {
-        var out = [];
+        var out = [{
+            id: 'nymind',
+            has: hasNymindFavorite,
+            set: setNymindFavorite,
+            add: 'Přidat do oblíbených',
+            remove: 'Odebrat z oblíbených',
+            inLabel: '♥ V oblíbených',
+            outLabel: '♡ Přidat do oblíbených',
+            added: 'Uloženo v oblíbených · Knihovna',
+            removed: 'Odebráno z oblíbených'
+        }];
         if (typeof StremioSync !== 'undefined' && StremioSync.isConnected()) {
             out.push({ id: 'stremio', has: StremioSync.inLibrary, set: StremioSync.setInLibrary, add: U.t('Add to Stremio Library'), remove: U.t('Remove from Stremio Library'),
                 inLabel: U.t('✓  In Stremio Library'), outLabel: U.t('+  Stremio Library'), added: U.t('Added to your Stremio Library'), removed: U.t('Removed from your Stremio Library') });
