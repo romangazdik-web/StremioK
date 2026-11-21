@@ -1280,7 +1280,7 @@
             if (launch && asked === 'guide' && (Stremio.getPrefs().hiddenTabs || []).indexOf('guide') === -1) { _wantGuide = _homeTab; }   // (see EPG.onChange below)
         }
 
-        var hero = U.look() === 'modern' && !NO_HERO[_homeTab];   // (Modern: the focused title's backdrop, behind it all)
+        var hero = !NO_HERO[_homeTab];   // (Nymind Red: existing cinematic backdrop on film tabs in Classic and Modern)
         if (hero) { s.appendChild(homeBackdrop(_homeTab)); }
         s.appendChild(buildTopMenu(_homeTab));
         // The focused title's details, between the top menu and the rows (#home-info); Modern's
