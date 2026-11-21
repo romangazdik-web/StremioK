@@ -645,7 +645,7 @@
         var base = e.parent || e.id.split(':')[0];
         var a = (art && art[base]) || {};
         var stock = calPoster(base);   // (a title's usual poster: for an entry saved without one, or whose link no longer loads)
-        var c = posterCard({ id: base, type: e.type, name: e.name, poster: a.poster || e.poster || stock, background: a.background || e.background, _posterAlt: stock }, e.type);
+        var c = posterCard({ id: base, type: e.type, name: e.name, poster: a.poster || e.poster || stock, background: a.background || e.background, _posterAlt: stock, _wideHome: true }, e.type);
         // Keep the full episode/file id so detail opens on it. With a saved stream the
         // card resumes it directly; long-press offers the Details page instead.
         var preview = { name: e.name, poster: e.poster, type: e.type };
@@ -1289,6 +1289,26 @@
         info.appendChild(U.el('div', 'home-info-title'));
         info.appendChild(U.el('div', 'home-info-meta'));
         info.appendChild(U.el('div', 'home-info-desc'));
+        if (hero) {
+            // Real Play and Details actions use the selected StremioK card handlers.
+            var actions = U.el('div', 'nf-actions');
+            var play = U.el('div', 'nf-action nf-play focusable', '▶  Přehrát');
+            var details = U.el('div', 'nf-action nf-details focusable', 'ⓘ  Informace');
+            play.__onselect = function () {
+                var c = _heroSourceCard;
+                if (c && s.contains(c)) {
+                    if (c.__onplay) { c.__onplay(); }
+                    else if (c.__onselect) { c.__onselect(); }
+                }
+            };
+            details.__onselect = function () {
+                var c = _heroSourceCard;
+                if (c && s.contains(c) && c.__onselect) { c.__onselect(); }
+            };
+            actions.appendChild(play);
+            actions.appendChild(details);
+            info.appendChild(actions);
+        }
         s.appendChild(info);
 
         // Rows for the active tab, from the once-per-session catalog cache. Catalog tabs
@@ -1317,9 +1337,9 @@
                     var art = homeArt(), now = [], soon = [];
                     entries.forEach(function (e) { var w = notOutYet(e); if (w) { soon.push({ e: e, w: w === true ? Infinity : w }); } else { now.push(e); } });
                     soon.sort(function (x, y) { return x.w - y.w; });
-                    if (now.length) { rows.appendChild(buildGrid(CW_TITLE, now.map(function (e) { return continueCard(e, art); }))); }
+                    if (now.length) { rows.appendChild(buildRow(CW_TITLE, now.map(function (e) { return continueCard(e, art); }))); }
                     if (soon.length) {
-                        rows.appendChild(buildGrid(UPCOMING_TITLE, soon.map(function (x) { var c = continueCard(x.e, art); c.__upcoming = true; return c; })));
+                        rows.appendChild(buildRow(UPCOMING_TITLE, soon.map(function (x) { var c = continueCard(x.e, art); c.__upcoming = true; return c; })));
                     }
                     refreshShowInfo(entries);
                 } else {
@@ -1357,8 +1377,30 @@
 
     // Details strip: updated when focus settles on a Home card (debounced, so holding a
     // direction doesn't redo it for every card passed).
-    var _homeInfoTimer = null;
-    function fillHomeInfo(m) { fillInfoBox(scr('home').querySelector('.home-info'), m); fillBackdrop(scr('home').querySelector('.home-bg'), m); }
+    var _homeInfoTimer = null, _heroSourceCard = null;
+    function fillHomeInfo(m) {
+        var screen = scr('home'), info = screen.querySelector('.home-info');
+        var focused = Focus.current();
+        if (focused && focused.classList && focused.classList.contains('card') && screen.contains(focused)) {
+            _heroSourceCard = focused;
+        }
+        // Keep the selected title while the focus visits the menu or banner buttons.
+        if (info && info.classList.contains('hero') && (!m || !(m.name || m.title)) &&
+            _heroSourceCard && screen.contains(_heroSourceCard)) {
+            m = _heroSourceCard.__meta;
+        }
+        fillInfoBox(info, m);
+        fillBackdrop(screen.querySelector('.home-bg'), m);
+        var actions = info && info.querySelector('.nf-actions');
+        if (actions) {
+            var active = !!(_heroSourceCard && screen.contains(_heroSourceCard) && m && (m.name || m.title));
+            actions.style.display = active ? 'flex' : 'none';
+            if (active) {
+                actions.children[0].__meta = m;
+                actions.children[1].__meta = m;
+            }
+        }
+    }
     // Modern look: the focused title's backdrop behind Home, two layers taking turns, so the
     // new one fades in over the last (Effects: Full) once it has loaded; a picture that doesn't
     // load gives way to the next of its choices (U.heroImages). A title without one: black; the
@@ -1695,7 +1737,8 @@
         function add(n) {
             var end = Math.min(c.metas.length, at + n), first = scroller.firstChild, nav = first && first.__navDOWN;
             for (; at < end; at++) {
-                var card = posterCard(c.metas[at], c.type);
+                var m = c.metas[at], wide = c.type === 'movie' || c.type === 'series';
+                var card = posterCard(wide ? Object.assign({}, m, { _wideHome: true }) : m, c.type);
                 if (nav) { card.__navDOWN = nav; }   // (the rows below it, as its neighbors)
                 scroller.appendChild(card);
             }
@@ -1724,7 +1767,10 @@
                 c = copyCat(c, c.metas.filter(function (m) { return !V.watchedHidden(m, c.type); }));
                 if (!c.metas.length) { continue; }
             }
-            var row = buildRow(c.name, c.metas.slice(0, ROW_FIRST).map(function (m) { return posterCard(m, c.type); }));
+            var row = buildRow(c.name, c.metas.slice(0, ROW_FIRST).map(function (m) {
+                var wide = c.type === 'movie' || c.type === 'series';
+                return posterCard(wide ? Object.assign({}, m, { _wideHome: true }) : m, c.type);
+            }));
             if (c.metas.length > ROW_FIRST) { lateCards(row, c); }
             if (c.loading) { row.className += ' row-loading'; row.appendChild(U.el('div', 'row-empty', U.t('Loading…'))); }   // (its place kept: nothing to focus)
             rows.appendChild(row);
