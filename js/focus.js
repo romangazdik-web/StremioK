@@ -121,9 +121,10 @@ var Focus = (function () {
                 }
             }
         }
-        /* Stream-source navigation after selecting an episode.
-           The left navigation rail must never steal DOWN/UP from source rows. */
-        if ((dir === 'DOWN' || dir === 'UP') && _scope.id === 'screen-detail') {
+        /* Nymind Cinema stream cards: two columns, predictable D-pad movement.
+           The source list remains entirely inside the content area. */
+        if ((dir === 'DOWN' || dir === 'UP' || dir === 'LEFT' || dir === 'RIGHT') &&
+            _scope.id === 'screen-detail') {
             var streamPanel = _scope.querySelector('.streams-panel');
             if (streamPanel) {
                 var streamList = streamPanel.querySelector('.list-scroll');
@@ -136,29 +137,25 @@ var Focus = (function () {
                 if (inStream) {
                     for (var si = 0; si < streamRows.length; si++) {
                         if (streamRows[si] !== _current) { continue; }
-                        if (dir === 'DOWN' && si + 1 < streamRows.length) {
-                            /* Allow the existing pagination hook to add more streams. */
-                            if (typeof _current.__navDOWN === 'function') { _current.__navDOWN(); }
-                            setFocus(streamRows[si + 1]); return;
-                        }
-                        if (dir === 'UP' && si > 0) { setFocus(streamRows[si - 1]); return; }
-                        if (dir === 'UP' && si === 0) {
-                            /* At the beginning of sources, return to the action
-                               bar (Play best / filters), never the sidebar. */
-                            var actions = streamBody ? streamBody.querySelector('.streams-actions') : null;
-                            var action = actions && actions.querySelector('.focusable');
-                            if (action) { setFocus(action); }
-                            return;
-                        }
+                        var next = -1;
+                        if (dir === 'DOWN') { next = si + 2; }
+                        if (dir === 'UP') { next = si - 2; }
+                        if (dir === 'RIGHT' && si % 2 === 0) { next = si + 1; }
+                        if (dir === 'LEFT' && si % 2 === 1) { next = si - 1; }
                         if (dir === 'DOWN' && typeof _current.__navDOWN === 'function') {
                             _current.__navDOWN();
-                            var expanded = streamList.querySelectorAll('.stream.focusable');
-                            if (si + 1 < expanded.length) { setFocus(expanded[si + 1]); }
-                            return;
+                            streamRows = streamList.querySelectorAll('.stream.focusable');
                         }
-                        /* At either end, do not jump to the sidebar. */
-                        if (dir === 'DOWN') { return; }
-                        break;
+                        if (next >= 0 && next < streamRows.length) {
+                            setFocus(streamRows[next]); return;
+                        }
+                        if (dir === 'UP' && next < 0) {
+                            var actions = streamBody ? streamBody.querySelector('.streams-actions') : null;
+                            var firstAction = actions && actions.querySelector('.focusable');
+                            if (firstAction) { setFocus(firstAction); }
+                        }
+                        /* Don't let the sidebar steal focus at the edges. */
+                        return;
                     }
                 }
             }
