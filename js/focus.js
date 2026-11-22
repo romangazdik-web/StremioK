@@ -142,6 +142,14 @@ var Focus = (function () {
                             setFocus(streamRows[si + 1]); return;
                         }
                         if (dir === 'UP' && si > 0) { setFocus(streamRows[si - 1]); return; }
+                        if (dir === 'UP' && si === 0) {
+                            /* At the beginning of sources, return to the action
+                               bar (Play best / filters), never the sidebar. */
+                            var actions = streamBody ? streamBody.querySelector('.streams-actions') : null;
+                            var action = actions && actions.querySelector('.focusable');
+                            if (action) { setFocus(action); }
+                            return;
+                        }
                         if (dir === 'DOWN' && typeof _current.__navDOWN === 'function') {
                             _current.__navDOWN();
                             var expanded = streamList.querySelectorAll('.stream.focusable');
