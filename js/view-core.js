@@ -1148,6 +1148,32 @@ var ViewParts = {};
         _holdHint.className = (node && typeof node.__onlongpress === 'function') ? '' : 'hidden';
     });
 
+    // Titan Bingie-inspired rail. Open only when focus is inside navigation,
+    // close as soon as a card, field or dialog owns focus. No timers or polling.
+    var _nfOpenedSidebar = null;
+    Focus.onFocus(function (node) {
+        var found = null, p = node;
+        while (p && p.nodeType === 1) {
+            if (p.className && typeof p.className === 'string' &&
+                (' ' + p.className + ' ').indexOf(' home-header ') >= 0 &&
+                (' ' + p.className + ' ').indexOf(' header ') >= 0) {
+                found = p;
+                break;
+            }
+            p = p.parentNode;
+        }
+        if (_nfOpenedSidebar && _nfOpenedSidebar !== found) {
+            _nfOpenedSidebar.className = _nfOpenedSidebar.className.replace(' nf-bingie-open', '');
+            _nfOpenedSidebar = null;
+        }
+        if (found) {
+            if ((' ' + found.className + ' ').indexOf(' nf-bingie-open ') < 0) {
+                found.className += ' nf-bingie-open';
+            }
+            _nfOpenedSidebar = found;
+        }
+    });
+
     // ----- published for the other parts (and js/views.js) -----
     V._current = _current;
     V.addonActions = addonActions;
