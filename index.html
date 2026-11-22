@@ -1458,10 +1458,75 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
 #nymind-boot .boot-sub {font-size:24px;letter-spacing:12px;color:#e50914;margin-top:12px}
 #nymind-boot .boot-line {width:105px;height:3px;background:#e50914;margin-top:35px}
     </style>
+
+    <style id="nymind-cinema-v253-grid">
+/* Nymind Cinema v2.5.3 — genuinely compact two-column episode browser. */
+#app #screen-detail .series-panel .list-scroll {
+ display:-webkit-flex!important;display:flex!important;
+ -webkit-flex-wrap:wrap!important;flex-wrap:wrap!important;
+ -webkit-align-content:flex-start!important;align-content:flex-start!important;
+ box-sizing:border-box!important;
+ overflow-x:hidden!important;overflow-y:auto!important;
+ padding:13px 7px 35px 13px!important;
+}
+#app #screen-detail .series-panel .ep.ep-row {
+ box-sizing:border-box!important;display:-webkit-flex!important;display:flex!important;
+ position:relative!important;
+ width:calc(50% - 17px)!important;min-width:0!important;max-width:none!important;
+ height:160px!important;min-height:160px!important;
+ margin:0 14px 14px 0!important;
+ padding:13px!important;
+ -webkit-flex:0 0 calc(50% - 17px)!important;flex:0 0 calc(50% - 17px)!important;
+ -webkit-align-items:flex-start!important;align-items:flex-start!important;
+ background:#1b1b1f!important;
+ border:2px solid #343438!important;border-radius:10px!important;
+ white-space:normal!important;overflow:hidden!important;
+}
+#app #screen-detail .series-panel .ep.ep-row.focused {
+ border:3px solid #fff!important;background:#27272d!important;
+ box-shadow:inset 4px 0 0 #e50914!important;
+}
+#app #screen-detail .series-panel .ep-thumb {
+ display:block!important;position:relative!important;
+ width:205px!important;min-width:205px!important;height:130px!important;
+ -webkit-flex:0 0 205px!important;flex:0 0 205px!important;
+ margin:0 17px 0 0!important;overflow:hidden!important;border-radius:7px!important;
+ background:#303039!important;background-size:cover!important;background-position:center!important;
+}
+#app #screen-detail .series-panel .ep-body {
+ -webkit-flex:1 1 auto!important;flex:1 1 auto!important;
+ min-width:0!important;width:auto!important;
+ max-height:130px!important;overflow:hidden!important;
+}
+#app #screen-detail .series-panel .ep-line {
+ display:block!important;font-size:21px!important;line-height:27px!important;
+}
+#app #screen-detail .series-panel .ep-title {
+ display:block!important;font-size:21px!important;line-height:27px!important;
+ font-weight:700!important;white-space:normal!important;
+ overflow:hidden!important;max-height:55px!important;
+}
+#app #screen-detail .series-panel .ep-rating {
+ display:block!important;margin:3px 0 0!important;font-size:15px!important;
+}
+#app #screen-detail .series-panel .ep-ov {
+ display:block!important;margin-top:6px!important;
+ font-size:16px!important;line-height:21px!important;
+ max-height:63px!important;overflow:hidden!important;color:#c6c6ce!important;
+}
+/* Keep episode cards compact even if the service returns no synopsis. */
+#app #screen-detail .series-panel .season-bar {
+ box-sizing:border-box!important;padding:7px 15px!important;
+}
+/* Brand symbol is vector and does not require emoji fonts or network assets. */
+#app .screen > .header.home-header .nf-mark svg {
+ width:44px!important;height:44px!important;
+}
+    </style>
 </head>
 <body>
     <div id="nymind-boot" aria-label="Načítá se Nymind Cinema">
-      <svg class="boot-mark" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="46" height="46" rx="11" fill="#e50914"/><path d="M13 34V14L35 34V14" fill="none" stroke="#fff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg class="boot-mark" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="3" width="74" height="74" rx="18" fill="#151519" stroke="#e50914" stroke-width="3"/><path d="M23 54V25L42 47V25" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M51 27L65 40L51 53Z" fill="#e50914"/></svg>
       <div class="boot-word">NYMIND</div><div class="boot-sub">CINEMA</div><div class="boot-line"></div>
     </div>
     <script>
