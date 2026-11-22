@@ -3,7 +3,7 @@
   "version": "2.5.2",
   "description": "StremioK streaming client for Tizen 3.0+ Samsung TVs (TizenBrew app module).",
   "packageType": "app",
-  "appName": "Nymind Cinema",
+  "appName": "StremioK",
   "appPath": "index.html",
   "serviceFile": "service/index.js",
   "files": [
