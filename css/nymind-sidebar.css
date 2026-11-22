@@ -1,0 +1,383 @@
+/* NYMIND CINEMA 2.5.0 — Sidebar / unified Netflix-like TV UI.
+   Samsung Tizen 3.0 (Chromium 47), 1920x1080 CSS coordinate space.
+   Only visual UI screens; player, subtitles, overlays and stream URLs untouched.
+   No CSS filters, live blur, CSS variables or expensive fullscreen animations. */
+
+/* Uniform slate-black surfaces; older preference backgrounds do not override. */
+#app #screen-home, #app #screen-search, #app #screen-discover,
+#app #screen-settings, #app #screen-detail {
+    background-color: #090909 !important;
+    color: #f4f4f4;
+}
+
+/* One real vertical navigation, the existing focusable DOM and actions retained. */
+#app .screen > .header.home-header {
+    position: absolute !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    box-sizing: border-box;
+    width: 285px !important;
+    height: 100% !important;
+    padding: 30px 14px 22px !important;
+    margin: 0 !important;
+    display: -webkit-flex !important;
+    display: flex !important;
+    -webkit-flex-direction: column !important;
+    flex-direction: column !important;
+    -webkit-justify-content: flex-start !important;
+    justify-content: flex-start !important;
+    -webkit-align-items: stretch !important;
+    align-items: stretch !important;
+    overflow: hidden;
+    background: #111114 !important;
+    border-right: 1px solid #2d2d32;
+    z-index: 25 !important;
+}
+#app .screen > .header.home-header::before { display: none !important; }
+#app .screen > .header.home-header .brand {
+    -webkit-order: -1;
+    order: -1;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    width: 255px;
+    min-height: 72px;
+    margin: 0 0 23px 2px !important;
+    padding: 0 6px !important;
+    color: #fff !important;
+    background: transparent;
+    letter-spacing: 0;
+    font-size: 20px !important;
+    text-shadow: none !important;
+    text-transform: none !important;
+    white-space: nowrap;
+}
+#app .screen > .header.home-header .brand::after,
+#app .screen > .header.home-header .brand::before { content: none !important; display: none !important; }
+#app .screen > .header.home-header .brand .nf-mark {
+    display: inline-block;
+    -webkit-flex: 0 0 49px;
+    flex: 0 0 49px;
+    margin-right: 12px;
+    width: 49px; height: 49px;
+}
+#app .screen > .header.home-header .brand .nf-mark svg { display: block; width: 49px; height: 49px; }
+#app .screen > .header.home-header .brand .nf-brand-text {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    line-height: 1;
+}
+#app .screen > .header.home-header .brand .nf-wordmark {
+    display: block;
+    font-family: Arial, sans-serif;
+    font-size: 26px;
+    line-height: 29px;
+    font-weight: bold;
+    letter-spacing: 1.4px;
+    color: #f7f7f7 !important;
+}
+#app .screen > .header.home-header .brand .nf-tagline {
+    display: block;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    font-weight: normal;
+    letter-spacing: 3px;
+    color: #e50914 !important;
+    margin-top: 3px;
+}
+#app .screen > .header.home-header .menu-scroll.nf-sidebar-list {
+    -webkit-order: 1;
+    order: 1;
+    display: block !important;
+    position: relative;
+    -webkit-flex: 1 1 auto !important;
+    flex: 1 1 auto !important;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-height: 100%;
+    margin: 0 !important;
+    padding: 3px 3px 15px !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    background: transparent !important;
+}
+#app .screen > .header.home-header .tabbar-inline {
+    display: block !important;
+    position: relative;
+    width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+}
+#app .screen > .header.home-header .tab-pill,
+#app .screen > .header.home-header .hchip {
+    display: -webkit-flex !important;
+    display: flex !important;
+    -webkit-align-items: center;
+    align-items: center;
+    box-sizing: border-box;
+    position: relative;
+    width: 100%;
+    height: 54px;
+    min-height: 54px;
+    padding: 0 13px !important;
+    margin: 0 0 3px !important;
+    background: transparent !important;
+    border: 2px solid transparent !important;
+    border-left: 4px solid transparent !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+    color: #c6c6c9 !important;
+    text-align: left;
+    font-family: Arial, sans-serif;
+    font-size: 20px !important;
+    line-height: 26px !important;
+    font-weight: 400 !important;
+    letter-spacing: 0;
+    white-space: nowrap;
+    text-shadow: none;
+}
+#app .screen > .header.home-header .tab-pill .tab-ic,
+#app .screen > .header.home-header .hchip .tab-ic {
+    display: inline-block !important;
+    -webkit-flex: 0 0 35px;
+    flex: 0 0 35px;
+    width: 35px;
+    margin: 0 7px 0 0 !important;
+    color: #d4d4d7;
+    font-family: Arial, sans-serif;
+    font-size: 25px !important;
+    line-height: 28px;
+    text-align: center;
+}
+#app .screen > .header.home-header .nf-nav-label {
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#app .screen > .header.home-header .tab-pill.active,
+#app .screen > .header.home-header .hchip.active {
+    border-left-color: #e50914 !important;
+    background: #282126 !important;
+    color: #fff !important;
+    font-weight: bold !important;
+}
+#app .screen > .header.home-header .tab-pill.focusable.focused,
+#app .screen > .header.home-header .hchip.focusable.focused {
+    border: 2px solid #fff !important;
+    border-left: 4px solid #e50914 !important;
+    background: #3a2327 !important;
+    color: #fff !important;
+    box-shadow: inset 0 0 0 1px rgba(229,9,20,.45) !important;
+}
+#app .screen > .header.home-header .tab-pill.focused .tab-ic,
+#app .screen > .header.home-header .hchip.focused .tab-ic { color: #fff; }
+#app .screen > .header.home-header .pf-chip {
+    min-height: 52px;
+    padding: 6px 15px !important;
+}
+#app .screen > .header.home-header .spacer { display: none; }
+
+/* HOME: keep existing backdrop, hero and row position, shift only into content area. */
+#app #screen-home .home-info.hero,
+#app #screen-home .home-info.hero.on {
+    left: 346px !important;
+    width: 850px !important;
+}
+#app #screen-home .home-info:not(.hero) { left: 345px !important; right: 58px !important; }
+#app #screen-home .rows {
+    left: 285px !important;
+    right: 0 !important;
+}
+#app #screen-home .row-title { margin-left: 59px !important; }
+#app #screen-home .row-scroller,
+#app #screen-home .card-grid { padding-left: 59px !important; padding-right: 25px !important; }
+#app #screen-home .row-empty { margin-left: 62px !important; }
+#app #screen-home .home-bg .hb { background-position: right 30% !important; }
+
+/* SEARCH: one clear heading, text field and large, readable result cards. */
+#app #screen-search .search-wrap {
+    left: 343px !important;
+    right: 54px !important;
+    top: 80px !important;
+    bottom: 35px !important;
+}
+#app #screen-search .search-wrap::before {
+    content: 'HLEDÁNÍ';
+    display: block;
+    font-size: 35px;
+    line-height: 53px;
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    letter-spacing: 0;
+    margin-bottom: 17px;
+    color: #fff;
+}
+#app #screen-search .search-bar { margin-bottom: 19px !important; }
+#app #screen-search #search-input {
+    background: #1a1a1c !important;
+    border: 2px solid #454548 !important;
+    border-radius: 6px !important;
+    color: #fff !important;
+    font-size: 24px;
+    padding: 14px 19px;
+}
+#app #screen-search #search-input.focused {
+    border-color: #fff !important;
+    box-shadow: inset 0 0 0 2px #e50914;
+}
+#app #screen-search .search-results { top: 145px !important; }
+#app #screen-search .search-results .row-title { margin-left: 18px; color: #f6f6f6; }
+#app #screen-search .search-results .card {
+    background: #242426;
+    border-radius: 5px;
+}
+#app #screen-search .search-results .card.focusable.focused {
+    border: 0;
+    box-shadow: 0 0 0 4px #fff;
+}
+
+/* DISCOVER: black filters and compact red/white focus, no purple controls. */
+#app #screen-discover .discover-bar {
+    top: 119px !important;
+    left: 337px !important;
+    right: 45px !important;
+}
+#app #screen-discover .home-info {
+    left: 340px !important;
+    right: 50px !important;
+    top: 198px !important;
+    background: rgba(15,15,15,.93) !important;
+    border-left: 4px solid #e50914 !important;
+    border-radius: 6px;
+}
+#app #screen-discover .discover-grid {
+    left: 285px !important;
+    right: 0 !important;
+    top: 337px !important;
+    padding: 19px 37px 50px 55px !important;
+}
+#app #screen-discover .discover-bar .pill,
+#app #screen-discover .discover-search {
+    color: #f2f2f2 !important;
+    background: #252527 !important;
+    border: 2px solid #4b4b4d !important;
+    border-radius: 6px !important;
+}
+#app #screen-discover .discover-bar .pill.focusable.focused,
+#app #screen-discover .discover-search.focused {
+    border-color: #fff !important;
+    box-shadow: inset 0 0 0 2px #e50914;
+    background: #333338 !important;
+    color: #fff !important;
+}
+#app #screen-discover .discover-grid .card.focusable.focused {
+    border: 0;
+    box-shadow: 0 0 0 4px #fff;
+}
+#app #screen-discover .discover-count { color: #bfc0c3; }
+
+/* SETTINGS: a consistent dark Netflix-like menu, no rounded purple blocks. */
+#app #screen-settings .settings-wrap {
+    left: 340px !important;
+    right: 55px !important;
+    top: 91px !important;
+    bottom: 30px !important;
+}
+#app #screen-settings .settings-wrap h2 {
+    font-size: 34px;
+    line-height: 46px;
+    color: #fff;
+    margin-bottom: 19px;
+}
+#app #screen-settings .addon-item,
+#app #screen-settings .feed-name,
+#app #screen-settings .feed-btn,
+#app #screen-settings .settings-wrap .pill,
+#app #screen-settings .settings-wrap .back-row {
+    background: #1c1c1f !important;
+    color: #eaeaea !important;
+    border: 2px solid #38383d !important;
+    border-left: 4px solid transparent !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+}
+#app #screen-settings .addon-item.focusable.focused,
+#app #screen-settings .feed-name.focusable.focused,
+#app #screen-settings .feed-btn.focusable.focused,
+#app #screen-settings .settings-wrap .pill.focusable.focused,
+#app #screen-settings .settings-wrap .back-row.focusable.focused {
+    background: #29292c !important;
+    color: #fff !important;
+    border: 2px solid #fff !important;
+    border-left: 4px solid #e50914 !important;
+    box-shadow: none !important;
+}
+#app #screen-settings .settings-wrap .a-url,
+#app #screen-settings .settings-wrap .hint { color: #aaaab0 !important; }
+
+/* Film and series detail: keep functional source/episode list and existing focus.
+   Match sidebar's fixed width; preserve the Netflix artwork behind it. */
+#app #screen-detail .detail-body {
+    left: 344px !important;
+    right: 55px !important;
+    max-width: none;
+}
+#app #screen-detail .list-panel,
+#app #screen-detail .more-panel {
+    left: 340px !important;
+    right: 55px !important;
+}
+#app #screen-detail .detail-body .detail-title { max-width: 1080px; }
+#app #screen-detail .streams-panel .stream.focusable.focused,
+#app #screen-detail .series-panel .ep.focusable.focused {
+    background: #252528 !important;
+    color: #fff !important;
+    border-left-color: #e50914 !important;
+}
+#app #screen-detail .detail-hero .shade {
+    background:
+       linear-gradient(90deg,rgba(8,8,8,.95) 0%,rgba(8,8,8,.82) 35%,
+           rgba(8,8,8,.46) 67%,rgba(8,8,8,.14) 100%),
+       linear-gradient(0deg,#080808 1%,rgba(8,8,8,.88) 36%,rgba(8,8,8,.05) 83%);
+}
+
+/* Shared controls on SEARCH / DISCOVER / SETTINGS, scoped away from the player. */
+#app #screen-search .pill,
+#app #screen-discover .pill,
+#app #screen-settings .pill {
+    border-radius: 6px;
+}
+#app #screen-search .pill.focusable.focused,
+#app #screen-discover .pill.focusable.focused,
+#app #screen-settings .pill.focusable.focused {
+    background: #fff !important;
+    color: #101010 !important;
+    border-color: #e50914 !important;
+}
+
+/* Dedicated Czech section headings where the original page lacked them. */
+#app #screen-discover::before,
+#app #screen-settings::before {
+    display: block;
+    position: absolute;
+    top: 37px;
+    left: 341px;
+    z-index: 5;
+    font-family: Arial, sans-serif;
+    font-size: 35px;
+    line-height: 43px;
+    font-weight: bold;
+    color: #f8f8f8;
+    pointer-events: none;
+}
+#app #screen-discover::before { content: 'OBJEVOVAT'; }
+#app #screen-settings::before { content: 'NASTAVENÍ'; }
