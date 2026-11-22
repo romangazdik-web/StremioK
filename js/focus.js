@@ -121,6 +121,40 @@ var Focus = (function () {
                 }
             }
         }
+        /* Stream-source navigation after selecting an episode.
+           The left navigation rail must never steal DOWN/UP from source rows. */
+        if ((dir === 'DOWN' || dir === 'UP') && _scope.id === 'screen-detail') {
+            var streamPanel = _scope.querySelector('.streams-panel');
+            if (streamPanel) {
+                var streamList = streamPanel.querySelector('.list-scroll');
+                var streamRows = streamList ? streamList.querySelectorAll('.stream.focusable') : [];
+                var inStream = !!(streamList && streamList.contains(_current));
+                var streamBody = _scope.querySelector('.streams-body');
+                if (dir === 'DOWN' && streamBody && streamBody.contains(_current) && streamRows.length) {
+                    setFocus(streamRows[0]); return;
+                }
+                if (inStream) {
+                    for (var si = 0; si < streamRows.length; si++) {
+                        if (streamRows[si] !== _current) { continue; }
+                        if (dir === 'DOWN' && si + 1 < streamRows.length) {
+                            /* Allow the existing pagination hook to add more streams. */
+                            if (typeof _current.__navDOWN === 'function') { _current.__navDOWN(); }
+                            setFocus(streamRows[si + 1]); return;
+                        }
+                        if (dir === 'UP' && si > 0) { setFocus(streamRows[si - 1]); return; }
+                        if (dir === 'DOWN' && typeof _current.__navDOWN === 'function') {
+                            _current.__navDOWN();
+                            var expanded = streamList.querySelectorAll('.stream.focusable');
+                            if (si + 1 < expanded.length) { setFocus(expanded[si + 1]); }
+                            return;
+                        }
+                        /* At either end, do not jump to the sidebar. */
+                        if (dir === 'DOWN') { return; }
+                        break;
+                    }
+                }
+            }
+        }
         var best = null;
         // An item that knows its neighbors (a Discover card: by its place in the grid) says
         // where a move goes, without measuring anything: a node, false (stay), or nothing
