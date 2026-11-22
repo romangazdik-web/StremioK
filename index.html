@@ -1171,6 +1171,24 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
     border-color: #e50914 !important;
 }
 
+/* Dedicated Czech section headings where the original page lacked them. */
+#app #screen-discover::before,
+#app #screen-settings::before {
+    display: block;
+    position: absolute;
+    top: 37px;
+    left: 341px;
+    z-index: 5;
+    font-family: Arial, sans-serif;
+    font-size: 35px;
+    line-height: 43px;
+    font-weight: bold;
+    color: #f8f8f8;
+    pointer-events: none;
+}
+#app #screen-discover::before { content: 'OBJEVOVAT'; }
+#app #screen-settings::before { content: 'NASTAVENÍ'; }
+
     </style>
 </head>
 <body>
