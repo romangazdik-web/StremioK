@@ -599,7 +599,7 @@ var ViewParts = {};
         h.appendChild(U.el('div', 'header-title', title || ''));
         h.appendChild(U.el('div', 'spacer'));
         var brand = U.el('div', 'brand');
-        brand.innerHTML = 'Stremio<span class="dot">K</span>';
+        brand.innerHTML = '<span class="nf-mark" aria-hidden="true"><svg viewBox="0 0 48 48" width="49" height="49" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="11" fill="#E50914"/><path d="M13 34V14L35 34V14" fill="none" stroke="#FFFFFF" stroke-width="5.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="nf-brand-text"><span class="nf-wordmark">NYMIND</span><span class="nf-tagline">CINEMA</span></span>';
         h.appendChild(brand);
         return h;
     }
@@ -608,6 +608,28 @@ var ViewParts = {};
     // the same: Watching, then the tabs, Discover and Search in your order (menuItems), then
     // Settings, on the left; StremioK on the right.
     // `active` is the key of the current view: a tab key, 'search' or 'settings'.
+    // Sidebar labels are Czech regardless of the language used for the deeper
+    // settings. Those have their own, separate I18N translations.
+    function nfNavLabel(key, fallback) {
+        var names = {
+            'continue': 'Sledování', 'calendar': 'Kalendář',
+            'movie': 'Filmy', 'series': 'Seriály', 'library': 'Knihovna',
+            'tv': 'Živá TV', 'guide': 'TV program', 'radio': 'Rádia',
+            'sport': 'Sport', 'youtube': 'YouTube', 'local': 'Moje soubory',
+            'discover': 'Objevovat', 'search': 'Hledat', 'settings': 'Nastavení'
+        };
+        return names[key] || fallback;
+    }
+    function nfNavIcon(key) {
+        var icons = {
+            'continue': '▶', 'calendar': '▦', 'movie': '▣',
+            'series': '▤', 'library': '♡', 'tv': '◉',
+            'guide': '☷', 'radio': '♫', 'sport': '★',
+            'youtube': '▷', 'local': '▥', 'discover': '◇',
+            'search': '⌕', 'settings': '⚙'
+        };
+        return icons[key] || '•';
+    }
     function buildTopMenu(active) {
         var head = U.el('div', 'header home-header');
         // Going UP into the menu always lands on the current view's item (not the pill
@@ -617,16 +639,52 @@ var ViewParts = {};
             head.__lastContent = from;
             return head.querySelector('.tab-pill.active, .hchip.active');
         };
-        function down() { return focusBelowTop(head); }
+        // RIGHT goes to the content; UP / DOWN walk the vertical menu.
+        // Back to the sidebar is already implemented globally in App.back().
+        function contentTarget() {
+            var old = head.__lastContent, screen = _current();
+            if (old && screen && screen.contains(old) && !head.contains(old)) {
+                var r = old.getBoundingClientRect();
+                if (r.width > 0 && r.height > 0) { return old; }
+            }
+            if (!screen) { return null; }
+            var all = screen.querySelectorAll('.focusable');
+            for (var i = 0; i < all.length; i++) {
+                if (head.contains(all[i])) { continue; }
+                var b = all[i].getBoundingClientRect();
+                if (b.width > 0 && b.height > 0) { return all[i]; }
+            }
+            return null;
+        }
+        function sidebarNeighbour(p, direction) {
+            var all = head.querySelectorAll('.tab-pill.focusable, .hchip.focusable');
+            for (var i = 0; i < all.length; i++) {
+                if (all[i] === p) {
+                    var at = i + direction;
+                    return at >= 0 && at < all.length ? all[at] : false;
+                }
+            }
+            return false;
+        }
+        function sidebarKeys(p) {
+            p.__navDOWN = function () { return false; };
+            p.__goDOWN = function () { return sidebarNeighbour(p, 1); };
+            p.__goUP = function () { return sidebarNeighbour(p, -1); };
+            p.__goRIGHT = function () { return contentTarget() || false; };
+            p.__goLEFT = function () { return false; };
+        }
         var tabbar = U.el('div', 'tabbar-inline');
         // a pill: a Home tab, Discover (browse any catalog in full, its own screen), Search;
         // Settings a chip like them (name, then icon), after them
         function item(cls, key, label, icon, open, into) {
             var p = U.el('div', cls + ' focusable' + (key === active ? ' active' : ''));
-            p.appendChild(document.createTextNode(label));
-            p.appendChild(U.el('span', 'tab-ic', icon));
+            var name = nfNavLabel(key, label);
+            p.setAttribute('data-nav-key', key);
+            p.setAttribute('aria-label', name);
+            p.appendChild(U.el('span', 'tab-ic', nfNavIcon(key)));
+            p.appendChild(U.el('span', 'nf-nav-label', name));
             p.__onselect = open;
-            p.__navDOWN = down;
+            sidebarKeys(p);
             into.appendChild(p);
         }
         menuItems().forEach(function (m) {
@@ -636,7 +694,7 @@ var ViewParts = {};
         });
         // The items in one strip that scrolls sideways when they don't all fit (Focus keeps the
         // focused one in view); the StremioK name outside it, at the right.
-        var strip = U.el('div', 'menu-scroll');
+        var strip = U.el('div', 'menu-scroll nf-sidebar-list');
         strip.appendChild(tabbar);
         item('hchip', 'settings', U.t('Settings'), '⚙', function () { App.openSettings(); }, strip);
         if (typeof Profiles !== 'undefined' && Profiles.count() > 1) {   // (who's watching: OK to switch)
@@ -644,13 +702,14 @@ var ViewParts = {};
             chip.appendChild(profileBadge(me, 'small'));
             chip.setAttribute('aria-label', me.name);
             chip.__onselect = function () { profilePicker(null, U.t('Switch profile')); };
-            chip.__navDOWN = down;
+            chip.setAttribute('data-nav-key', 'profile');
+            sidebarKeys(chip);
             strip.appendChild(chip);
         }
         head.appendChild(strip);
         setTimeout(function () { showActiveItem(strip); }, 0);   // (once it's on screen)
         var brand = U.el('div', 'brand');
-        brand.innerHTML = 'Stremio<span class="dot">K</span>';
+        brand.innerHTML = '<span class="nf-mark" aria-hidden="true"><svg viewBox="0 0 48 48" width="49" height="49" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="11" fill="#E50914"/><path d="M13 34V14L35 34V14" fill="none" stroke="#FFFFFF" stroke-width="5.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="nf-brand-text"><span class="nf-wordmark">NYMIND</span><span class="nf-tagline">CINEMA</span></span>';
         if (Player.isPrivate && Player.isPrivate()) { brand.className += ' private'; }   // (private viewing on: drawn as an outline)
         head.appendChild(brand);
         return head;
@@ -660,6 +719,15 @@ var ViewParts = {};
     // room for a neighbour on either side; focus may be on the page below.
     function showActiveItem(strip) {
         var a = strip.querySelector('.active'), w = strip.clientWidth, mx = 90;
+        if (strip.className.indexOf('nf-sidebar-list') >= 0) {
+            if (!a) { return; }
+            if (a.offsetTop < strip.scrollTop + 30) {
+                strip.scrollTop = Math.max(0, a.offsetTop - 30);
+            } else if (a.offsetTop + a.offsetHeight > strip.scrollTop + strip.clientHeight - 30) {
+                strip.scrollTop = a.offsetTop + a.offsetHeight - strip.clientHeight + 30;
+            }
+            return;
+        }
         if (!a || !w) { return; }
         if (a.offsetLeft < strip.scrollLeft + mx) { strip.scrollLeft = Math.max(0, a.offsetLeft - mx); }
         else if (a.offsetLeft + a.offsetWidth > strip.scrollLeft + w - mx) { strip.scrollLeft = a.offsetLeft + a.offsetWidth - w + mx; }
