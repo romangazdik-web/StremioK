@@ -2036,7 +2036,7 @@
             var opens = playable ? null : ((row && row.app !== undefined) ? (row.app || null) : whereApp(stream));
             var node = U.el('div', 'stream focusable');
             node.__streamKey = streamIdentity(stream);
-            node.appendChild(document.createTextNode(Stremio.streamName(stream)));
+            node.appendChild(U.el('div', 'nf-stream-title', Stremio.streamName(stream)));
 
             // Detail block: size + the addon's own description (languages, seeds, etc.)
             var lines = [];
@@ -2062,7 +2062,13 @@
                 }
                 else { lines.push(U.t('— not directly playable on the TV')); }
             }
-            var sub = U.el('span', 's-sub', lines.join('\n'));
+            /* Unsupported emoji show as squares on Chromium 47.
+               Keep the technical information, remove only decorative emoji. */
+            var cleaned = lines.map(function (line) {
+                return line.replace(/[\uD83C\uD83D\uD83E][\uDC00-\uDFFF]/g, '')
+                    .replace(/[\uFE0E\uFE0F\u200D]/g, '').replace(/^\s+/, '');
+            });
+            var sub = U.el('span', 's-sub', cleaned.join('\n'));
             sub.style.whiteSpace = 'pre-line';
             node.appendChild(sub);
             if (!playable && !opens) { node.style.opacity = '0.55'; }
