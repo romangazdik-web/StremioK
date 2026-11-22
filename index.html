@@ -1523,6 +1523,18 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
  width:44px!important;height:44px!important;
 }
     </style>
+    <style id="nymind-cinema-v257-episode-images">
+/* Real <img> inside episode tile; Chrome 47 / Tizen 3.0 safe. */
+#app #screen-detail .series-panel .ep-thumb img.ep-still-image {
+ display:block!important;position:absolute!important;left:0!important;top:0!important;
+ width:100%!important;height:100%!important;max-width:none!important;
+ object-fit:cover!important;border:0!important;margin:0!important;padding:0!important;
+ opacity:1!important;visibility:visible!important;
+}
+#app #screen-detail .series-panel .ep-thumb.no-still {
+ background:linear-gradient(135deg,#25252b,#111114)!important;
+}
+    </style>
 </head>
 <body>
     <div id="nymind-boot" aria-label="Načítá se Nymind Cinema">
@@ -1627,7 +1639,7 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
     <script src="js/view-core.js?v=2.5.3"></script>
     <script src="js/view-home.js?v=2.4.8"></script>
     <script src="js/view-guide.js?v=2.4.3"></script>
-    <script src="js/view-detail.js?v=2.5.6"></script>
+    <script src="js/view-detail.js?v=2.5.7"></script>
     <script src="js/view-search.js?v=2.5.0"></script>
     <script src="js/view-settings.js?v=2.4.3"></script>
     <script src="js/view-discover.js?v=2.4.3"></script>
