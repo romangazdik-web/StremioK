@@ -7,7 +7,14 @@ var U = (function () {
     function el(tag, className, text) {
         var node = document.createElement(tag);
         if (className) { node.className = className; }
-        if (text !== undefined && text !== null) { node.textContent = text; }
+        if (text !== undefined && text !== null) {
+            /* Older Tizen lacks emoji glyphs: remove only unsupported pictograms
+               from film and episode titles, keeping ordinary Unicode letters. */
+            if (className && /(?:^|\\s)(?:card-title|detail-title|ep-title|hero-title|home-title|meta-title)(?:\\s|$)/.test(className)) {
+                text = String(text).replace(/[\\uD83C\\uD83D\\uD83E][\\uDC00-\\uDFFF]/g, '').replace(/[\\uFE0E\\uFE0F\\u200D]/g, '').replace(/\\s{2,}/g, ' ').replace(/\\s+$/, '');
+            }
+            node.textContent = text;
+        }
         return node;
     }
 
