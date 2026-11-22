@@ -599,7 +599,7 @@ var ViewParts = {};
         h.appendChild(U.el('div', 'header-title', title || ''));
         h.appendChild(U.el('div', 'spacer'));
         var brand = U.el('div', 'brand');
-        brand.innerHTML = '<span class="nf-mark" aria-hidden="true"><svg viewBox="0 0 48 48" width="49" height="49" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="11" fill="#E50914"/><path d="M13 34V14L35 34V14" fill="none" stroke="#FFFFFF" stroke-width="5.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="nf-brand-text"><span class="nf-wordmark">NYMIND</span><span class="nf-tagline">CINEMA</span></span>';
+        brand.innerHTML = '<span class="nf-mark" aria-hidden="true"><svg viewBox="0 0 80 80" width="49" height="49" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="74" height="74" rx="18" fill="#151519" stroke="#e50914" stroke-width="3"/><path d="M23 54V25L42 47V25" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M51 27L65 40L51 53Z" fill="#e50914"/></svg></span><span class="nf-brand-text"><span class="nf-wordmark">NYMIND</span><span class="nf-tagline">CINEMA</span></span>';
         h.appendChild(brand);
         return h;
     }
@@ -719,7 +719,7 @@ var ViewParts = {};
         head.appendChild(strip);
         setTimeout(function () { showActiveItem(strip); }, 0);   // (once it's on screen)
         var brand = U.el('div', 'brand');
-        brand.innerHTML = '<span class="nf-mark" aria-hidden="true"><svg viewBox="0 0 48 48" width="49" height="49" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="11" fill="#E50914"/><path d="M13 34V14L35 34V14" fill="none" stroke="#FFFFFF" stroke-width="5.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="nf-brand-text"><span class="nf-wordmark">NYMIND</span><span class="nf-tagline">CINEMA</span></span>';
+        brand.innerHTML = '<span class="nf-mark" aria-hidden="true"><svg viewBox="0 0 80 80" width="49" height="49" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="74" height="74" rx="18" fill="#151519" stroke="#e50914" stroke-width="3"/><path d="M23 54V25L42 47V25" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M51 27L65 40L51 53Z" fill="#e50914"/></svg></span><span class="nf-brand-text"><span class="nf-wordmark">NYMIND</span><span class="nf-tagline">CINEMA</span></span>';
         if (Player.isPrivate && Player.isPrivate()) { brand.className += ' private'; }   // (private viewing on: drawn as an outline)
         head.appendChild(brand);
         return head;
