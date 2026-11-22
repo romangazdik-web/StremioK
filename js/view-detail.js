@@ -1293,39 +1293,55 @@
             var hide = spoilerFor(v);   // (Hide spoilers: an episode not watched yet)
             var thumb = U.el('div', 'ep-thumb' + (hide ? ' spoiler' : ''));
             // through the poster queue: a season's thumbnails don't all download at once
-            var ref = { num: v.episode, thumb: thumb, hasThumb: false, hideOv: hide === 'all', still: null };
-            /* Artwork fallback sequence:
-               1. Addon's actual episode still, 2. keyless Cinemeta still by
-               IMDb/season/episode, 3. TMDB enrichment when configured,
-               4. series-wide backdrop/poster so the tile is never empty.
-               Never use the show image as if it were an episode screenshot. */
-            var candidates = [], fallbackIdx = 0, fallbackSeen = {};
-            function addImage(url, role) {
-                var img = U.cardImage(url, role || 'still');
-                if (img && !fallbackSeen[img]) { fallbackSeen[img] = true; candidates.push(img); }
+            /* Use a real IMG element rather than a CSS background: old Samsung
+               Chromium 47 sometimes paints background-images inside flex cards as
+               empty even when the image request succeeds. Queueing stays throttled. */
+            var shot = U.el('img', 'ep-still-image');
+            shot.setAttribute('alt', '');
+            shot.setAttribute('aria-hidden', 'true');
+            thumb.appendChild(shot);
+            var ref = { num:v.episode, thumb:thumb, shot:shot, hideOv:hide==='all',
+                        still:null, loadStill:null };
+            var sources=[], seen={}, at=0, generation=0;
+            function addCandidate(url, role) {
+                var normalized = U.cardImage(url, role || 'still');
+                if (normalized && !seen[normalized]) {
+                    seen[normalized]=true;sources.push(normalized);
+                }
             }
-            addImage(v.thumbnail, 'still');
-            var showImdb = /^tt[0-9]+$/.test(meta.id || '') ? meta.id : (/^tt[0-9]+$/.test(_d.id || '') ? _d.id : '');
-            var seasonNum = v.season === undefined ? 1 : Number(v.season);
+            addCandidate(v.thumbnail, 'still');
+            var showImdb = /^tt[0-9]+$/.test(meta.id || '') ? meta.id :
+                           (/^tt[0-9]+$/.test(_d.id || '') ? _d.id : '');
+            var seasonNum = v.season===undefined ? 1 : Number(v.season);
             var episodeNum = Number(v.episode);
-            if (showImdb && isFinite(seasonNum) && seasonNum >= 0 &&
-                isFinite(episodeNum) && episodeNum > 0) {
-                addImage('https://episodes.metahub.space/' + showImdb + '/' +
-                    seasonNum + '/' + episodeNum + '/w300.jpg', 'still');
+            if (showImdb && isFinite(seasonNum) && seasonNum>=0 &&
+                isFinite(episodeNum) && episodeNum>0) {
+                addCandidate('https://episodes.metahub.space/' + showImdb + '/' +
+                             seasonNum + '/' + episodeNum + '/w300.jpg','still');
             }
-            addImage(meta.background, 'landscape');
-            addImage(meta.poster, 'poster');
-            ref.tryNextImage = function () {
-                if (fallbackIdx >= candidates.length) {
-                    thumb.__bgFail = null;
+            addCandidate(meta.background, 'landscape');
+            addCandidate(meta.poster, 'poster');
+            function nextShot() {
+                if (at >= sources.length) {
+                    shot.onerror=null;
                     thumb.className += ' no-still';
                     return;
                 }
-                var nextUrl = candidates[fallbackIdx++];
-                thumb.__bgFail = ref.tryNextImage;
-                U.deferBg(thumb, nextUrl, fallbackIdx === 1);
+                var url=sources[at++];
+                shot.onerror=nextShot;
+                /* Native <img> works in Tizen 3.0 and avoids CSS background paints.
+                   U.deferImage limits parallel loads and handles cached failures. */
+                U.deferImage(shot,url,at===1);
+            }
+            ref.loadStill=function(url) {
+                var normalized=U.cardImage(url,'still');
+                if (!normalized) { return; }
+                if (!seen[normalized]) { seen[normalized]=true;sources.splice(at,0,normalized); }
+                if (shot.getAttribute('src') && shot.complete && shot.naturalWidth>0) {
+                    at=0;sources=[normalized];shot.onerror=nextShot;nextShot();
+                } else if (at>=sources.length) { nextShot(); }
             };
-            ref.tryNextImage();
+            nextShot();
             var pr = !watched && Player.progressFor(_d.collection ? 'movie' : 'series', v.id);
             if (pr && pr.duration && pr.position > 0) {   // partly watched: progress stripe
                 var stripe = U.el('div', 'ep-prog');
@@ -1386,16 +1402,7 @@
                     epRefs.forEach(function (r) {
                         var ep = map[r.num];
                         if (!ep) { return; }
-                        if (ep.still) {
-                            r.still = ep.still;
-                            /* Prefer the real per-episode TMDB still over a
-                               generic show backdrop after metadata arrives. */
-                            var realStill = U.cardImage(ep.still, 'still');
-                            if (realStill) {
-                                r.thumb.__bgFail = function () { r.thumb.__bgFail = r.tryNextImage; r.tryNextImage(); };
-                                U.deferBg(r.thumb, realStill, true);
-                            }
-                        }
+                        if (ep.still) { r.still=ep.still; r.loadStill(ep.still); }
                         // Fill the rating only if OMDb didn't provide one for this episode
                         // (OMDb's dataset is missing IMDb ratings for some episodes).
                         if (ep.rating && !r.rating.textContent) { r.rating.textContent = '★ ' + (Math.round(ep.rating * 10) / 10) + ' TMDb'; }
