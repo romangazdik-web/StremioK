@@ -83,6 +83,40 @@ var Focus = (function () {
             if (list.length) { setFocus(list[0]); }
             return;
         }
+        /* Nymind Cinema: deterministic vertical navigation inside series details.
+           Prevent geometry-based focus from jumping across the content gap into
+           the left sidebar instead of entering the season/episode browser. */
+        if ((dir === 'DOWN' || dir === 'UP') && _scope.id === 'screen-detail') {
+            var seriesPanel = _scope.querySelector('.series-panel');
+            if (seriesPanel) {
+                var seasonBar = seriesPanel.querySelector('.season-bar');
+                var epList = seriesPanel.querySelector('.list-scroll');
+                var eps = epList ? epList.querySelectorAll('.ep.focusable') : [];
+                var seasons = seasonBar ? seasonBar.querySelectorAll('.pill.focusable') : [];
+                var inBody = !!(_current.closest && _current.closest('.detail-body'));
+                var inSeason = !!(seasonBar && seasonBar.contains(_current));
+                var inEp = !!(epList && epList.contains(_current));
+                if (dir === 'DOWN' && inBody && seasons.length) {
+                    setFocus(seasonBar.querySelector('.season-sel') || seasons[0]); return;
+                }
+                if (dir === 'DOWN' && inSeason && eps.length) {
+                    setFocus(eps[0]); return;
+                }
+                if (dir === 'UP' && inEp && eps.length && eps[0] === _current && seasons.length) {
+                    setFocus(seasonBar.querySelector('.season-sel') || seasons[0]); return;
+                }
+                if (inEp && eps.length) {
+                    for (var ei=0;ei<eps.length;ei++) {
+                        if(eps[ei]===_current) {
+                            if(dir==='DOWN' && ei+1<eps.length){setFocus(eps[ei+1]);return;}
+                            if(dir==='UP' && ei>0){setFocus(eps[ei-1]);return;}
+                            if(dir==='DOWN' && ei===eps.length-1){return;}
+                            break;
+                        }
+                    }
+                }
+            }
+        }
         var best = null;
         // An item that knows its neighbors (a Discover card: by its place in the grid) says
         // where a move goes, without measuring anything: a node, false (stay), or nothing
