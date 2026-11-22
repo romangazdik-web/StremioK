@@ -86,7 +86,7 @@ var Focus = (function () {
         /* Nymind Cinema: deterministic vertical navigation inside series details.
            Prevent geometry-based focus from jumping across the content gap into
            the left sidebar instead of entering the season/episode browser. */
-        if ((dir === 'DOWN' || dir === 'UP') && _scope.id === 'screen-detail') {
+        if ((dir === 'DOWN' || dir === 'UP' || dir === 'LEFT' || dir === 'RIGHT') && _scope.id === 'screen-detail') {
             var seriesPanel = _scope.querySelector('.series-panel');
             if (seriesPanel) {
                 var seasonBar = seriesPanel.querySelector('.season-bar');
@@ -102,17 +102,21 @@ var Focus = (function () {
                 if (dir === 'DOWN' && inSeason && eps.length) {
                     setFocus(eps[0]); return;
                 }
-                if (dir === 'UP' && inEp && eps.length && eps[0] === _current && seasons.length) {
-                    setFocus(seasonBar.querySelector('.season-sel') || seasons[0]); return;
-                }
                 if (inEp && eps.length) {
-                    for (var ei=0;ei<eps.length;ei++) {
-                        if(eps[ei]===_current) {
-                            if(dir==='DOWN' && ei+1<eps.length){setFocus(eps[ei+1]);return;}
-                            if(dir==='UP' && ei>0){setFocus(eps[ei-1]);return;}
-                            if(dir==='DOWN' && ei===eps.length-1){return;}
-                            break;
+                    for (var ei=0; ei<eps.length; ei++) {
+                        if (eps[ei] !== _current) { continue; }
+                        var next=-1;
+                        if (dir === 'DOWN') { next=ei+2; }
+                        if (dir === 'UP') { next=ei-2; }
+                        if (dir === 'RIGHT' && ei%2===0) { next=ei+1; }
+                        if (dir === 'LEFT' && ei%2===1) { next=ei-1; }
+                        if (next>=0 && next<eps.length) { setFocus(eps[next]); return; }
+                        if (dir === 'UP' && next<0 && seasons.length) {
+                            setFocus(seasonBar.querySelector('.season-sel') || seasons[0]); return;
                         }
+                        /* At the edge, stay in the episode grid instead of jumping
+                           into the sidebar through spatial geometry. */
+                        return;
                     }
                 }
             }
