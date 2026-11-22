@@ -1,0 +1,206 @@
+/* NYMIND CINEMA 2.5.1 · Bingie-like collapsible icon navigation
+   Tizen 3.0 / Chromium 47 / 1920x1080.
+   One narrow icon rail; focus opens a dark overlay, without moving page content.
+   Pure CSS on existing DOM; NO player, sources, subtitle or video selectors. */
+
+/* Narrow rail by default. Expanded panel is an overlay only on focus. */
+#app .screen > .header.home-header {
+    width: 80px !important;
+    height: 100% !important;
+    padding: 19px 6px 15px !important;
+    background: rgba(12,12,15,.94) !important;
+    border-right: 1px solid rgba(255,255,255,.09) !important;
+    box-shadow: none !important;
+    z-index: 30 !important;
+    overflow: hidden !important;
+}
+#app .screen > .header.home-header.nf-bingie-open {
+    width: 302px !important;
+    padding: 19px 8px 15px !important;
+    background: linear-gradient(90deg,rgba(8,8,10,.99),rgba(15,15,19,.99)) !important;
+    border-right: 1px solid rgba(255,255,255,.16) !important;
+    box-shadow: 16px 0 32px rgba(0,0,0,.58) !important;
+}
+/* Use the existing N logo as the collapsed Bingie-style brand icon. */
+#app .screen > .header.home-header .brand {
+    display: -webkit-flex !important;
+    display: flex !important;
+    width: 67px !important;
+    min-height: 62px !important;
+    height: 62px !important;
+    padding: 0 !important;
+    margin: 0 0 19px 0 !important;
+    -webkit-justify-content: center !important;
+    justify-content: center !important;
+    -webkit-align-items: center !important;
+    align-items: center !important;
+    overflow: hidden !important;
+}
+#app .screen > .header.home-header .brand .nf-mark {
+    margin: 0 !important;
+    -webkit-flex: 0 0 44px !important;
+    flex: 0 0 44px !important;
+    width: 44px !important;
+    height: 44px !important;
+}
+#app .screen > .header.home-header .brand .nf-mark svg {
+    width: 44px !important;
+    height: 44px !important;
+}
+#app .screen > .header.home-header .brand .nf-brand-text {
+    display: none !important;
+}
+#app .screen > .header.home-header.nf-bingie-open .brand {
+    width: 279px !important;
+    padding: 0 11px !important;
+    -webkit-justify-content: flex-start !important;
+    justify-content: flex-start !important;
+    margin-bottom: 19px !important;
+}
+#app .screen > .header.home-header.nf-bingie-open .brand .nf-mark {
+    margin-right: 12px !important;
+}
+#app .screen > .header.home-header.nf-bingie-open .brand .nf-brand-text {
+    display: -webkit-flex !important;
+    display: flex !important;
+}
+/* All actual items stay focusable, even when their captions are hidden. */
+#app .screen > .header.home-header .menu-scroll.nf-sidebar-list {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 0 12px !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+}
+#app .screen > .header.home-header .tabbar-inline {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+#app .screen > .header.home-header .tab-pill,
+#app .screen > .header.home-header .hchip {
+    width: 100% !important;
+    min-height: 57px !important;
+    height: 57px !important;
+    padding: 0 !important;
+    margin: 0 0 2px !important;
+    border: 2px solid transparent !important;
+    border-left: 3px solid transparent !important;
+    border-radius: 3px !important;
+    -webkit-justify-content: center !important;
+    justify-content: center !important;
+    -webkit-align-items: center !important;
+    align-items: center !important;
+}
+#app .screen > .header.home-header .tab-pill .tab-ic,
+#app .screen > .header.home-header .hchip .tab-ic {
+    width: 39px !important;
+    -webkit-flex: 0 0 39px !important;
+    flex: 0 0 39px !important;
+    margin: 0 !important;
+    font-size: 25px !important;
+    line-height: 32px !important;
+    text-align: center !important;
+}
+#app .screen > .header.home-header .nf-nav-label {
+    display: none !important;
+}
+#app .screen > .header.home-header.nf-bingie-open .tab-pill,
+#app .screen > .header.home-header.nf-bingie-open .hchip {
+    padding: 0 11px !important;
+    -webkit-justify-content: flex-start !important;
+    justify-content: flex-start !important;
+}
+#app .screen > .header.home-header.nf-bingie-open .tab-pill .tab-ic,
+#app .screen > .header.home-header.nf-bingie-open .hchip .tab-ic {
+    margin-right: 12px !important;
+}
+#app .screen > .header.home-header.nf-bingie-open .nf-nav-label {
+    display: inline-block !important;
+    color: inherit;
+    font-size: 20px;
+    line-height: 28px;
+}
+#app .screen > .header.home-header .tab-pill.active,
+#app .screen > .header.home-header .hchip.active {
+    border-left: 3px solid #e50914 !important;
+    background: rgba(229,9,20,.15) !important;
+}
+#app .screen > .header.home-header .tab-pill.focusable.focused,
+#app .screen > .header.home-header .hchip.focusable.focused {
+    border: 2px solid #fff !important;
+    border-left: 3px solid #e50914 !important;
+    background: rgba(255,255,255,.16) !important;
+    color: #fff !important;
+    box-shadow: none !important;
+}
+/* Film/TV content stays fixed in place while the menu expands over its left edge. */
+#app #screen-home .home-info.hero,
+#app #screen-home .home-info.hero.on {
+    left: 142px !important;
+    width: 850px !important;
+}
+#app #screen-home .home-info:not(.hero) {
+    left: 142px !important;
+    right: 48px !important;
+}
+#app #screen-home .rows {
+    left: 80px !important;
+    right: 0 !important;
+}
+#app #screen-home .row-title {
+    margin-left: 54px !important;
+}
+#app #screen-home .row-scroller,
+#app #screen-home .card-grid {
+    padding-left: 54px !important;
+    padding-right: 28px !important;
+}
+#app #screen-home .row-empty {
+    margin-left: 54px !important;
+}
+
+/* Search has the full width when the menu is collapsed. */
+#app #screen-search .search-wrap {
+    left: 138px !important;
+    right: 55px !important;
+}
+#app #screen-discover .discover-bar {
+    left: 137px !important;
+    right: 45px !important;
+}
+#app #screen-discover .home-info {
+    left: 136px !important;
+    right: 50px !important;
+}
+#app #screen-discover .discover-grid {
+    left: 80px !important;
+    right: 0 !important;
+    padding-left: 54px !important;
+}
+#app #screen-settings .settings-wrap {
+    left: 137px !important;
+    right: 57px !important;
+}
+
+/* Film detail shares the same overlay rail. The list always remains scrollable. */
+#app #screen-detail .detail-body {
+    left: 138px !important;
+    right: 55px !important;
+}
+#app #screen-detail .list-panel,
+#app #screen-detail .more-panel {
+    left: 138px !important;
+    right: 55px !important;
+}
+#app #screen-discover::before,
+#app #screen-settings::before {
+    left: 138px !important;
+}
+
+/* No expand/collapse animations: avoids layout lag on Samsung Tizen 3.0. */
+#app .screen > .header.home-header,
+#app .screen > .header.home-header .nf-nav-label {
+    -webkit-transition: none !important;
+    transition: none !important;
+}
