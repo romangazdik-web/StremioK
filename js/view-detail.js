@@ -1293,14 +1293,39 @@
             var hide = spoilerFor(v);   // (Hide spoilers: an episode not watched yet)
             var thumb = U.el('div', 'ep-thumb' + (hide ? ' spoiler' : ''));
             // through the poster queue: a season's thumbnails don't all download at once
-            var ref = { num: v.episode, thumb: thumb, hasThumb: !!v.thumbnail, hideOv: hide === 'all', still: null };
-            // (the addon's picture doesn't load, now or earlier: TMDB's, with a key, once known; see below)
-            thumb.__bgFail = function () {
-                thumb.__bgFail = null;   // (once: TMDB's failing too is the end of it)
-                ref.hasThumb = false;
-                if (ref.still) { ref.hasThumb = true; U.deferBg(thumb, U.cardImage(ref.still, 'still')); }
+            var ref = { num: v.episode, thumb: thumb, hasThumb: false, hideOv: hide === 'all', still: null };
+            /* Artwork fallback sequence:
+               1. Addon's actual episode still, 2. keyless Cinemeta still by
+               IMDb/season/episode, 3. TMDB enrichment when configured,
+               4. series-wide backdrop/poster so the tile is never empty.
+               Never use the show image as if it were an episode screenshot. */
+            var candidates = [], fallbackIdx = 0, fallbackSeen = {};
+            function addImage(url, role) {
+                var img = U.cardImage(url, role || 'still');
+                if (img && !fallbackSeen[img]) { fallbackSeen[img] = true; candidates.push(img); }
+            }
+            addImage(v.thumbnail, 'still');
+            var showImdb = /^tt[0-9]+$/.test(meta.id || '') ? meta.id : (/^tt[0-9]+$/.test(_d.id || '') ? _d.id : '');
+            var seasonNum = v.season === undefined ? 1 : Number(v.season);
+            var episodeNum = Number(v.episode);
+            if (showImdb && isFinite(seasonNum) && seasonNum >= 0 &&
+                isFinite(episodeNum) && episodeNum > 0) {
+                addImage('https://episodes.metahub.space/' + showImdb + '/' +
+                    seasonNum + '/' + episodeNum + '/w300.jpg', 'still');
+            }
+            addImage(meta.background, 'landscape');
+            addImage(meta.poster, 'poster');
+            ref.tryNextImage = function () {
+                if (fallbackIdx >= candidates.length) {
+                    thumb.__bgFail = null;
+                    thumb.className += ' no-still';
+                    return;
+                }
+                var nextUrl = candidates[fallbackIdx++];
+                thumb.__bgFail = ref.tryNextImage;
+                U.deferBg(thumb, nextUrl, fallbackIdx === 1);
             };
-            if (v.thumbnail) { U.deferBg(thumb, U.cardImage(v.thumbnail, 'still')); }
+            ref.tryNextImage();
             var pr = !watched && Player.progressFor(_d.collection ? 'movie' : 'series', v.id);
             if (pr && pr.duration && pr.position > 0) {   // partly watched: progress stripe
                 var stripe = U.el('div', 'ep-prog');
@@ -1361,8 +1386,16 @@
                     epRefs.forEach(function (r) {
                         var ep = map[r.num];
                         if (!ep) { return; }
-                        if (ep.still) { r.still = ep.still; }   // (kept: for the addon's picture, should it fail)
-                        if (ep.still && !r.hasThumb) { r.hasThumb = true; U.deferBg(r.thumb, U.cardImage(ep.still, 'still')); }
+                        if (ep.still) {
+                            r.still = ep.still;
+                            /* Prefer the real per-episode TMDB still over a
+                               generic show backdrop after metadata arrives. */
+                            var realStill = U.cardImage(ep.still, 'still');
+                            if (realStill) {
+                                r.thumb.__bgFail = function () { r.thumb.__bgFail = r.tryNextImage; r.tryNextImage(); };
+                                U.deferBg(r.thumb, realStill, true);
+                            }
+                        }
                         // Fill the rating only if OMDb didn't provide one for this episode
                         // (OMDb's dataset is missing IMDb ratings for some episodes).
                         if (ep.rating && !r.rating.textContent) { r.rating.textContent = '★ ' + (Math.round(ep.rating * 10) / 10) + ' TMDb'; }
