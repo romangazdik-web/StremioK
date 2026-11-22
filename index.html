@@ -349,7 +349,7 @@ body.zoom-140 #screen-home .nf-action { height: 46px; line-height: 39px; font-si
 
 /* Visible version marker: assures the TV received new embedded CSS. */
 body #screen-home .brand::after {
- content: " CINEMA 2.4.8";
+ content: " CINEMA 2.4.9";
  display: inline-block;
  margin-left: 12px;
  color: #f4f4f4;
@@ -490,6 +490,317 @@ body.zoom-130 #screen-home .home-info.hero { top: 91px; height: 252px; }
 body.zoom-130 #screen-home .home-info.hero + .rows { top: 387px; }
 body.zoom-140 #screen-home .home-info.hero { top: 84px; height: 211px; }
 body.zoom-140 #screen-home .home-info.hero + .rows { top: 347px; }
+
+    </style>
+    <!-- Nymind Cinema 2.4.9 detail: inline avoids stale CSS with TizenBrew CDN. -->
+    <style id="nymind-cinema-detail-v249">
+
+/* NYMIND CINEMA 2.4.9 | NETFLIX-STYLE DETAIL
+   Presentation-only. Scoped to #screen-detail; intentionally leaves
+   video, AVPlay, subtitles, stream ranking, navigation and storage untouched.
+   Tizen 3/Chromium 47: no backdrop-filter, custom fonts or animation loops. */
+
+body #screen-detail,
+body.bg-light #screen-detail,
+body.look-modern #screen-detail {
+    background: #080808 !important;
+    color: #f7f7f7;
+    font-family: Arial, 'Tizen Sans', sans-serif;
+}
+
+/* Hero image visible on the right, with dark layers underneath text and lists. */
+body #screen-detail .detail-hero,
+body #screen-detail .detail-hero.hero-full {
+    height: 100%;
+    background-size: cover;
+    background-position: right top;
+    background-color: #080808;
+    opacity: 1;
+}
+body #screen-detail .detail-hero .shade,
+body #screen-detail .detail-hero.hero-full .shade {
+    background:
+      linear-gradient(90deg, #080808 3%, rgba(8,8,8,.98) 23%,
+          rgba(8,8,8,.90) 43%, rgba(8,8,8,.54) 67%, rgba(8,8,8,.20) 100%),
+      linear-gradient(0deg, #080808 3%, rgba(8,8,8,.97) 34%,
+          rgba(8,8,8,.70) 60%, rgba(8,8,8,.08) 87%),
+      linear-gradient(180deg, rgba(8,8,8,.76), rgba(8,8,8,0) 23%);
+}
+
+/* Navigation matches Home; change only visual order, never DOM focus order. */
+body #screen-detail .home-header,
+body #screen-detail .header {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row-reverse;
+    flex-direction: row-reverse;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-justify-content: flex-end;
+    justify-content: flex-end;
+    height: 94px;
+    padding: 18px 76px 3px;
+    background: linear-gradient(180deg,rgba(0,0,0,.78),rgba(0,0,0,0));
+    position: relative;
+    z-index: 6;
+}
+body #screen-detail .header::before { display: none !important; }
+body #screen-detail .brand {
+    color: #e50914 !important;
+    font-size: 36px;
+    line-height: 1;
+    letter-spacing: -1px;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin: 0 32px 0 0;
+    flex-shrink: 0;
+    text-shadow: 0 2px 8px rgba(0,0,0,.5);
+}
+body #screen-detail .brand .dot { color: #e50914 !important; }
+body #screen-detail .brand::after {
+    content: " DETAIL 2.4.9";
+    display: inline-block;
+    color: #dddddd;
+    font-size: 12px;
+    font-weight: normal;
+    letter-spacing: 1.5px;
+    vertical-align: middle;
+    margin-left: 11px;
+}
+body #screen-detail .header .menu-scroll {
+    flex: 1 1 auto;
+    -webkit-flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    background: transparent;
+}
+body #screen-detail .header .tabbar-inline {
+    background: transparent !important;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+}
+body #screen-detail .header .tab-pill,
+body #screen-detail .header .hchip {
+    color: #eeeeee;
+    background: transparent !important;
+    border: 2px solid transparent;
+    border-radius: 5px;
+    font-size: 20px;
+    line-height: 27px;
+    font-weight: normal;
+    padding: 7px 11px;
+    margin-right: 3px;
+    white-space: nowrap;
+    box-shadow: none;
+}
+body #screen-detail .header .menu-scroll > .hchip { margin-left: 7px; }
+body #screen-detail .header .tab-ic { display: none; }
+body #screen-detail .header .tab-pill.active,
+body #screen-detail .header .hchip.active {
+    color: #fff;
+    border-bottom: 3px solid #e50914;
+    background: rgba(255,255,255,.10) !important;
+}
+body #screen-detail .header .tab-pill.focusable.focused,
+body #screen-detail .header .hchip.focusable.focused {
+    color: #fff;
+    background: #bd0812 !important;
+    border-color: #fff;
+}
+
+/* Film/episode headline. Let original fitPanel() determine list position. */
+body #screen-detail .detail-body {
+    top: 115px;
+    left: 78px;
+    right: 78px;
+    z-index: 2;
+}
+body #screen-detail .detail-title {
+    font-size: 54px;
+    line-height: 1.06;
+    font-weight: bold;
+    color: #fff;
+    letter-spacing: -1px;
+    margin-bottom: 10px;
+    max-width: 950px;
+    text-shadow: 0 2px 9px rgba(0,0,0,.7);
+}
+body #screen-detail .detail-title.has-logo {
+    height: 92px;
+    margin-bottom: 8px;
+}
+body #screen-detail .detail-logo {
+    max-width: 600px;
+    max-height: 92px;
+}
+body #screen-detail .detail-title.logo-failed { line-height: 92px; }
+body #screen-detail .detail-meta {
+    font-size: 20px;
+    line-height: 27px;
+    color: #e2e2e2;
+    max-width: 1260px;
+    margin-bottom: 9px;
+    text-shadow: 0 2px 7px rgba(0,0,0,.55);
+}
+body #screen-detail .detail-ratings {
+    color: #eacb7d;
+    font-size: 18px;
+    line-height: 22px;
+    height: 22px;
+    margin: -4px 0 9px;
+}
+body #screen-detail .detail-desc {
+    font-size: 21px;
+    line-height: 30px;
+    max-height: 100px;
+    max-width: 970px;
+    color: #f0f0f0;
+    margin-bottom: 16px;
+    overflow: hidden;
+    text-shadow: 0 2px 8px rgba(0,0,0,.62);
+}
+body #screen-detail .series-body {
+    top: 112px;
+    max-height: 349px;
+}
+body #screen-detail .series-body .detail-title.has-logo {
+    height: 76px;
+}
+body #screen-detail .series-body .detail-logo {
+    max-height: 76px;
+}
+body #screen-detail .series-body .detail-title.logo-failed {
+    line-height: 76px;
+}
+body #screen-detail .series-body .detail-desc {
+    max-height: 84px;
+    margin-bottom: 0;
+}
+body #screen-detail .series-body .detail-meta { margin-bottom: 8px; }
+
+/* Actions: Netflix rectangular controls; preserve scrolling and existing buttons. */
+body #screen-detail .btn-row {
+    margin: -4px -4px -4px -4px;
+    padding: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+body #screen-detail .series-body .series-actions,
+body #screen-detail .series-body .streams-actions {
+    margin: 8px -4px 0 -4px;
+    padding: 4px;
+}
+body #screen-detail .btn-row .pill,
+body #screen-detail .season-bar .pill {
+    border: 2px solid transparent;
+    border-radius: 6px;
+    padding: 10px 19px;
+    margin-right: 10px;
+    font-size: 19px;
+    line-height: 27px;
+    color: #fafafa;
+    background: rgba(58,58,58,.94);
+    box-shadow: none;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+body #screen-detail .btn-row .pill:first-child {
+    background: #f5f5f5;
+    color: #111;
+}
+body #screen-detail .btn-row .pill.focusable.focused,
+body #screen-detail .season-bar .pill.focusable.focused {
+    color: #101010;
+    background: #fff;
+    border-color: #e50914;
+    box-shadow: 0 0 0 2px rgba(255,255,255,.68);
+}
+body #screen-detail .season-bar .pill.season-sel {
+    background: #b20710;
+    color: #fff;
+}
+
+/* Film sources and series episodes: dark cards with strong readable focus. */
+body #screen-detail .list-panel {
+    left: 78px;
+    right: 78px;
+    bottom: 20px;
+}
+body #screen-detail .list-panel .list-scroll {
+    padding: 4px 5px;
+}
+body #screen-detail .streams-panel .stream,
+body #screen-detail .series-panel .ep,
+body #screen-detail .files-panel .stream {
+    display: block;
+    border: 2px solid rgba(220,220,220,.19);
+    border-left: 5px solid rgba(220,220,220,.30);
+    border-radius: 7px;
+    background: rgba(19,19,19,.94);
+    color: #f8f8f8;
+    padding: 13px 18px;
+    font-size: 20px;
+    line-height: 27px;
+    margin-bottom: 9px;
+    text-shadow: none;
+    box-shadow: none;
+}
+body #screen-detail .streams-panel .stream .s-sub,
+body #screen-detail .series-panel .ep .ep-sub,
+body #screen-detail .series-panel .ep .ep-ov {
+    color: #c6c6c6;
+    font-size: 16px;
+    line-height: 22px;
+    margin-top: 4px;
+}
+body #screen-detail .streams-panel .stream.focusable.focused,
+body #screen-detail .series-panel .ep.focusable.focused,
+body #screen-detail .files-panel .stream.focusable.focused {
+    background: #282828;
+    color: #fff;
+    border-color: #fff;
+    border-left-color: #e50914;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.13);
+}
+body #screen-detail .streams-panel .stream.focusable.focused .s-sub,
+body #screen-detail .series-panel .ep.focusable.focused .ep-sub,
+body #screen-detail .series-panel .ep.focusable.focused .ep-ov,
+body #screen-detail .series-panel .ep.focusable.focused .ep-rating {
+    color: #eeeeee;
+}
+body #screen-detail .streams-panel .stream-for,
+body #screen-detail .streams-panel .stream-group,
+body #screen-detail .streams-panel .streams-hidden {
+    color: #eeeeee;
+    text-shadow: 0 1px 4px #000;
+}
+body #screen-detail .streams-panel .stream-group {
+    margin: 12px 0 8px 5px;
+    font-size: 23px;
+    font-weight: bold;
+}
+body #screen-detail .streams-panel .stream-group::before {
+    content: "";
+    display: inline-block;
+    width: 5px;
+    height: 21px;
+    background: #e50914;
+    margin-right: 12px;
+    vertical-align: -2px;
+}
+body #screen-detail .streams-panel .stream-for {
+    font-size: 19px;
+    margin: 3px 0 10px 5px;
+}
+body #screen-detail .series-panel .ep-prog {
+    background: #e50914;
+}
+
+/* Smaller zoom modes keep the existing panel sizing and navigation. */
+body.zoom-120 #screen-detail .series-body { max-height: 315px; }
+body.zoom-130 #screen-detail .series-body { max-height: 280px; }
+body.zoom-140 #screen-detail .series-body { max-height: 249px; }
 
     </style>
 </head>
