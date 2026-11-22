@@ -80,9 +80,9 @@
         input.id = 'search-input';
         input.type = 'text';
         input.className = 'focusable';
-        input.placeholder = hasPeople() ? U.t('Search movies, series & people…') : U.t('Search movies & series…');
+        input.placeholder = hasPeople() ? 'Hledat filmy, seriály a osobnosti…' : 'Hledat filmy a seriály…';
         input.__onselect = function () { input.focus(); };
-        var go = U.el('div', 'pill focusable search-go', U.t('Search'));
+        var go = U.el('div', 'pill focusable search-go', 'Hledat');
         go.__onselect = function () { runSearch(input.value); };
 
         // Enter runs the search. The keyboard's Done moves focus to Search, so one OK
@@ -102,7 +102,7 @@
         bar.appendChild(input);
         bar.appendChild(go);
         // Search words from the phone: searched as soon as they arrive (Type it: the field)
-        var fromPhone = U.el('div', 'pill focusable search-go search-phone', U.t('▣  From phone'));
+        var fromPhone = U.el('div', 'pill focusable search-go search-phone', '▣  Z telefonu');
         fromPhone.__onselect = function () {
             V.phoneEntry({ title: U.t('Search from your phone'), what: 'search',
                 onText: function (t) { input.value = t; runSearch(t); },
