@@ -1400,8 +1400,85 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
 }
 
     </style>
+    <style id="nymind-cinema-v252-fixes">
+/* Tizen 3.0 safe: refined rail icons and tighter, readable episode cards. */
+#app .screen > .header.home-header .tab-ic svg.nf-nav-svg {
+ display:block!important;width:29px!important;height:29px!important;margin:0 auto!important;
+ stroke:currentColor!important;fill:none!important;opacity:.93;
+}
+#app .screen > .header.home-header.nf-bingie-open .tab-ic svg.nf-nav-svg {margin:0!important}
+#app .screen > .header.home-header .tab-pill.focused .tab-ic svg,
+#app .screen > .header.home-header .hchip.focused .tab-ic svg {opacity:1}
+#app #screen-detail .series-panel {right:110px!important}
+#app #screen-detail .series-panel .list-scroll {
+ padding:10px 12px 25px!important;overflow-y:auto!important;overflow-x:hidden!important;
+}
+#app #screen-detail .series-panel .ep.ep-row {
+ display:-webkit-flex!important;display:flex!important;
+ -webkit-align-items:flex-start!important;align-items:flex-start!important;
+ box-sizing:border-box!important;
+ width:94%!important;min-height:154px!important;height:154px!important;
+ padding:13px 17px!important;margin:0 0 12px!important;
+ border:2px solid rgba(255,255,255,.12)!important;border-left:4px solid transparent!important;
+ border-radius:13px!important;background:#1b1b1e!important;
+ overflow:hidden!important;white-space:normal!important;
+}
+#app #screen-detail .series-panel .ep.ep-row.focused {
+ border:2px solid #fff!important;border-left:5px solid #e50914!important;
+ background:#303034!important;box-shadow:0 0 0 2px rgba(229,9,20,.21)!important;
+}
+#app #screen-detail .series-panel .ep-thumb {
+ width:213px!important;height:120px!important;min-width:213px!important;
+ -webkit-flex:0 0 213px!important;flex:0 0 213px!important;
+ margin:0 19px 0 0!important;border-radius:8px!important;
+ background-color:#29292d!important;
+}
+#app #screen-detail .series-panel .ep-body {min-width:0!important;overflow:hidden!important;max-height:126px!important}
+#app #screen-detail .series-panel .ep-line {font-size:23px!important;line-height:29px!important}
+#app #screen-detail .series-panel .ep-title {
+ display:block!important;overflow:hidden!important;
+ text-overflow:ellipsis!important;white-space:nowrap!important;font-weight:600!important;
+}
+#app #screen-detail .series-panel .ep-ov {
+ color:#b7b7bd!important;font-size:17px!important;line-height:23px!important;
+ max-height:69px!important;overflow:hidden!important;margin-top:8px!important;
+}
+#app #screen-detail .series-panel .season-bar {padding-left:14px!important}
+#nymind-boot {
+ position:fixed;left:0;top:0;right:0;bottom:0;z-index:100000;
+ background:#08090d;color:#fff;
+ display:-webkit-flex;display:flex;
+ -webkit-flex-direction:column;flex-direction:column;
+ -webkit-align-items:center;align-items:center;
+ -webkit-justify-content:center;justify-content:center;
+ font-family:Arial,Helvetica,sans-serif;
+}
+#nymind-boot .boot-mark {width:106px;height:106px;margin-bottom:24px}
+#nymind-boot .boot-word {font-size:56px;font-weight:bold;letter-spacing:6px}
+#nymind-boot .boot-sub {font-size:24px;letter-spacing:12px;color:#e50914;margin-top:12px}
+#nymind-boot .boot-line {width:105px;height:3px;background:#e50914;margin-top:35px}
+    </style>
 </head>
 <body>
+    <div id="nymind-boot" aria-label="Načítá se Nymind Cinema">
+      <svg class="boot-mark" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="46" height="46" rx="11" fill="#e50914"/><path d="M13 34V14L35 34V14" fill="none" stroke="#fff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="boot-word">NYMIND</div><div class="boot-sub">CINEMA</div><div class="boot-line"></div>
+    </div>
+    <script>
+    (function(){
+      var boot=document.getElementById('nymind-boot'),count=0,stopped=false;
+      function done(){if(stopped)return;stopped=true;if(boot&&boot.parentNode)boot.parentNode.removeChild(boot);}
+      function check(){
+        if(stopped)return;
+        var home=document.getElementById('screen-home');
+        var hasContent=home&&home.children&&home.children.length>1;
+        if(hasContent){setTimeout(done,450);return;}
+        if(++count<70)setTimeout(check,100);else done();
+      }
+      setTimeout(check,100);
+      window.addEventListener('keydown',function(){if(count>20)done();},false);
+    })();
+    </script>
     <!-- CSS-applied sentinel (kept off-screen); app.js waits for its width before rendering -->
     <div id="css-sentinel" style="position:absolute;left:-9999px;top:0;height:1px;overflow:hidden;"></div>
     <!-- AVPlay video plane (Tizen). Sits behind the UI; shown only during playback. -->
@@ -1452,7 +1529,7 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
     <script src="js/profiles.js?v=2.4.3"></script>
     <script src="js/lang/languages.js?v=2.4.3"></script>
     <script src="js/i18n.js?v=2.4.3"></script>
-    <script src="js/util.js?v=2.4.3"></script>
+    <script src="js/util.js?v=2.5.2"></script>
     <script src="js/iptv.js?v=2.4.3"></script>
     <script src="js/xtvod.js?v=2.4.3"></script>
     <script src="js/stvod.js?v=2.4.3"></script>
@@ -1464,7 +1541,7 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
     <script src="js/stremio.js?v=2.4.3"></script>
     <script src="js/trakt.js?v=2.4.3"></script>
     <script src="js/keys.js?v=2.4.3"></script>
-    <script src="js/focus.js?v=2.4.3"></script>
+    <script src="js/focus.js?v=2.5.2"></script>
     <script src="js/tvapps.js?v=2.4.3"></script>
     <script src="js/player-core.js?v=2.4.3"></script>
     <script src="js/player-store.js?v=2.4.3"></script>
@@ -1482,7 +1559,7 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
     <script src="js/nuvio-import.js?v=2.4.3"></script>
     <script src="js/nuvio-sync.js?v=2.4.3"></script>
     <script src="js/stremio-sync.js?v=2.4.3"></script>
-    <script src="js/view-core.js?v=2.5.1"></script>
+    <script src="js/view-core.js?v=2.5.2"></script>
     <script src="js/view-home.js?v=2.4.8"></script>
     <script src="js/view-guide.js?v=2.4.3"></script>
     <script src="js/view-detail.js?v=2.4.3"></script>
