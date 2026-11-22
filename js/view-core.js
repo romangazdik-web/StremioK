@@ -621,14 +621,24 @@ var ViewParts = {};
         return names[key] || fallback;
     }
     function nfNavIcon(key) {
-        var icons = {
-            'continue': '▶', 'calendar': '▦', 'movie': '▣',
-            'series': '▤', 'library': '♡', 'tv': '◉',
-            'guide': '☷', 'radio': '♫', 'sport': '★',
-            'youtube': '▷', 'local': '▥', 'discover': '◇',
-            'search': '⌕', 'settings': '⚙'
+        /* SVG paths instead of unsupported Unicode pictograms on Chromium 47. */
+        var paths = {
+          'continue':'<path d="M9 6L20 12L9 18Z"/>',
+          'calendar':'<rect x="4" y="6" width="16" height="15" rx="2"/><path d="M8 3v6M16 3v6M4 11h16"/>',
+          'movie':'<rect x="3" y="5" width="18" height="15" rx="2"/><path d="M8 5v15M3 10h5M3 15h5M16 5v15M16 10h5M16 15h5"/>',
+          'series':'<rect x="4" y="4" width="16" height="17" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/>',
+          'library':'<path d="M12 20S4 15.4 4 10a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 5.4-8 10-8 10Z"/>',
+          'tv':'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 22h8M12 19v3"/>',
+          'guide':'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/>',
+          'radio':'<rect x="3" y="8" width="18" height="12" rx="3"/><path d="M6 8l12-5"/><circle cx="9" cy="14" r="2"/><path d="M15 12h3M15 16h3"/>',
+          'sport':'<circle cx="12" cy="12" r="9"/><path d="M9 9l3-2 3 2-1 4h-4Z"/>',
+          'youtube':'<rect x="3" y="6" width="18" height="12" rx="4"/><path d="M10 9l5 3-5 3Z"/>',
+          'local':'<path d="M3 7V5h7l2 2h9v12H3Z"/>',
+          'discover':'<circle cx="12" cy="12" r="9"/><path d="M16 8l-3 6-5 2 3-6Z"/>',
+          'search':'<circle cx="10" cy="10" r="6"/><path d="M15 15l6 6"/>',
+          'settings':'<circle cx="12" cy="12" r="3"/><path d="M10 3h4l1 3 3 1 3-1 2 4-3 2v3l2 2-3 4-3-1-2 2h-4l-1-3-3-1-3 1-2-4 3-2v-3l-2-2 3-4 3 1Z"/>'
         };
-        return icons[key] || '•';
+        return '<svg class="nf-nav-svg" viewBox="0 0 24 24" width="29" height="29" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[key]||'<circle cx="12" cy="12" r="7"/>')+'</svg>';
     }
     function buildTopMenu(active) {
         var head = U.el('div', 'header home-header');
@@ -681,7 +691,7 @@ var ViewParts = {};
             var name = nfNavLabel(key, label);
             p.setAttribute('data-nav-key', key);
             p.setAttribute('aria-label', name);
-            p.appendChild(U.el('span', 'tab-ic', nfNavIcon(key)));
+            var ico = U.el('span', 'tab-ic'); ico.innerHTML = nfNavIcon(key); p.appendChild(ico);
             p.appendChild(U.el('span', 'nf-nav-label', name));
             p.__onselect = open;
             sidebarKeys(p);
