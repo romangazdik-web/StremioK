@@ -1535,6 +1535,102 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
  background:linear-gradient(135deg,#25252b,#111114)!important;
 }
     </style>
+    <style id="nymind-cinema-v258-system">
+/* NYMIND CINEMA 2.5.8 | unified TV presentation.
+   Compatible with Tizen 3.0 Chromium 47; only UI views, never player/OSD. */
+#app #screen-detail .streams-panel .list-scroll {
+  display:-webkit-flex!important;display:flex!important;
+  -webkit-flex-wrap:wrap!important;flex-wrap:wrap!important;
+  -webkit-align-content:flex-start!important;align-content:flex-start!important;
+  box-sizing:border-box!important;overflow-y:auto!important;overflow-x:hidden!important;
+  padding:12px 12px 40px!important;
+}
+#app #screen-detail .streams-panel .stream-for,
+#app #screen-detail .streams-panel .stream-group,
+#app #screen-detail .streams-panel .streams-hidden,
+#app #screen-detail .streams-panel .stream-note,
+#app #screen-detail .streams-panel .no-sources {
+  display:block!important;width:100%!important;-webkit-flex:0 0 100%!important;flex:0 0 100%!important;
+  box-sizing:border-box!important;
+}
+#app #screen-detail .streams-panel .stream-group {
+  font-size:19px!important;font-weight:bold!important;letter-spacing:.7px!important;
+  color:#dddde3!important;padding:12px 8px 8px!important;margin:2px 0 5px!important;
+  border-bottom:1px solid rgba(255,255,255,.13)!important;
+}
+#app #screen-detail .streams-panel .stream.stream.focusable {
+  display:block!important;position:relative!important;box-sizing:border-box!important;
+  width:calc(50% - 15px)!important;max-width:none!important;min-width:0!important;
+  -webkit-flex:0 0 calc(50% - 15px)!important;flex:0 0 calc(50% - 15px)!important;
+  height:170px!important;min-height:170px!important;
+  margin:0 14px 14px 0!important;padding:17px 19px 14px!important;
+  background:rgba(26,27,32,.95)!important;
+  border:2px solid #3c3d43!important;border-left:4px solid #575862!important;
+  border-radius:11px!important;box-shadow:none!important;
+  overflow:hidden!important;white-space:normal!important;text-shadow:none!important;
+  color:#f5f5f7!important;line-height:1.27!important;
+}
+#app #screen-detail .streams-panel .stream.stream.focusable.focused {
+  background:#303137!important;border:3px solid #fff!important;
+  border-left:6px solid #e50914!important;box-shadow:0 0 0 2px rgba(229,9,20,.25)!important;
+  opacity:1!important;color:#fff!important;
+}
+#app #screen-detail .streams-panel .nf-stream-title {
+  display:block!important;box-sizing:border-box!important;
+  font-size:22px!important;font-weight:700!important;line-height:27px!important;
+  max-height:58px!important;overflow:hidden!important;
+  overflow-wrap:break-word!important;word-wrap:break-word!important;
+  color:#fff!important;margin-bottom:8px!important;
+}
+#app #screen-detail .streams-panel .stream .s-sub {
+  display:block!important;box-sizing:border-box!important;
+  max-height:74px!important;overflow:hidden!important;
+  white-space:pre-line!important;word-wrap:break-word!important;
+  font-size:16px!important;line-height:22px!important;
+  color:#bfc0c9!important;margin:0!important;
+}
+#app #screen-detail .streams-panel .stream.focused .s-sub {color:#f0f0f3!important}
+#app #screen-detail .streams-panel .rescan-row {
+  border-left-color:#e50914!important;
+}
+#app #screen-detail .streams-body .streams-actions .pill {
+  border-radius:7px!important;background:#28292e!important;
+  border:2px solid #4b4c54!important;color:#f0f0f4!important;
+  padding:11px 18px!important;margin-right:10px!important;
+  font-size:19px!important;
+}
+#app #screen-detail .streams-body .streams-actions .pill.focused {
+  background:#f7f7f9!important;color:#121215!important;
+  border-color:#e50914!important;
+}
+#app #screen-detail .detail-title {
+  font-size:47px!important;line-height:1.1!important;
+  color:#fff!important;text-shadow:0 2px 12px #000!important;
+}
+#app #screen-detail .detail-meta {color:#d1d1d5!important;font-size:19px!important;line-height:1.4!important}
+#app #screen-detail .detail-desc {color:#d3d3da!important;font-size:20px!important;line-height:1.4!important}
+#app #screen-search .search-results .card,
+#app #screen-discover .discover-grid .card {
+  border-radius:9px!important;background:#1e1e23!important;
+  border:2px solid rgba(255,255,255,.12)!important;box-shadow:none!important;
+}
+#app #screen-search .search-results .card.focused,
+#app #screen-discover .discover-grid .card.focused {
+  border-color:#fff!important;box-shadow:0 0 0 2px #e50914!important;
+}
+#app #screen-settings .settings-wrap .pill,
+#app #screen-settings .settings-wrap .addon-item,
+#app #screen-settings .settings-wrap .feed-name,
+#app #screen-settings .settings-wrap .feed-btn {
+  border-radius:8px!important;background:#202126!important;
+  border-color:#45454d!important;
+}
+#app #screen-settings .settings-wrap .focused {
+  border-color:#fff!important;background:#34353c!important;color:#fff!important;
+}
+#app #screen-detail .series-panel .ep.ep-row {background:#202126!important}
+#app #screen-detail .series-panel .ep.ep-row.focused {background:#34353a!important}
+    </style>
 </head>
 <body>
     <div id="nymind-boot" aria-label="Načítá se Nymind Cinema">
@@ -1618,7 +1714,7 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
     <script src="js/stremio.js?v=2.4.3"></script>
     <script src="js/trakt.js?v=2.4.3"></script>
     <script src="js/keys.js?v=2.4.3"></script>
-    <script src="js/focus.js?v=2.5.5"></script>
+    <script src="js/focus.js?v=2.5.8"></script>
     <script src="js/tvapps.js?v=2.4.3"></script>
     <script src="js/player-core.js?v=2.4.3"></script>
     <script src="js/player-store.js?v=2.4.3"></script>
@@ -1639,7 +1735,7 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
     <script src="js/view-core.js?v=2.5.3"></script>
     <script src="js/view-home.js?v=2.4.8"></script>
     <script src="js/view-guide.js?v=2.4.3"></script>
-    <script src="js/view-detail.js?v=2.5.7"></script>
+    <script src="js/view-detail.js?v=2.5.8"></script>
     <script src="js/view-search.js?v=2.5.0"></script>
     <script src="js/view-settings.js?v=2.4.3"></script>
     <script src="js/view-discover.js?v=2.4.3"></script>
