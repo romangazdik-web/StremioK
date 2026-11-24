@@ -1030,7 +1030,7 @@
             while ((m = re.exec(t || '')) !== null) { if (+m[1] > max) { max = +m[1]; } }
             return max;
         }, function () { return 0; });
-        var info = U.getJSON(YTPlay.infoUrl(youtube), 22000, 524288, null, true).then(function (r) {
+        var info = U.getJSON(YTPlay.infoUrl(youtube), 22000, 524288, null, null, null, true).then(function (r) {
             return r || null;
         }, function () { return null; });
         Promise.all([master, info]).then(function (both) {
