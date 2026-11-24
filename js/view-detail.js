@@ -695,7 +695,7 @@
         c.appendChild(cap);
         c.__onselect = function () {
             if (!Stremio.hasTmdb || !Stremio.hasTmdb() || !Stremio.tmdbPeople) {
-                App.openPerson('wiki:' + encodeURIComponent(name), name); return;
+                App.openPerson('wiki:' + encodeURIComponent(name), name, (c.querySelector('img.poster') || {}).src || ''); return;
             }
             // Name-only addon credits should open the person's profile as well.
             var wanted = name.toLowerCase().replace(/\s+/g, ' ').trim();
