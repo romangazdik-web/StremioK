@@ -460,27 +460,34 @@
             });
             return panel;
         }
-        var metadata = /^tt\d+$/.test(page.id || '') ?
-            Stremio.tmdbTitleExtras(page.type, page.id, pageCancel()).then(function (found) {
-                if (found && found.cast && found.cast.length) { return found; }
-                return Stremio.tmdbTitleExtrasByName(page.type, page.meta.name || page.meta.title, page.meta.year || page.meta.releaseInfo, pageCancel());
-            }) : Stremio.tmdbTitleExtrasByName(page.type, page.meta.name || page.meta.title, page.meta.year || page.meta.releaseInfo, pageCancel());
+        var metadata = Stremio.tmdbTitleExtrasForMeta(page.type, page.id, page.meta, pageCancel());
         metadata.then(function (x) {
             if (_d !== page || _d.mode !== 'more') { return; }
             U.clear(rows);
-            if (x && x.cast.length) {
-                rows.appendChild(U.el('div', 'nf-cast-hint', 'Vyber herce a stiskni OK: fotografie, životopis a filmografie z TMDB.'));
-                rows.appendChild(buildRow(U.t('Cast & more'), x.cast.map(personCard)));
+            if (x && x.cast && x.cast.length) {
+                rows.appendChild(U.el('div', 'nf-cast-hint', 'HERCI A TVŮRCI   ·   OK = profil, fotografie a filmografie   ·   ↓ = další obsah'));
+                rows.appendChild(buildRow('Herci a tvůrci', x.cast.map(personCard)));
             }
-            var own = !(x && x.cast.length) && theirs();   // (no people from TMDB: the addon's)
-            if (x && x.collection) { rows.appendChild(buildRow(x.collection.name, x.collection.parts.map(tmdbCard))); }
-            if (x && x.similar.length) { rows.appendChild(buildRow(U.t('More like this'), x.similar.map(tmdbCard))); }
-            if (!rows.firstChild && !own) { rows.appendChild(U.el('div', 'row-empty', U.t('TMDB has nothing more for this title.'))); }
+            var own = !(x && x.cast && x.cast.length) && theirs();
+            if (x && x.collection && x.collection.parts && x.collection.parts.length) {
+                rows.appendChild(buildRow('Filmy ze stejné série', x.collection.parts.map(tmdbCard)));
+            }
+            if (x && x.similar && x.similar.length) {
+                rows.appendChild(buildRow('Podobné filmy a seriály', x.similar.map(tmdbCard)));
+            }
+            if (!rows.querySelector('.row')) {
+                rows.appendChild(U.el('div', 'row-empty', own ?
+                    'Fotografie a podobné filmy se nepodařilo načíst z TMDB. Zobrazují se údaje z doplňku.' :
+                    'TMDB pro tento titul nevrátilo herce ani podobné filmy.'));
+            }
             focusLoaded(rows);
         }, function (err) {
             if (_d !== page || (err && err.cancelled)) { return; }
             U.clear(rows);
-            if (!theirs()) { rows.appendChild(U.el('div', 'row-empty', U.t('Couldn\'t reach TMDB.'))); }
+            var fallback = theirs();
+            rows.insertBefore(U.el('div', 'row-empty', fallback ?
+                'TMDB se nepodařilo načíst, proto jsou dostupná pouze jména z doplňku. Zkontroluj integraci TMDB.' :
+                'TMDB nyní neodpovídá. Zkontroluj připojení a API klíč v Nastavení → Obsah → Integrace.'), rows.firstChild);
             focusLoaded(rows);
         });
         return panel;
@@ -1111,7 +1118,7 @@
         var list = trailersOf(_d.meta);
         if (typeof YTPlay === 'undefined') { return null; }
         var p = U.el('div', 'pill focusable trailer-pill', list.length ?
-            '▶  Trailer' + (list.length > 1 ? ' (' + list.length + ')' : '') : '⌕  Najít trailer');
+            '▶  Trailer' + (list.length > 1 ? ' (' + list.length + ')' : '') : '▶  Najít trailer');
         p.__onselect = function () {
             if (list.length) { playTrailers(list, true); } else { findTrailerBySearch(false); }
         };
