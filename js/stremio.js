@@ -902,7 +902,10 @@ var Stremio = (function () {
                 return list.filter(function (m) {
                     if (!m || !m.id || m.id === id || seen[m.id] || !(m.poster || m.background)) { return false; }
                     seen[m.id] = 1;
-                    return (m.genres || []).some(function (g) { return keys[('' + g).toLowerCase()]; });
+                    // The catalog itself was queried for this genre; previews
+                    // sometimes omit the genres array to save bandwidth.
+                    return !Array.isArray(m.genres) || !m.genres.length ||
+                        m.genres.some(function (g) { return keys[('' + g).toLowerCase()]; });
                 }).sort(function (a, b) {
                     function score(m) {
                         var common = (m.genres || []).filter(function (g) { return keys[('' + g).toLowerCase()]; }).length;
