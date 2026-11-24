@@ -1084,21 +1084,21 @@ var ViewParts = {};
                 if (e._trakt) { if (Trakt.dismiss) { Trakt.dismiss(e.type, e.id); } } else if (!e._stremio) { Player.removeProgress(e.type, e.id); }
                 if (typeof StremioSync !== 'undefined' && StremioSync.dismiss) { StremioSync.dismiss(e.type, e.id); }
             });
-            U.toast(U.t('Removed from Continue Watching'));
+            U.toast('Odebráno ze sledování');
         } else if (type === 'movie') {
             Player.addToContinue({ id: m.id, type: 'movie', name: m.name || m.title, poster: m.poster, background: m.background, parent: m.id });
-            U.toast(U.t('Added to Continue Watching'));
+            U.toast('Přidáno do sledování');
         } else {
             var v = nextUp(m).v;
             Player.addToContinue({ id: v.id, type: 'series', name: (m.name || '') + '  ' + epCode(v), poster: m.poster, background: m.background, parent: m.id });
-            U.toast(U.t('Added to Continue Watching'));
+            U.toast('Přidáno do sledování');
         }
         markHomeDirty();
     }
     // The button's label, for a title page's meta (checked by the same id toggleNowPlaying
     // adds and removes by: the id the title's details came with, which can differ from the
     // one it was opened by, e.g. a TMDB id in Discover for an IMDb one).
-    function nowPlayingLabel(type, id) { return inNowPlaying(type, id) ? U.t('✓  In Continue Watching') : U.t('+  Add to Continue Watching'); }
+    function nowPlayingLabel(type, id) { return inNowPlaying(type, id) ? '✓  Ve sledování' : '+  Přidat do sledování'; }
     // Your Stremio account's Library (Settings › Integrations › Stremio account): a title in it or not.
     // The Libraries this profile has: its Stremio account's (connected), its Nuvio profile's (kept in step).
     // Profile-scoped local favorites work without signing in to Stremio, Nuvio or Trakt.
@@ -1142,11 +1142,11 @@ var ViewParts = {};
         }];
         if (typeof StremioSync !== 'undefined' && StremioSync.isConnected()) {
             out.push({ id: 'stremio', has: StremioSync.inLibrary, set: StremioSync.setInLibrary, add: U.t('Add to Stremio Library'), remove: U.t('Remove from Stremio Library'),
-                inLabel: U.t('✓  In Stremio Library'), outLabel: U.t('+  Stremio Library'), added: U.t('Added to your Stremio Library'), removed: U.t('Removed from your Stremio Library') });
+                inLabel: '✓  V knihovně Stremio', outLabel: '+  Do knihovny Stremio', added: U.t('Added to your Stremio Library'), removed: U.t('Removed from your Stremio Library') });
         }
         if (typeof NuvioSync !== 'undefined' && NuvioSync.isConnected()) {
             out.push({ id: 'nuvio', has: NuvioSync.inLibrary, set: NuvioSync.setInLibrary, add: U.t('Add to Nuvio Library'), remove: U.t('Remove from Nuvio Library'),
-                inLabel: U.t('✓  In Nuvio Library'), outLabel: U.t('+  Nuvio Library'), added: U.t('Added to your Nuvio Library'), removed: U.t('Removed from your Nuvio Library') });
+                inLabel: '✓  V knihovně Nuvio', outLabel: '+  Do knihovny Nuvio', added: U.t('Added to your Nuvio Library'), removed: U.t('Removed from your Nuvio Library') });
         }
         return out;
     }
