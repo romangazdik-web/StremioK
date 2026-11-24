@@ -1451,32 +1451,97 @@ var Stremio = (function () {
         var kind = type === 'series' ? 'tv' : 'movie';
         return tmdbFind(imdbId, kind, cancel).then(function (id) { return id ? tmdbExtrasById(kind, id, cancel) : null; });
     }
-    // For add-ons without IMDb ids, fetch cast by verified title/year instead.
-    // Avoid choosing a different film when only a fuzzy search result exists.
+    // Titles often use Czech names, TMDB IDs, or an alternative IMDb field.
+    // Find cast/recommendations by verified ID first, then title/year.
+    function tmdbTitleExtrasForMeta(type, id, meta, cancel) {
+        meta = meta || {};
+        var kind = type === 'series' ? 'tv' : 'movie';
+        var refs = [id, meta.id, meta.tmdb_id, meta.tmdbId];
+        var numeric = '';
+        refs.some(function (v) {
+            var m = ('' + (v || '')).match(/^tmdb:(?:(movie|tv|series):)?(\d+)$/i);
+            if (m && (!m[1] || m[1] === kind || (kind === 'tv' && m[1] === 'series'))) {
+                numeric = m[2]; return true;
+            }
+            return false;
+        });
+        if (!numeric && ('' + (meta.tmdbId || meta.tmdb_id || '')).match(/^\d+$/)) {
+            numeric = '' + (meta.tmdbId || meta.tmdb_id);
+        }
+        var imdb = '';
+        [meta.imdb_id, meta.imdbId, meta._imdbId, meta.imdbID, id, meta.id].some(function (v) {
+            if (/^tt\d+$/.test('' + (v || ''))) { imdb = '' + v; return true; }
+            return false;
+        });
+        var year = meta.year || meta.releaseInfo || meta.releaseDate || meta.released || '';
+        var names = [meta.name, meta.title, meta.originalName, meta.originalTitle, meta.original_name, meta.original_title]
+            .filter(function (v) { return typeof v === 'string' && v.trim(); });
+        var seen = {};
+        names = names.filter(function (v) {
+            var k = v.toLowerCase().trim();
+            if (seen[k]) { return false; }
+            seen[k] = true; return true;
+        }).slice(0, 3);
+        function useful(x) {
+            return !!(x && ((x.cast && x.cast.length) || (x.similar && x.similar.length) || x.collection));
+        }
+        function lookupName(i) {
+            if (i >= names.length) { return Promise.resolve(null); }
+            return tmdbTitleExtrasByName(type, names[i], year, cancel).then(function (x) {
+                return useful(x) ? x : lookupName(i + 1);
+            }, function () { return lookupName(i + 1); });
+        }
+        function fallback(x) { return useful(x) ? x : lookupName(0); }
+        if (numeric) {
+            return tmdbExtrasById(kind, numeric, cancel).then(fallback, function () { return lookupName(0); });
+        }
+        if (imdb) { return tmdbTitleExtras(type, imdb, cancel).then(fallback, function () { return lookupName(0); }); }
+        return lookupName(0);
+    }
+
+    // For add-ons without IMDb IDs, fetch verified cast, recommendations, posters by title.
+    // Never silently bind a different film just because it is the top search result.
     function tmdbTitleExtrasByName(type, title, year, cancel) {
         var kind = type === 'series' ? 'tv' : 'movie', q = ('' + (title || '')).trim();
         var embeddedYear = q.match(/\s*\((19|20)\d{2}\)\s*$/);
-        var yr = parseInt(year, 10) || (embeddedYear ? parseInt(embeddedYear[0].replace(/[^\d]/g, ''), 10) : 0);
+        var yearText = '' + (year || '');
+        var yearMatch = yearText.match(/\b(?:19|20)\d{2}\b/);
+        var yr = yearMatch ? parseInt(yearMatch[0], 10) :
+            (embeddedYear ? parseInt(embeddedYear[0].replace(/[^\d]/g, ''), 10) : 0);
         if (embeddedYear) { q = q.slice(0, embeddedYear.index).trim(); }
         if (!tmdbKey() || !q || q.length > 140) { return Promise.resolve(null); }
-        var suffix = '&query=' + encodeURIComponent(q) + '&language=cs-CZ' +
-            (yr ? '&' + (kind === 'movie' ? 'year' : 'first_air_date_year') + '=' + yr : '');
         function norm(x) {
             x = ('' + (x || '')).toLowerCase();
             if (x.normalize) { try { x = x.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); } catch (e) {} }
             return x.replace(/[^a-z0-9]+/g, '');
         }
-        return tmdbGet('/search/' + kind, suffix, cancel).then(function (r) {
-            var wanted = norm(q), found = null;
-            ((r && r.results) || []).slice(0, 10).some(function (x) {
+        var wanted = norm(q);
+        function pick(r) {
+            var good = [], results = ((r && r.results) || []).slice(0, 20);
+            results.forEach(function (x) {
                 var name = norm(x.title || x.name), orig = norm(x.original_title || x.original_name);
                 var y = parseInt((x.release_date || x.first_air_date || '').slice(0, 4), 10) || 0;
-                if (wanted && (name === wanted || orig === wanted) && (!yr || (y && Math.abs(y - yr) <= 1))) {
-                    found = x.id; return true;
-                }
-                return false;
+                var exact = wanted && (name === wanted || orig === wanted);
+                // The year can be missing in metadata; otherwise accept only a plausible match.
+                var near = !yr || (y && Math.abs(y - yr) <= 2);
+                if (exact && near) { good.push(x); }
             });
-            return found ? tmdbExtrasById(kind, found, cancel) : null;
+            good.sort(function (a,b) {
+                return (b.vote_count || 0) - (a.vote_count || 0);
+            });
+            return good.length ? good[0].id : null;
+        }
+        function query(withYear) {
+            var suffix = '&query=' + encodeURIComponent(q) + '&language=cs-CZ';
+            if (withYear && yr) {
+                suffix += '&' + (kind === 'movie' ? 'year' : 'first_air_date_year') + '=' + yr;
+            }
+            return tmdbGet('/search/' + kind, suffix, cancel).then(pick);
+        }
+        return query(true).then(function (id) {
+            return id ? id : (yr ? query(false) : Promise.resolve(null));
+        }).then(function (id) {
+            return id ? tmdbExtrasById(kind, id, cancel) : null;
         });
     }
     // The same, for a title known by its TMDB id (kind 'movie' | 'tv'), e.g. from a person's
@@ -2491,7 +2556,7 @@ var Stremio = (function () {
         getIntroSegments: getIntroSegments, tmdbFind: tmdbFind,
         tmdbValidate: tmdbValidate, mdblistValidate: mdblistValidate, omdbValidate: omdbValidate,
         tmdbFindTvId: tmdbFindTvId, tmdbSeasonEpisodes: tmdbSeasonEpisodes, tmdbImg: tmdbImg,
-        tmdbTitleExtras: tmdbTitleExtras, tmdbTitleExtrasByName: tmdbTitleExtrasByName, tmdbExtrasById: tmdbExtrasById, tmdbEpisodeCast: tmdbEpisodeCast, tmdbEpisodeTrailer: tmdbEpisodeTrailer, setHideWords: setHideWords, hideWordHit: hideWordHit, normalizeAddonUrl: normalizeManifestUrl, debridOf: debridOf, addonOrigin: addonOrigin, setAddonOrigin: setAddonOrigin, parseSetupList: parseSetupList, applySetupEntries: applySetupEntries, exportGroups: exportGroups, exportSetup: exportSetup, sizeLimitHit: sizeLimitHit, setSizeLimit: setSizeLimit, gbText: gbText, runtimeMinutes: runtimeMinutes, tmdbPeople: tmdbPeople, tmdbPerson: tmdbPerson, tmdbBrowse: tmdbBrowse, tmdbTitleTrailers: tmdbTitleTrailers, tmdbProviders: tmdbProviders, tmdbProvidersKept: tmdbProvidersKept, tmdbGenres: tmdbGenres, tmdbWhereToWatch: tmdbWhereToWatch, watchRegion: watchRegion, autoWatchRegion: autoWatchRegion, tmdbImdbId: tmdbImdbId, findFilm: findFilm, hasTmdb: function () { return !!tmdbKey(); },
+        tmdbTitleExtras: tmdbTitleExtras, tmdbTitleExtrasByName: tmdbTitleExtrasByName, tmdbTitleExtrasForMeta: tmdbTitleExtrasForMeta, tmdbExtrasById: tmdbExtrasById, tmdbEpisodeCast: tmdbEpisodeCast, tmdbEpisodeTrailer: tmdbEpisodeTrailer, setHideWords: setHideWords, hideWordHit: hideWordHit, normalizeAddonUrl: normalizeManifestUrl, debridOf: debridOf, addonOrigin: addonOrigin, setAddonOrigin: setAddonOrigin, parseSetupList: parseSetupList, applySetupEntries: applySetupEntries, exportGroups: exportGroups, exportSetup: exportSetup, sizeLimitHit: sizeLimitHit, setSizeLimit: setSizeLimit, gbText: gbText, runtimeMinutes: runtimeMinutes, tmdbPeople: tmdbPeople, tmdbPerson: tmdbPerson, tmdbBrowse: tmdbBrowse, tmdbTitleTrailers: tmdbTitleTrailers, tmdbProviders: tmdbProviders, tmdbProvidersKept: tmdbProvidersKept, tmdbGenres: tmdbGenres, tmdbWhereToWatch: tmdbWhereToWatch, watchRegion: watchRegion, autoWatchRegion: autoWatchRegion, tmdbImdbId: tmdbImdbId, findFilm: findFilm, hasTmdb: function () { return !!tmdbKey(); },
         mdblistRatings: mdblistRatings,
         omdbSeasonRatings: omdbSeasonRatings,
         loadAddons: loadAddons, listCatalogs: listCatalogs, getCatalog: getCatalog,
