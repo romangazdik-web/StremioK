@@ -100,13 +100,23 @@
         s.appendChild(U.el('div', 'detail-hero'));
         s.appendChild(buildTopMenu('detail'));
         U.spinner(true);
-        // A movie goes straight to its sources: ask for them alongside the details
-        // instead of after (the request is shared with the source list).
+        // Show the catalog artwork/title immediately. A slow metadata addon
+        // must not leave the viewer staring at a spinner for 10-12 seconds.
+        // Complete metadata and series episodes upgrade this page in place.
+        if (preview && (preview.name || preview.title)) {
+            _d.meta = Object.assign({ id: id, type: type }, preview);
+            _d._waitingMeta = true;
+            U.spinner(false);
+            drawDetail();
+        }
         if (type === 'movie') { Stremio.prefetchStreams(type, id); }
         var still = pageNow();
         Stremio.getMeta(type, id, pageCancel()).then(function (meta) {
             if (!still()) { return; }
             _d.meta = meta;
+            _d._waitingMeta = false;
+            _d._extrasPromise = null;
+            _d._tmdbExtras = null;
             if (_d.preview && !meta.poster && _d.preview.poster) { meta.poster = _d.preview.poster; }   // (details without artwork: the card's, so Continue Watching has one)
             if (_d.preview && !meta.background && _d.preview.background) { meta.background = _d.preview.background; }
             U.spinner(false);
@@ -118,6 +128,7 @@
             // resource. Use the catalog preview so the title still opens & plays.
             if (_d.preview) {
                 _d.meta = Object.assign({ id: id, type: type }, _d.preview);
+                _d._waitingMeta = false;
                 afterMeta();
             } else {
                 U.toast(U.t('Could not load details'));
@@ -133,7 +144,9 @@
             var files = embeddedFiles(_d.meta);
             var ep = playBest && target ? (_d.meta.videos || []).filter(function (v) { return v.id === target; })[0] : null;
             if (_d.type === 'movie' && playBest) { openStreams(_d.id, _d.meta.name || _d.meta.title, false, PLAY_KEY); }
-            else if (_d.type === 'movie') { drawDetail(); }
+            else if (_d.type === 'movie') {
+                if (_d.mode === 'info' || _d.mode === 'more') { drawDetail(); }
+            }
             else if (files.length === 1) { openEmbedded(files[0]); }
             else if (ep) { _d.season = (ep.season === undefined ? 1 : ep.season); openStreams(ep.id, epName(ep), false, PLAY_KEY); }
             else { drawDetail(); }
@@ -325,7 +338,7 @@
             var factsLine = U.el('div', 'nf-hero-extras');
             body.appendChild(factsLine);
             fillHeroExtras(factsLine, _d);
-            if (Stremio.hasTmdb && Stremio.hasTmdb()) {
+            if (!_d._waitingMeta && Stremio.hasTmdb && Stremio.hasTmdb()) {
                 (function (page, line) {
                     ensureTmdbExtras(page).then(function () {
                         if (_d === page && page.mode === 'info' && line.parentNode) { fillHeroExtras(line, page); }
@@ -360,6 +373,8 @@
             body.className += ' series-body streams-body';
             body.appendChild(streamActionsBar());
             s.appendChild(streamsPanel());
+        } else if (_d._waitingMeta && _d.type === 'series') {
+            body.appendChild(U.el('div', 'nf-loading-note', 'Načítám seznam epizod…'));
         } else if (_d.type === 'series' && meta.videos && meta.videos.length) {
             body.className += ' series-body';   // shorter text block: room for the episode rows
             if (!_d.addonType) { syncSeriesTick(meta); }
