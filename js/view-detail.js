@@ -783,6 +783,15 @@
             U.deferImage(img, photo);
         } else {
             c.appendChild(U.el('div', 'fallback person-fallback nf-person-silhouette'));
+            // TMDB sometimes provides a person record without a profile_path.
+            // Fill up to four such portraits from verified Wikipedia biographies.
+            var page = _d;
+            if (page && Stremio.wikiPersonPhoto && (page._wikiCastCount || 0) < 4) {
+                page._wikiCastCount = (page._wikiCastCount || 0) + 1;
+                Stremio.wikiPersonPhoto(p.name).then(function (pic) {
+                    if (_d === page && pic && c.parentNode) { attachPortrait(c, pic); }
+                }, function () {});
+            }
         }
         var cap = U.el('div', 'cap');
         cap.appendChild(U.el('div', 'cap-name', p.name));
