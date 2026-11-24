@@ -1541,6 +1541,11 @@ var Stremio = (function () {
         return query(true).then(function (id) {
             return id ? id : (yr ? query(false) : Promise.resolve(null));
         }).then(function (id) {
+            if (id) { return id; }
+            // Older/foreign addons may use an original-language title not shown
+            // in TMDB's Czech search translation. Try the broad search once.
+            return tmdbGet('/search/' + kind, '&query=' + encodeURIComponent(q) + '&language=en-US', cancel).then(pick, function () { return null; });
+        }).then(function (id) {
             return id ? tmdbExtrasById(kind, id, cancel) : null;
         });
     }
@@ -1566,8 +1571,20 @@ var Stremio = (function () {
                 facts: {
                     original: d.original_title || d.original_name || '',
                     year: (d.release_date || d.first_air_date || '').slice(0, 4),
+                    fullDate: d.release_date || d.first_air_date || '',
                     genre: (d.genres || []).slice(0, 4).map(function (g) { return g.name; }).join(' · '),
-                    rating: typeof d.vote_average === 'number' && d.vote_count > 0 ? d.vote_average.toFixed(1) : ''
+                    rating: typeof d.vote_average === 'number' && d.vote_count > 0 ? d.vote_average.toFixed(1) : '',
+                    votes: d.vote_count || 0,
+                    tagline: d.tagline || '',
+                    country: (d.production_countries || []).slice(0, 3).map(function (c) { return c.name || c.iso_3166_1 || ''; }).filter(Boolean).join(', '),
+                    languages: (d.spoken_languages || []).slice(0, 3).map(function (c) { return c.english_name || c.name || c.iso_639_1 || ''; }).filter(Boolean).join(', '),
+                    studios: (d.production_companies || []).slice(0, 3).map(function (c) { return c.name; }).filter(Boolean).join(', '),
+                    creators: (d.created_by || []).slice(0, 3).map(function (c) { return c.name; }).filter(Boolean).join(', '),
+                    directors: ((d.credits && d.credits.crew) || []).filter(function (c) { return c.job === 'Director'; }).slice(0, 3).map(function (c) { return c.name; }).filter(Boolean).join(', '),
+                    seasons: d.number_of_seasons || 0,
+                    episodes: d.number_of_episodes || 0,
+                    status: d.status || '',
+                    runtime: d.runtime || (d.episode_run_time && d.episode_run_time[0]) || 0
                 },
                 collection: null
             };
