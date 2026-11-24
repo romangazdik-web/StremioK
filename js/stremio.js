@@ -1426,6 +1426,41 @@ var Stremio = (function () {
         return U.cachedJSON(_tmdbCache, 'https://api.themoviedb.org/3' + path + '?api_key=' + encodeURIComponent(key) + (extra || ''), 12000, cancel);
     }
 
+    // Optional, key-free portraits from verified Wikipedia biographies.
+    // Cinemeta/TMDB metadata addons often supply actor names but no photographs.
+    // A photograph is accepted ONLY for an exact biography title describing an
+    // actor/director/performer: never substitute an unrelated person by fuzzy search.
+    var _wikiPhotoCache = U.lru(80);
+    function wikiPersonPhoto(name) {
+        name = ('' + (name || '')).replace(/\\s+/g, ' ').trim();
+        if (!name || name.length > 90 || !/^[^<>\\[\\]{}|]+$/.test(name)) { return Promise.resolve(''); }
+        var key = name.toLowerCase();
+        var saved = _wikiPhotoCache.get(key);
+        if (saved !== undefined) { return saved; }
+        function look(language) {
+            var api = 'https://' + language + '.wikipedia.org/w/api.php?action=query&format=json&formatversion=2&origin=*&redirects=1' +
+                '&prop=pageimages%7Cdescription&piprop=thumbnail&pithumbsize=320&titles=' + encodeURIComponent(name);
+            return U.getJSON(api, 5000, undefined, null, null, null, true).then(function (data) {
+                var pages = (data && data.query && data.query.pages) || [];
+                if (!pages.length) { return ''; }
+                var page = pages[0];
+                if (!page || page.missing || !page.thumbnail || !page.thumbnail.source) { return ''; }
+                var title = (page.title || '').replace(/\\s*\\([^)]*\\)$/, '').toLowerCase().trim();
+                var target = name.toLowerCase().trim();
+                if (title !== target) { return ''; }
+                var d = page.description || '';
+                var role = language === 'es' ? /actor|actriz|director|directora|intérprete/i :
+                    /actor|actress|film director|filmmaker|performer|television presenter/i;
+                if (!role.test(d)) { return ''; }
+                return U.cardImage(page.thumbnail.source, 'cast') || '';
+            }, function () { return ''; });
+        }
+        var task = look('en').then(function (photo) { return photo || look('es'); })
+            .then(function (photo) { return photo || ''; }, function () { return ''; });
+        _wikiPhotoCache.set(key, task);
+        return task;
+    }
+
     // imdb id (tt..) -> TMDB id of a 'movie' or 'tv' title (null: not on TMDB, or unreachable).
     function tmdbFind(imdbId, kind, cancel) {
         if (!tmdbKey() || !imdbId) { return Promise.resolve(null); }
@@ -2599,7 +2634,7 @@ var Stremio = (function () {
         getIntroSegments: getIntroSegments, tmdbFind: tmdbFind,
         tmdbValidate: tmdbValidate, mdblistValidate: mdblistValidate, omdbValidate: omdbValidate,
         tmdbFindTvId: tmdbFindTvId, tmdbSeasonEpisodes: tmdbSeasonEpisodes, tmdbImg: tmdbImg,
-        tmdbTitleExtras: tmdbTitleExtras, tmdbTitleExtrasByName: tmdbTitleExtrasByName, tmdbTitleExtrasForMeta: tmdbTitleExtrasForMeta, tmdbExtrasById: tmdbExtrasById, tmdbEpisodeCast: tmdbEpisodeCast, tmdbEpisodeTrailer: tmdbEpisodeTrailer, setHideWords: setHideWords, hideWordHit: hideWordHit, normalizeAddonUrl: normalizeManifestUrl, debridOf: debridOf, addonOrigin: addonOrigin, setAddonOrigin: setAddonOrigin, parseSetupList: parseSetupList, applySetupEntries: applySetupEntries, exportGroups: exportGroups, exportSetup: exportSetup, sizeLimitHit: sizeLimitHit, setSizeLimit: setSizeLimit, gbText: gbText, runtimeMinutes: runtimeMinutes, tmdbPeople: tmdbPeople, tmdbPerson: tmdbPerson, tmdbBrowse: tmdbBrowse, tmdbTitleTrailers: tmdbTitleTrailers, tmdbProviders: tmdbProviders, tmdbProvidersKept: tmdbProvidersKept, tmdbGenres: tmdbGenres, tmdbWhereToWatch: tmdbWhereToWatch, watchRegion: watchRegion, autoWatchRegion: autoWatchRegion, tmdbImdbId: tmdbImdbId, findFilm: findFilm, hasTmdb: function () { return !!tmdbKey(); },
+        wikiPersonPhoto: wikiPersonPhoto, tmdbTitleExtras: tmdbTitleExtras, tmdbTitleExtrasByName: tmdbTitleExtrasByName, tmdbTitleExtrasForMeta: tmdbTitleExtrasForMeta, tmdbExtrasById: tmdbExtrasById, tmdbEpisodeCast: tmdbEpisodeCast, tmdbEpisodeTrailer: tmdbEpisodeTrailer, setHideWords: setHideWords, hideWordHit: hideWordHit, normalizeAddonUrl: normalizeManifestUrl, debridOf: debridOf, addonOrigin: addonOrigin, setAddonOrigin: setAddonOrigin, parseSetupList: parseSetupList, applySetupEntries: applySetupEntries, exportGroups: exportGroups, exportSetup: exportSetup, sizeLimitHit: sizeLimitHit, setSizeLimit: setSizeLimit, gbText: gbText, runtimeMinutes: runtimeMinutes, tmdbPeople: tmdbPeople, tmdbPerson: tmdbPerson, tmdbBrowse: tmdbBrowse, tmdbTitleTrailers: tmdbTitleTrailers, tmdbProviders: tmdbProviders, tmdbProvidersKept: tmdbProvidersKept, tmdbGenres: tmdbGenres, tmdbWhereToWatch: tmdbWhereToWatch, watchRegion: watchRegion, autoWatchRegion: autoWatchRegion, tmdbImdbId: tmdbImdbId, findFilm: findFilm, hasTmdb: function () { return !!tmdbKey(); },
         mdblistRatings: mdblistRatings,
         omdbSeasonRatings: omdbSeasonRatings,
         loadAddons: loadAddons, listCatalogs: listCatalogs, getCatalog: getCatalog,
