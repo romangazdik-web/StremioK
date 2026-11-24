@@ -1,7 +1,7 @@
 {
   "name": "stremiok",
-  "version": "2.5.12",
-  "description": "Nymind Cinema: cinematic title details before choosing sources, interactive TMDB cast and information, responsive source list, trailers.",
+  "version": "2.5.13",
+  "description": "Nymind Cinema fullscreen TV details and cast: rich TMDB facts, portraits and recommendations when key available, explicit setup/retry when not.",
   "packageType": "app",
   "appName": "StremioK",
   "appPath": "index.html",
