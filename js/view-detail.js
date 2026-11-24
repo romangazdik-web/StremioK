@@ -468,7 +468,10 @@
         metadata.then(function (x) {
             if (_d !== page || _d.mode !== 'more') { return; }
             U.clear(rows);
-            if (x && x.cast.length) { rows.appendChild(buildRow(U.t('Cast & more'), x.cast.map(personCard))); }
+            if (x && x.cast.length) {
+                rows.appendChild(U.el('div', 'nf-cast-hint', 'Vyber herce a stiskni OK: fotografie, životopis a filmografie z TMDB.'));
+                rows.appendChild(buildRow(U.t('Cast & more'), x.cast.map(personCard)));
+            }
             var own = !(x && x.cast.length) && theirs();   // (no people from TMDB: the addon's)
             if (x && x.collection) { rows.appendChild(buildRow(x.collection.name, x.collection.parts.map(tmdbCard))); }
             if (x && x.similar.length) { rows.appendChild(buildRow(U.t('More like this'), x.similar.map(tmdbCard))); }
@@ -1051,15 +1054,17 @@
     }
     // Manually search for a Czech trailer if neither TMDB nor the metadata addon
     // provided one. We offer real YouTube videos, never synthetic trailer URLs.
-    function findTrailerBySearch(english) {
+    function findTrailerBySearch(mode) {
+        mode = (mode === 1 || mode === 2) ? mode : 0;
         if (typeof YouTube === 'undefined' || !YouTube.catalog || typeof YTPlay === 'undefined') {
             U.toast('Vyhledávání trailerů vyžaduje službu YouTube.'); return;
         }
         var page = _d, meta = page.meta || {}, title = meta.name || meta.title || '';
         if (!title) { return; }
         var year = ('' + (meta.year || meta.releaseInfo || '')).match(/(?:19|20)\d{2}/);
-        var query = title + (year ? ' ' + year[0] : '') + (english ? ' official trailer HD' : ' oficiální trailer česky HD');
-        U.spinner(true, 'Hledám ' + (english ? 'další' : 'české') + ' trailery…');
+        var endings = [' oficiální trailer česky HD', ' trailer české titulky HD', ' official trailer HD'];
+        var query = title + (year ? ' ' + year[0] : '') + endings[mode];
+        U.spinner(true, ['Hledám české trailery…', 'Hledám trailery s CZ titulky…', 'Hledám originální trailery…'][mode]);
         YouTube.catalog('ytk_search_videos', { search: query, skip: 0 }).then(function (items) {
             if (_d !== page) { U.spinner(false); return; }
             U.spinner(false);
@@ -1067,16 +1072,18 @@
                 return /^ytk:v:[A-Za-z0-9_-]{11}$/.test(m.id || '') && /trailer|teaser|upout[aá]vka|uk[aá]zka|traileru/i.test(m.name || '');
             }).slice(0, 8);
             if (!list.length) {
-                if (!english) { findTrailerBySearch(true); }
+                if (mode < 2) { findTrailerBySearch(mode + 1); }
                 else { U.toast('Pro tento titul jsem na YouTube nenašel vhodný trailer.'); }
                 return;
             }
             var opts = list.map(function (m) {
                 return [m.id.slice(6), (m.name || 'Trailer').slice(0, 95)];
             });
-            if (!english) { opts.push(['search-en', 'Hledat i originální trailery (HD)']); }
+            if (mode < 1) { opts.push(['search-subs', 'Hledat trailery s českými titulky']); }
+            if (mode < 2) { opts.push(['search-en', 'Hledat originální trailery (HD)']); }
             pickList('Vyber trailer · ' + title, opts, null, function (id) {
-                if (id === 'search-en') { findTrailerBySearch(true); return; }
+                if (id === 'search-subs') { findTrailerBySearch(1); return; }
+                if (id === 'search-en') { findTrailerBySearch(2); return; }
                 previewSearchedTrailer(id, title);
             });
         }, function () {
