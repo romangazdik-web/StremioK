@@ -866,12 +866,12 @@
 
     // Actor profile by exact name when only Cinemeta is active; TMDB numeric IDs
     // keep the original combined-credits workflow when explicitly configured.
-    function renderPerson(personId, name) {
+    function renderPerson(personId, name, portrait) {
         newPage();
         var wiki = /^wiki:/.test('' + personId);
         _d = { mode: 'person', type: 'person', id: 'person:' + personId,
             personId: personId, meta: { name: name || '' },
-            person: { name: name || '', photo: '', bio: 'Načítám životopis…',
+            person: { name: name || '', photo: portrait || '', bio: 'Načítám životopis…',
                 meta: '', movies: [], series: [], source: wiki ? 'wikipedia' : 'tmdb' },
             personLoading: true, creditLoading: false };
         drawPerson();
@@ -883,11 +883,12 @@
                 if (_d !== page) { return; }
                 page.personLoading = false;
                 if (!p) {
-                    page.person = { name: actual, photo: '', bio: 'Ověřený životopis se nepodařilo najít. Můžeš vyhledat tituly podle jména.',
+                    page.person = { name: actual, photo: portrait || '', bio: 'Ověřený životopis se nepodařilo najít. Můžeš vyhledat tituly podle jména.',
                         meta: 'Profil není dostupný na Wikipedii', movies: [], series: [], source: 'wikipedia' };
                     drawPerson(); return;
                 }
                 p.source = 'wikipedia';
+                if (!p.photo && portrait) { p.photo = portrait; }
                 p.bio = p.bio || 'Na Wikipedii není dostupný stručný životopis.';
                 page.person = p;
                 page.creditLoading = !!p.qid;
