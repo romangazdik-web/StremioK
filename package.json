@@ -1,7 +1,7 @@
 {
   "name": "stremiok",
-  "version": "2.5.9",
-  "description": "StremioK on Samsung Tizen: full-width Discover layout and ČSFD review links via QR in detail and title actions; playback unchanged.",
+  "version": "2.5.10",
+  "description": "StremioK on Samsung Tizen: accessible one-column stream sources, Czech trailer lookup and TMDB actor portraits; player behavior preserved.",
   "packageType": "app",
   "appName": "StremioK",
   "appPath": "index.html",
