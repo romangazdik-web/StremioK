@@ -560,11 +560,11 @@
                     var name = card.getAttribute('data-person-name') || '';
                     Stremio.tmdbPeople(name, 1, pageCancel()).then(function (result) {
                         if (_d !== page || _d.mode !== 'more') { return; }
-                        var want = name.toLowerCase().replace(/\\s+/g, ' ').trim();
+                        var want = name.toLowerCase().replace(/\s+/g, ' ').trim();
                         var people = (result && result.people) || [];
                         var found = null;
                         people.some(function (p) {
-                            if (p && (p.name || '').toLowerCase().replace(/\\s+/g, ' ').trim() === want) {
+                            if (p && (p.name || '').toLowerCase().replace(/\s+/g, ' ').trim() === want) {
                                 found = p; return true;
                             }
                             return false;
