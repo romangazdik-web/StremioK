@@ -63,10 +63,10 @@ var App = (function () {
     }
 
     // A person's page (from a title's cast row).
-    function openPerson(personId, name) {
+    function openPerson(personId, name, portrait) {
         pushFrame();
         showScreen('detail');
-        Views.renderPerson(personId, name);
+        Views.renderPerson(personId, name, portrait);
     }
 
     // Close a live player directly back to the screen/card that launched it. The
