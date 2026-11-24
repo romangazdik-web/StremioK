@@ -1451,6 +1451,31 @@ var Stremio = (function () {
         var kind = type === 'series' ? 'tv' : 'movie';
         return tmdbFind(imdbId, kind, cancel).then(function (id) { return id ? tmdbExtrasById(kind, id, cancel) : null; });
     }
+    // For add-ons without IMDb ids, fetch cast by verified title/year instead.
+    // Avoid choosing a different film when only a fuzzy search result exists.
+    function tmdbTitleExtrasByName(type, title, year, cancel) {
+        var kind = type === 'series' ? 'tv' : 'movie', q = ('' + (title || '')).trim();
+        var yr = parseInt(year, 10) || 0;
+        if (!tmdbKey() || !q || q.length > 140) { return Promise.resolve(null); }
+        var suffix = '&query=' + encodeURIComponent(q) + (yr ? '&' + (kind === 'movie' ? 'year' : 'first_air_date_year') + '=' + yr : '');
+        function norm(x) {
+            x = ('' + (x || '')).toLowerCase();
+            if (x.normalize) { try { x = x.normalize('NFD').replace(/[\\u0300-\\u036f]/g, ''); } catch (e) {} }
+            return x.replace(/[^a-z0-9]+/g, '');
+        }
+        return tmdbGet('/search/' + kind, suffix, cancel).then(function (r) {
+            var wanted = norm(q), found = null;
+            ((r && r.results) || []).slice(0, 10).some(function (x) {
+                var name = norm(x.title || x.name), orig = norm(x.original_title || x.original_name);
+                var y = parseInt((x.release_date || x.first_air_date || '').slice(0, 4), 10) || 0;
+                if (wanted && (name === wanted || orig === wanted) && (!yr || (y && Math.abs(y - yr) <= 1))) {
+                    found = x.id; return true;
+                }
+                return false;
+            });
+            return found ? tmdbExtrasById(kind, found, cancel) : null;
+        });
+    }
     // The same, for a title known by its TMDB id (kind 'movie' | 'tv'), e.g. from a person's
     // movies and series (the player's Cast & more goes from one to the other).
     function tmdbExtrasById(kind, id, cancel) {
@@ -2463,7 +2488,7 @@ var Stremio = (function () {
         getIntroSegments: getIntroSegments, tmdbFind: tmdbFind,
         tmdbValidate: tmdbValidate, mdblistValidate: mdblistValidate, omdbValidate: omdbValidate,
         tmdbFindTvId: tmdbFindTvId, tmdbSeasonEpisodes: tmdbSeasonEpisodes, tmdbImg: tmdbImg,
-        tmdbTitleExtras: tmdbTitleExtras, tmdbExtrasById: tmdbExtrasById, tmdbEpisodeCast: tmdbEpisodeCast, tmdbEpisodeTrailer: tmdbEpisodeTrailer, setHideWords: setHideWords, hideWordHit: hideWordHit, normalizeAddonUrl: normalizeManifestUrl, debridOf: debridOf, addonOrigin: addonOrigin, setAddonOrigin: setAddonOrigin, parseSetupList: parseSetupList, applySetupEntries: applySetupEntries, exportGroups: exportGroups, exportSetup: exportSetup, sizeLimitHit: sizeLimitHit, setSizeLimit: setSizeLimit, gbText: gbText, runtimeMinutes: runtimeMinutes, tmdbPeople: tmdbPeople, tmdbPerson: tmdbPerson, tmdbBrowse: tmdbBrowse, tmdbTitleTrailers: tmdbTitleTrailers, tmdbProviders: tmdbProviders, tmdbProvidersKept: tmdbProvidersKept, tmdbGenres: tmdbGenres, tmdbWhereToWatch: tmdbWhereToWatch, watchRegion: watchRegion, autoWatchRegion: autoWatchRegion, tmdbImdbId: tmdbImdbId, findFilm: findFilm, hasTmdb: function () { return !!tmdbKey(); },
+        tmdbTitleExtras: tmdbTitleExtras, tmdbTitleExtrasByName: tmdbTitleExtrasByName, tmdbExtrasById: tmdbExtrasById, tmdbEpisodeCast: tmdbEpisodeCast, tmdbEpisodeTrailer: tmdbEpisodeTrailer, setHideWords: setHideWords, hideWordHit: hideWordHit, normalizeAddonUrl: normalizeManifestUrl, debridOf: debridOf, addonOrigin: addonOrigin, setAddonOrigin: setAddonOrigin, parseSetupList: parseSetupList, applySetupEntries: applySetupEntries, exportGroups: exportGroups, exportSetup: exportSetup, sizeLimitHit: sizeLimitHit, setSizeLimit: setSizeLimit, gbText: gbText, runtimeMinutes: runtimeMinutes, tmdbPeople: tmdbPeople, tmdbPerson: tmdbPerson, tmdbBrowse: tmdbBrowse, tmdbTitleTrailers: tmdbTitleTrailers, tmdbProviders: tmdbProviders, tmdbProvidersKept: tmdbProvidersKept, tmdbGenres: tmdbGenres, tmdbWhereToWatch: tmdbWhereToWatch, watchRegion: watchRegion, autoWatchRegion: autoWatchRegion, tmdbImdbId: tmdbImdbId, findFilm: findFilm, hasTmdb: function () { return !!tmdbKey(); },
         mdblistRatings: mdblistRatings,
         omdbSeasonRatings: omdbSeasonRatings,
         loadAddons: loadAddons, listCatalogs: listCatalogs, getCatalog: getCatalog,
