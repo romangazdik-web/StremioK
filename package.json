@@ -1,7 +1,7 @@
 {
   "name": "stremiok",
-  "version": "2.5.11",
-  "description": "StremioK for Tizen: balanced two-column stream picker, reliable directional navigation, TMDB actor pictures and related titles, safe trailer button.",
+  "version": "2.5.12",
+  "description": "Nymind Cinema: cinematic title details before choosing sources, interactive TMDB cast and information, responsive source list, trailers.",
   "packageType": "app",
   "appName": "StremioK",
   "appPath": "index.html",
