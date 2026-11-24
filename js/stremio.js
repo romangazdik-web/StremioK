@@ -875,6 +875,47 @@ var Stremio = (function () {
         }
     }
 
+    // Recommendations without TMDB: choose from the user's already enabled
+    // Cinemeta/metadata catalog by the same genre. Unlike provider-recommended
+    // titles, these are labelled honestly as genre matches.
+    var _genreRecCache = U.lru(45);
+    function genreRecommendations(type, id, meta, cancel) {
+        var genres = meta && Array.isArray(meta.genres) ? meta.genres.filter(function (g) { return typeof g === 'string' && g.trim(); }) : [];
+        if (!genres.length || (type !== 'movie' && type !== 'series')) { return Promise.resolve([]); }
+        var key = type + '|' + id + '|' + genres[0];
+        var cached = _genreRecCache.get(key);
+        if (cached) { return cached; }
+        var task = listCatalogs().then(function (cats) {
+            var capable = cats.filter(function (c) {
+                if (c.type !== type || !c.addon || c.addon.__local || !c.def) { return false; }
+                return (c.def.extra || []).some(function (e) { return e && e.name === 'genre'; });
+            });
+            capable.sort(function (a, b) {
+                var aa = /cinemeta/i.test((a.addon.manifest && a.addon.manifest.name) || '') ? 1 : 0;
+                var bb = /cinemeta/i.test((b.addon.manifest && b.addon.manifest.name) || '') ? 1 : 0;
+                return bb - aa;
+            });
+            if (!capable.length) { return []; }
+            return getCatalog(capable[0], { genre: genres[0] }, cancel).then(function (list) {
+                var seen = {}, keys = {};
+                genres.forEach(function (g) { keys[g.toLowerCase()] = 1; });
+                return list.filter(function (m) {
+                    if (!m || !m.id || m.id === id || seen[m.id] || !(m.poster || m.background)) { return false; }
+                    seen[m.id] = 1;
+                    return (m.genres || []).some(function (g) { return keys[('' + g).toLowerCase()]; });
+                }).sort(function (a, b) {
+                    function score(m) {
+                        var common = (m.genres || []).filter(function (g) { return keys[('' + g).toLowerCase()]; }).length;
+                        return common * 10 + (parseFloat(m.imdbRating) || 0);
+                    }
+                    return score(b) - score(a);
+                }).slice(0, 16);
+            }, function () { return []; });
+        }, function () { return []; });
+        _genreRecCache.set(key, task);
+        return task;
+    }
+
     // ---- Feed lists: order + show / hide, as the user sets them ----
     // Home feeds (the Home rows: every catalog) and search sources (the Search rows:
     // every catalog that can search) each keep their own { order: [keys], hidden: [keys] }.
@@ -2697,7 +2738,7 @@ var Stremio = (function () {
         wikiPersonPhoto: wikiPersonPhoto, wikiPersonProfile: wikiPersonProfile, wikiFilmography: wikiFilmography, tmdbTitleExtras: tmdbTitleExtras, tmdbTitleExtrasByName: tmdbTitleExtrasByName, tmdbTitleExtrasForMeta: tmdbTitleExtrasForMeta, tmdbExtrasById: tmdbExtrasById, tmdbEpisodeCast: tmdbEpisodeCast, tmdbEpisodeTrailer: tmdbEpisodeTrailer, setHideWords: setHideWords, hideWordHit: hideWordHit, normalizeAddonUrl: normalizeManifestUrl, debridOf: debridOf, addonOrigin: addonOrigin, setAddonOrigin: setAddonOrigin, parseSetupList: parseSetupList, applySetupEntries: applySetupEntries, exportGroups: exportGroups, exportSetup: exportSetup, sizeLimitHit: sizeLimitHit, setSizeLimit: setSizeLimit, gbText: gbText, runtimeMinutes: runtimeMinutes, tmdbPeople: tmdbPeople, tmdbPerson: tmdbPerson, tmdbBrowse: tmdbBrowse, tmdbTitleTrailers: tmdbTitleTrailers, tmdbProviders: tmdbProviders, tmdbProvidersKept: tmdbProvidersKept, tmdbGenres: tmdbGenres, tmdbWhereToWatch: tmdbWhereToWatch, watchRegion: watchRegion, autoWatchRegion: autoWatchRegion, tmdbImdbId: tmdbImdbId, findFilm: findFilm, hasTmdb: function () { return !!tmdbKey(); },
         mdblistRatings: mdblistRatings,
         omdbSeasonRatings: omdbSeasonRatings,
-        loadAddons: loadAddons, listCatalogs: listCatalogs, getCatalog: getCatalog,
+        loadAddons: loadAddons, listCatalogs: listCatalogs, getCatalog: getCatalog, genreRecommendations: genreRecommendations,
         catalogsForHome: catalogsForHome, listCatalogsOrdered: listCatalogsOrdered,
         catalogKey: catalogKey, moveFeed: moveFeed, toggleFeed: toggleFeed, isFeedHidden: isFeedHidden,
         getMeta: getMeta, getStreams: getStreams, prefetchStreams: prefetchStreams, dedupeStreams: dedupeStreams,
