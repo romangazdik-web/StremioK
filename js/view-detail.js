@@ -274,6 +274,8 @@
         } else {
             s.className = s.className.replace(/\s+nf-movie-landing/g, '');
         }
+        s.className = s.className.replace(/\s+nf-cast-view/g, '');
+        if (_d.mode === 'more') { s.className += ' nf-cast-view'; }
         var listed = _d.mode === 'streams' || (_d.mode === 'info' && _d.type === 'series');   // (a source list, an episode list)
         var hero = U.el('div', 'detail-hero' + (listed ? ' hero-full' : ''));   // (a list: over the whole backdrop)
         var bg = meta.background || meta.poster;
@@ -312,12 +314,25 @@
             var genres = (meta.genres && meta.genres.length) ? meta.genres : own.genres;
             if (genres.length) { bits.push(genres.slice(0, 3).join(', ')); }
         }
-        if (meta._from) { bits.push(U.t('Details: {addon}', { addon: meta._from })); }   // (which addon: the highest in Settings › Addons that has them)
+        // Source addon names belong on the full information page, not in the
+        // movie hero's title/genre line.
         body.appendChild(U.el('div', 'detail-meta', bits.join('   ·   ')));
         var ratings = U.el('div', 'detail-ratings');
         body.appendChild(ratings);
         if (!ep) { fillRatings(ratings); }   // (the show's: not the episode's)
         body.appendChild(U.el('div', 'detail-desc', (ep && spoilerFor(ep) === 'all') ? SPOILER_TEXT : (ep && (ep.overview || ep.description)) || meta.description || ''));
+        if (_d.mode === 'info' && !_d.live && !_d.addonType && (_d.type === 'movie' || _d.type === 'series')) {
+            var factsLine = U.el('div', 'nf-hero-extras');
+            body.appendChild(factsLine);
+            fillHeroExtras(factsLine, _d);
+            if (Stremio.hasTmdb && Stremio.hasTmdb()) {
+                (function (page, line) {
+                    ensureTmdbExtras(page).then(function () {
+                        if (_d === page && page.mode === 'info' && line.parentNode) { fillHeroExtras(line, page); }
+                    }, function () {});
+                })(_d, factsLine);
+            }
+        }
         s.appendChild(body);
 
         // If resuming a series episode, pre-select its season.
@@ -421,6 +436,53 @@
         }, function () {});
     }
 
+    // A single verified TMDB lookup per title page. Shared by its cover and Cast
+    // tab so opening Cast immediately does not start the same remote lookup twice.
+    function ensureTmdbExtras(page) {
+        if (page._extrasPromise) { return page._extrasPromise; }
+        page._extrasPromise = Stremio.tmdbTitleExtrasForMeta(page.type, page.id, page.meta, pageCancel()).then(function (x) {
+            if (_d === page) { page._tmdbExtras = x || null; }
+            return x || null;
+        }, function (err) {
+            if (_d === page) { page._extrasPromise = null; }
+            throw err;
+        });
+        return page._extrasPromise;
+    }
+
+    // Brief real information, not addon names: directors, actors and episode count.
+    function fillHeroExtras(line, page) {
+        var meta = page.meta || {}, a = addonLinks(meta), x = page._tmdbExtras;
+        var f = (x && x.facts) || {}, parts = [], casts = (x && x.cast) || [];
+        var directors = f.directors || f.creators || a.directors.slice(0, 2).join(', ');
+        if (directors) { parts.push('Režie / tvůrci: ' + directors); }
+        if (casts.length) { parts.push('Hrají: ' + casts.slice(0, 3).map(function (p) { return p.name; }).join(', ')); }
+        else if (a.cast.length) { parts.push('Hrají: ' + a.cast.slice(0, 3).join(', ')); }
+        if (page.type === 'series' && meta.videos && meta.videos.length) {
+            var ss = {}, count = 0;
+            meta.videos.forEach(function (v) { if (v) { ss[v.season === undefined ? 1 : v.season] = true; count++; } });
+            parts.push(Object.keys(ss).length + ' sérií · ' + count + ' epizod');
+        }
+        if (f.country) { parts.push('Země: ' + f.country); }
+        line.textContent = parts.join('    •    ');
+    }
+
+    // Clear status and route to the saved-key setting rather than silently showing
+    // name-only cast as though a TMDB portrait request had succeeded.
+    function tmdbNotice(rows, message, action) {
+        var box = U.el('div', 'nf-tmdb-notice');
+        box.appendChild(U.el('div', 'nf-tmdb-notice-text', message));
+        if (action) {
+            var button = U.el('div', 'pill focusable nf-tmdb-action', action === 'settings' ? '⚙  Nastavit TMDB API klíč' : '↻  Zkusit načíst znovu');
+            button.__onselect = function () {
+                if (action === 'settings') { App.openSettings(); }
+                else { if (_d) { _d._extrasPromise = null; _d._tmdbExtras = null; drawDetail(); } }
+            };
+            box.appendChild(button);
+        }
+        rows.appendChild(box);
+    }
+
     // ----- "Cast & more": cast & more, the collection a film belongs to, more like this -----
     // (TMDB's, with a key; the people the addon names where TMDB has none, or with no key)
     function withTmdb() {
@@ -448,7 +510,7 @@
     function morePanel() {
         var panel = U.el('div', 'list-panel more-panel');
         var rows = U.el('div', 'more-rows');
-        rows.appendChild(U.el('div', 'row-empty', U.t('Loading…')));
+        rows.appendChild(U.el('div', 'row-empty', 'Načítám fotografie herců, tvůrce a podobné tituly z TMDB…'));
         panel.appendChild(rows);
         var page = _d;
         var ep = shownEpisode();
@@ -460,10 +522,11 @@
         }
         if (!withTmdb()) {
             U.clear(rows);
+            tmdbNotice(rows, Stremio.hasTmdb && Stremio.hasTmdb() ?
+                'Pro tento typ obsahu není dostupné rozšířené TMDB. Zobrazují se údaje od poskytovatele.' :
+                'TMDB není v této instalaci Nymind Cinema nastavené. Bez vlastního TMDB v3 API klíče se zobrazují jen jména herců bez fotografií a doporučení.', Stremio.hasTmdb && Stremio.hasTmdb() ? null : 'settings');
             appendBasicFacts(rows, page.meta);
-            if (!theirs()) {
-                rows.appendChild(U.el('div', 'row-empty', 'Fotografie herců a podobné filmy vyžadují aktivní TMDB klíč v Nastavení → Obsah → Integrace.'));
-            }
+            if (!theirs()) { rows.appendChild(U.el('div', 'row-empty', 'Pro tento titul nejsou další herci uvedeni.')); }
             focusLoaded(rows); return panel;
         }
         if (ep && /^tt\d+$/.test(page.id || '')) {   // an episode's: its own people (the show's when TMDB has nothing for it)
@@ -485,15 +548,29 @@
             });
             return panel;
         }
-        var metadata = Stremio.tmdbTitleExtrasForMeta(page.type, page.id, page.meta, pageCancel());
+        // Reuse the title hero lookup; an already resolved result is immediate.
+        var metadata = ensureTmdbExtras(page);
         metadata.then(function (x) {
             if (_d !== page || _d.mode !== 'more') { return; }
             U.clear(rows);
             appendBasicFacts(rows, page.meta);
             if (x && x.facts) {
-                var info = [x.facts.year ? 'Rok: ' + x.facts.year : '', x.facts.rating ? 'TMDB: ' + x.facts.rating + '/10' : '',
-                    x.facts.genre || '', x.facts.original ? 'Originální název: ' + x.facts.original : ''].filter(Boolean);
+                var f = x.facts;
+                var info = [f.original ? 'Originální název: ' + f.original : '',
+                    f.fullDate ? 'Premiéra: ' + f.fullDate : (f.year ? 'Rok: ' + f.year : ''),
+                    f.rating ? 'TMDB: ' + f.rating + '/10' + (f.votes ? ' (' + f.votes + ' hlasů)' : '') : '',
+                    f.directors ? 'Režie: ' + f.directors : '',
+                    f.creators ? 'Tvůrci: ' + f.creators : '',
+                    f.genre ? 'Žánry: ' + f.genre : '',
+                    f.country ? 'Země: ' + f.country : '',
+                    f.languages ? 'Jazyky: ' + f.languages : '',
+                    f.studios ? 'Studio: ' + f.studios : '',
+                    f.seasons ? 'Počet sérií: ' + f.seasons : '',
+                    f.episodes ? 'Počet epizod: ' + f.episodes : '',
+                    f.runtime ? 'Délka: ' + f.runtime + ' min' : ''
+                ].filter(Boolean);
                 if (info.length) { rows.appendChild(U.el('div', 'nf-more-facts', info.join('    ·    '))); }
+                if (f.tagline) { rows.appendChild(U.el('div', 'nf-tmdb-tagline', '„' + f.tagline + '“')); }
             }
             if (x && x.cast && x.cast.length) {
                 rows.appendChild(U.el('div', 'nf-cast-hint', 'HERCI A TVŮRCI   ·   OK = profil, fotografie a filmografie   ·   ↓ = další obsah'));
@@ -506,20 +583,21 @@
             if (x && x.similar && x.similar.length) {
                 rows.appendChild(buildRow('Podobné filmy a seriály', x.similar.map(tmdbCard)));
             }
+            if (!x) { tmdbNotice(rows, 'Tento film nebo seriál se nepodařilo jednoznačně dohledat v TMDB podle názvu či identifikátoru. Jména jsou z doplňku.', 'retry'); }
+            else if ((!x.cast || !x.cast.length) && (!x.similar || !x.similar.length)) {
+                tmdbNotice(rows, 'TMDB pro tento konkrétní titul neuvádí fotografie herců ani podobné filmy.', null);
+            }
             if (!rows.querySelector('.row')) {
-                rows.appendChild(U.el('div', 'row-empty', own ?
-                    'Fotografie a podobné filmy se nepodařilo načíst z TMDB. Zobrazují se údaje z doplňku.' :
-                    'TMDB pro tento titul nevrátilo herce ani podobné filmy.'));
+                rows.appendChild(U.el('div', 'row-empty', own ? 'Zobrazují se herci a tvůrci z doplňku.' : 'Další tituly ani herci nejsou pro tento titul dostupní.'));
             }
             focusLoaded(rows);
         }, function (err) {
             if (_d !== page || (err && err.cancelled)) { return; }
             U.clear(rows);
             appendBasicFacts(rows, page.meta);
+            tmdbNotice(rows, 'Nepodařilo se spojit s TMDB. Zkontroluj internet, platnost TMDB v3 klíče nebo zkus vyhledávání zopakovat.', 'retry');
             var fallback = theirs();
-            rows.insertBefore(U.el('div', 'row-empty', fallback ?
-                'TMDB se nepodařilo načíst, proto jsou dostupná pouze jména z doplňku. Zkontroluj integraci TMDB.' :
-                'TMDB nyní neodpovídá. Zkontroluj připojení a API klíč v Nastavení → Obsah → Integrace.'), rows.firstChild);
+            if (!fallback) { rows.appendChild(U.el('div', 'row-empty', 'Od poskytovatele nejsou dostupné další informace.')); }
             focusLoaded(rows);
         });
         return panel;
@@ -536,6 +614,7 @@
         if (genres && genres.length) { bits.push('Žánry: ' + genres.join(', ')); }
         if (meta.imdbRating || own.imdb) { bits.push('IMDb: ' + (meta.imdbRating || own.imdb)); }
         if (bits.length) { rows.appendChild(U.el('div', 'nf-more-facts', bits.join('    ·    '))); }
+        if (meta._from) { rows.appendChild(U.el('div', 'nf-more-provider', 'Metadata poskytuje: ' + meta._from)); }
         if (meta.description) {
             rows.appendChild(U.el('div', 'nf-more-description', meta.description));
         }
@@ -578,7 +657,8 @@
         var c = U.el('div', 'card person-card focusable');
         c.setAttribute('data-id', 'name:' + name);
         c.setAttribute('data-person-name', name);
-        c.appendChild(U.el('div', 'fallback', name));
+        var initials = name.split(/\s+/).slice(0, 2).map(function (part) { return part.charAt(0).toUpperCase(); }).join('');
+        c.appendChild(U.el('div', 'fallback person-fallback', initials || '?'));
         var cap = U.el('div', 'cap');
         cap.appendChild(U.el('div', 'cap-name', name));
         if (role) { cap.appendChild(U.el('div', 'cap-sub', role)); }
