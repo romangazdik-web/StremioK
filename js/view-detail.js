@@ -109,7 +109,8 @@
             U.spinner(false);
             drawDetail();
         }
-        if (type === 'movie') { Stremio.prefetchStreams(type, id); }
+        // Sources are fetched only when Přehrát is selected, so they cannot
+        // compete with the hero/backdrop and portraits on older Tizen hardware.
         var still = pageNow();
         Stremio.getMeta(type, id, pageCancel()).then(function (meta) {
             if (!still()) { return; }
@@ -516,7 +517,7 @@
     function ratingsPill() {
         var integ = Stremio.getIntegrations();
         if (!(integ.omdb || integ.tmdb) || !/^tt\d+$/.test(_d.id || '')) { return null; }
-        var p = U.el('div', 'pill focusable ratings-pill', U.t('★  Episode ratings'));
+        var p = U.el('div', 'pill focusable ratings-pill', '★  Hodnocení epizod');
         p.__onselect = function () { _d.moreFrom = _d.mode; _d.mode = 'ratings'; drawDetail(); };
         if (_d._focusPill === 'ratings') { _d._epFocus = p; _d._focusPill = null; }
         return p;
@@ -675,10 +676,10 @@
     // Rows of them, by name (no photos): OK searches for the name. Whether there were any.
     function appendAddonPeople(rows, meta) {
         var o = addonLinks(meta), any = false;
-        [[U.t('Cast'), o.cast, ''], [U.t('Directors'), o.directors, U.t('Director')], [U.t('Writers'), o.writers, U.t('Writer')]].forEach(function (g) {
+        [['Herci', o.cast, ''], ['Režie', o.directors, 'Režie'], ['Scénář', o.writers, 'Scénář']].forEach(function (g) {
             if (!g[1].length) { return; }
             any = true;
-            rows.appendChild(buildRow(g[0] + '   ·   ' + U.t('from {addon}', { addon: (meta && meta._from) || U.t('the addon') }), g[1].map(function (n) { return namedPersonCard(n, g[2]); })));
+            rows.appendChild(buildRow(g[0], g[1].map(function (n) { return namedPersonCard(n, g[2]); })));
         });
         return any;
     }
@@ -1187,7 +1188,7 @@
         // watched all that's out): no Play, just when it airs.
         var airs = airsAt(up.v);
         if (_d.collection) {   // (the next film you haven't watched: its page)
-            var open = U.el('div', 'pill focusable', '▶  ' + U.t('Open  “{title}”', { title: up.v.title || up.v.name || '' }));
+            var open = U.el('div', 'pill focusable', '▶  Otevřít: ' + (up.v.title || up.v.name || ''));
             open.__onselect = function () { openTitle(up.v); };
             row.appendChild(open);
             var tpc = trailerPill();
@@ -1195,7 +1196,7 @@
             return row;
         }
         if (!up.resume && !episodeWatched(up.v) && airs > Date.now()) {
-            row.appendChild(U.el('div', 'pill airs-pill', U.t('{ep} airs {when}', { ep: epCode(up.v), when: U.dayLabel(airs) })));
+            row.appendChild(U.el('div', 'pill airs-pill', epCode(up.v) + ' · Premiéra ' + U.dayLabel(airs)));
         } else {
             row.appendChild(playUpButton(up));
         }
@@ -1213,8 +1214,8 @@
     }
     function playUpButton(up) {
         var btn = U.el('div', 'pill focusable', up.resume
-            ? '▶  ' + U.t('Resume  {ep}  ·  {at}', { ep: epCode(up.v), at: U.fmtTime(up.resume.position) })
-            : '▶  ' + U.t('Play  {ep}', { ep: epCode(up.v) }));
+            ? '▶  Pokračovat  ' + epCode(up.v) + '  ·  ' + U.fmtTime(up.resume.position)
+            : '▶  Přehrát  ' + epCode(up.v));
         btn.__onselect = function () {
             // resume the exact stream when one was saved; otherwise pick a source
             if (up.resume && up.resume.url) { startResume(up.resume); }
@@ -1529,7 +1530,7 @@
 
     // Hide spoilers (Settings › Appearance): for an episode not watched yet, 'pictures' (its still
     // blurred) or 'all' (its synopsis left out too); '' to show it.
-    var SPOILER_TEXT = U.t('Synopsis hidden: not watched yet');
+    var SPOILER_TEXT = 'Popis je skrytý, dokud epizodu nezhlédneš.';
     function spoilerFor(v) {
         var mode = Stremio.getPrefs().spoilers;
         if (mode === 'off' || !v || _d.collection || episodeWatched(v)) { return ''; }
