@@ -62,6 +62,7 @@
             streamId: id, streamLabel: (preview && (preview.name || preview.title)) || '', streams: null,
             exitToBack: true, live: true, channels: channels || null };
         var s = scr('detail');
+        s.className = s.className.replace(/\s+nf-movie-landing/g, '');
         U.clear(s);
         s.appendChild(U.el('div', 'detail-hero'));
         s.appendChild(buildTopMenu('detail'));
@@ -529,7 +530,7 @@
         var bits = [];
         var own = addonLinks(meta);
         var year = meta.releaseInfo || meta.year || '';
-        var genres = (meta.genres && meta.genres.length) ? meta.genres : own.genres;
+        var genres = Array.isArray(meta.genres) ? meta.genres : own.genres;
         if (year) { bits.push('Vydání: ' + year); }
         if (meta.runtime) { bits.push('Délka: ' + meta.runtime); }
         if (genres && genres.length) { bits.push('Žánry: ' + genres.join(', ')); }
