@@ -1784,6 +1784,104 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
       color: white;
     }
     </style>
+    <!-- Nymind Cinema 2.5.11: compact sources and actual TMDB cast browser. -->
+    <style id="nymind-cinema-2511">
+    #app #screen-detail .streams-panel .list-scroll {
+      display: -webkit-flex !important;
+      display: flex !important;
+      -webkit-flex-wrap: wrap !important;
+      flex-wrap: wrap !important;
+      -webkit-align-content: flex-start !important;
+      align-content: flex-start !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      padding: 11px 12px 42px !important;
+      box-sizing: border-box !important;
+    }
+    #app #screen-detail .streams-panel .stream.stream.focusable {
+      display: block !important;
+      position: relative !important;
+      box-sizing: border-box !important;
+      width: calc(50% - 12px) !important;
+      min-width: 0 !important;
+      max-width: none !important;
+      -webkit-flex: 0 0 calc(50% - 12px) !important;
+      flex: 0 0 calc(50% - 12px) !important;
+      height: 144px !important;
+      min-height: 144px !important;
+      margin: 0 12px 12px 0 !important;
+      padding: 12px 47px 10px 15px !important;
+      border-radius: 9px !important;
+      background: #23242a !important;
+      overflow: hidden !important;
+    }
+    #app #screen-detail .streams-panel .nf-stream-title {
+      font-size: 20px !important;
+      line-height: 25px !important;
+      max-height: 50px !important;
+      margin-bottom: 5px !important;
+    }
+    #app #screen-detail .streams-panel .stream .s-sub {
+      font-size: 15px !important;
+      line-height: 20px !important;
+      max-height: 62px !important;
+      color: #c7c8d0 !important;
+    }
+    #app #screen-detail .streams-panel .nf-sources-guide,
+    #app #screen-detail .streams-panel .stream-for,
+    #app #screen-detail .streams-panel .stream-group,
+    #app #screen-detail .streams-panel .streams-hidden,
+    #app #screen-detail .streams-panel .stream-note,
+    #app #screen-detail .streams-panel .no-sources {
+      width: 100% !important;
+      -webkit-flex: 0 0 100% !important;
+      flex: 0 0 100% !important;
+      box-sizing: border-box !important;
+    }
+    #app #screen-detail .more-panel .more-rows {
+      overflow-x: hidden !important;
+      overflow-y: auto !important;
+      padding: 8px 12px 45px !important;
+      box-sizing: border-box !important;
+    }
+    #app #screen-detail .more-rows .row { margin-bottom: 28px; }
+    #app #screen-detail .more-rows .person-card {
+      width: 174px !important;
+      height: 258px !important;
+      border-radius: 10px !important;
+      background: #272932 !important;
+      overflow: hidden !important;
+    }
+    #app #screen-detail .more-rows .person-card .poster {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      object-position: center top !important;
+    }
+    #app #screen-detail .more-rows .person-card .cap {
+      background: linear-gradient(0deg, rgba(0,0,0,.96), rgba(0,0,0,.55), transparent) !important;
+      padding: 28px 10px 12px !important;
+    }
+    #app #screen-detail .more-rows .nf-more-facts {
+      display: block;
+      padding: 14px 18px;
+      margin-bottom: 12px;
+      border-left: 3px solid #e50914;
+      border-radius: 5px;
+      background: rgba(29,30,37,.96);
+      color: #d9dce3;
+      font-size: 18px;
+      line-height: 25px;
+      white-space: normal;
+    }
+    #app #screen-detail .more-rows .nf-cast-hint {
+      color: #bbc0cb;
+      font-size: 17px;
+      line-height: 24px;
+      white-space: normal;
+      padding: 8px 15px 12px;
+    }
+    </style>
 </head>
 <body>
     <div id="nymind-boot" aria-label="Načítá se Nymind Cinema">
@@ -1864,10 +1962,10 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
     <script src="js/plex.js?v=2.4.3"></script>
     <script src="js/epg.js?v=2.4.3"></script>
     <script src="js/youtube.js?v=2.4.3"></script>
-    <script src="js/stremio.js?v=2.5.10"></script>
+    <script src="js/stremio.js?v=2.5.11"></script>
     <script src="js/trakt.js?v=2.4.3"></script>
     <script src="js/keys.js?v=2.4.3"></script>
-    <script src="js/focus.js?v=2.5.10"></script>
+    <script src="js/focus.js?v=2.5.11"></script>
     <script src="js/tvapps.js?v=2.4.3"></script>
     <script src="js/player-core.js?v=2.4.3"></script>
     <script src="js/player-store.js?v=2.4.3"></script>
@@ -1888,7 +1986,7 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
     <script src="js/view-core.js?v=2.5.9"></script>
     <script src="js/view-home.js?v=2.4.8"></script>
     <script src="js/view-guide.js?v=2.4.3"></script>
-    <script src="js/view-detail.js?v=2.5.10"></script>
+    <script src="js/view-detail.js?v=2.5.11"></script>
     <script src="js/view-search.js?v=2.5.0"></script>
     <script src="js/view-settings.js?v=2.4.3"></script>
     <script src="js/view-discover.js?v=2.4.3"></script>
