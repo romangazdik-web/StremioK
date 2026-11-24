@@ -121,8 +121,8 @@ var Focus = (function () {
                 }
             }
         }
-        /* Nymind Cinema stream cards: two columns, predictable D-pad movement.
-           The source list remains entirely inside the content area. */
+        /* Nymind Cinema: each stream is one row in the vertically scrollable
+           source list. Never jump across a group heading or into the sidebar. */
         if ((dir === 'DOWN' || dir === 'UP' || dir === 'LEFT' || dir === 'RIGHT') &&
             _scope.id === 'screen-detail') {
             var streamPanel = _scope.querySelector('.streams-panel');
@@ -135,26 +135,22 @@ var Focus = (function () {
                     setFocus(streamRows[0]); return;
                 }
                 if (inStream) {
+                    if (dir === 'LEFT' || dir === 'RIGHT') { return; }
                     for (var si = 0; si < streamRows.length; si++) {
                         if (streamRows[si] !== _current) { continue; }
-                        var next = -1;
-                        if (dir === 'DOWN') { next = si + 2; }
-                        if (dir === 'UP') { next = si - 2; }
-                        if (dir === 'RIGHT' && si % 2 === 0) { next = si + 1; }
-                        if (dir === 'LEFT' && si % 2 === 1) { next = si - 1; }
                         if (dir === 'DOWN' && typeof _current.__navDOWN === 'function') {
                             _current.__navDOWN();
                             streamRows = streamList.querySelectorAll('.stream.focusable');
                         }
+                        var next = dir === 'DOWN' ? si + 1 : si - 1;
                         if (next >= 0 && next < streamRows.length) {
                             setFocus(streamRows[next]); return;
                         }
-                        if (dir === 'UP' && next < 0) {
+                        if (dir === 'UP') {
                             var actions = streamBody ? streamBody.querySelector('.streams-actions') : null;
                             var firstAction = actions && actions.querySelector('.focusable');
                             if (firstAction) { setFocus(firstAction); }
                         }
-                        /* Don't let the sidebar steal focus at the edges. */
                         return;
                     }
                 }
