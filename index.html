@@ -1661,6 +1661,122 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
         box-sizing: border-box !important;
     }
     </style>
+
+    <!-- Nymind Cinema 2.5.10: readable sources, visible trailers and cast portraits on Tizen 3. -->
+    <style id="nymind-cinema-sources-2510">
+    /* A compact vertically navigated source browser: no interleaved 2-column focus traps. */
+    #app #screen-detail .streams-panel .list-scroll {
+      display: block !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      padding: 10px 12px 48px !important;
+      box-sizing: border-box !important;
+    }
+    #app #screen-detail .streams-panel .stream.stream.focusable {
+      display: block !important;
+      position: relative !important;
+      width: 100% !important;
+      max-width: none !important;
+      min-width: 0 !important;
+      height: auto !important;
+      min-height: 96px !important;
+      -webkit-flex: none !important;
+      flex: none !important;
+      box-sizing: border-box !important;
+      padding: 13px 55px 12px 18px !important;
+      margin: 0 0 9px !important;
+      background: #202126 !important;
+      border-radius: 8px !important;
+    }
+    #app #screen-detail .streams-panel .stream.stream.focusable.focused {
+      background: #33343c !important;
+      border-left: 6px solid #e50914 !important;
+      border-top: 2px solid white !important;
+      border-right: 2px solid white !important;
+      border-bottom: 2px solid white !important;
+    }
+    #app #screen-detail .streams-panel .nf-stream-title {
+      font-size: 22px !important;
+      line-height: 27px !important;
+      font-weight: bold !important;
+      max-height: 54px !important;
+      overflow: hidden !important;
+      margin: 0 0 3px !important;
+      padding-right: 15px !important;
+    }
+    #app #screen-detail .streams-panel .stream .s-sub {
+      max-height: 49px !important;
+      font-size: 16px !important;
+      line-height: 23px !important;
+      white-space: pre-line !important;
+      overflow: hidden !important;
+      color: #c0c3cc !important;
+    }
+    #app #screen-detail .streams-panel .nf-stream-index {
+      position: absolute;
+      top: 13px;
+      right: 15px;
+      min-width: 25px;
+      text-align: right;
+      color: #b6b6c0;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    #app #screen-detail .streams-panel .nf-sources-guide {
+      padding: 10px 15px 13px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #44464e;
+      background: #191a20;
+      border-radius: 7px;
+      color: #eeeef0;
+    }
+    #app #screen-detail .streams-panel .nf-sources-guide-title {
+      font-size: 20px; font-weight: bold; margin-bottom: 6px;
+    }
+    #app #screen-detail .streams-panel .nf-sources-guide-note {
+      font-size: 16px; color: #b9bdc6;
+    }
+    /* Action chips scroll horizontally when there are many; Trailer is near Play. */
+    #app #screen-detail .detail-body .btn-row {
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      white-space: nowrap !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      padding-bottom: 8px !important;
+    }
+    #app #screen-detail .detail-body .trailer-pill {
+      border-color: #747883 !important;
+      font-weight: bold !important;
+    }
+    #app #screen-detail .detail-body .trailer-pill.focused {
+      border-color: #e50914 !important;
+    }
+    /* Photos returned by TMDB; initials only if a particular portrait is missing. */
+    #app #screen-detail .more-rows .person-card .poster {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #292b33;
+    }
+    #app #screen-detail .more-rows .person-card .person-fallback {
+      display: -webkit-flex;
+      display: flex;
+      -webkit-align-items: center;
+      align-items: center;
+      -webkit-justify-content: center;
+      justify-content: center;
+      font-size: 64px;
+      font-weight: bold;
+      background: #303641;
+      color: #d6d8df;
+    }
+    #app #screen-detail .more-rows .person-card .cap {
+      background: linear-gradient(transparent,rgba(0,0,0,.95));
+      color: white;
+    }
+    </style>
 </head>
 <body>
     <div id="nymind-boot" aria-label="Načítá se Nymind Cinema">
@@ -1741,10 +1857,10 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
     <script src="js/plex.js?v=2.4.3"></script>
     <script src="js/epg.js?v=2.4.3"></script>
     <script src="js/youtube.js?v=2.4.3"></script>
-    <script src="js/stremio.js?v=2.4.3"></script>
+    <script src="js/stremio.js?v=2.5.10"></script>
     <script src="js/trakt.js?v=2.4.3"></script>
     <script src="js/keys.js?v=2.4.3"></script>
-    <script src="js/focus.js?v=2.5.8"></script>
+    <script src="js/focus.js?v=2.5.10"></script>
     <script src="js/tvapps.js?v=2.4.3"></script>
     <script src="js/player-core.js?v=2.4.3"></script>
     <script src="js/player-store.js?v=2.4.3"></script>
@@ -1765,7 +1881,7 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
     <script src="js/view-core.js?v=2.5.9"></script>
     <script src="js/view-home.js?v=2.4.8"></script>
     <script src="js/view-guide.js?v=2.4.3"></script>
-    <script src="js/view-detail.js?v=2.5.9"></script>
+    <script src="js/view-detail.js?v=2.5.10"></script>
     <script src="js/view-search.js?v=2.5.0"></script>
     <script src="js/view-settings.js?v=2.4.3"></script>
     <script src="js/view-discover.js?v=2.4.3"></script>
