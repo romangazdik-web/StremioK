@@ -1,7 +1,7 @@
 {
   "name": "stremiok",
-  "version": "2.5.14",
-  "description": "Faster opening of titles using catalog previews; verified actor portraits from TMDB or key-free Wikipedia fallback; clean silhouette where no real photo exists.",
+  "version": "2.5.15",
+  "description": "Nymind Cinema for Samsung Tizen: fast title previews, Czech UI, Cinemeta genre suggestions, verified key-free actor biographies and selected filmographies; preserves existing portraits and player.",
   "packageType": "app",
   "appName": "StremioK",
   "appPath": "index.html",
