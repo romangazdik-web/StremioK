@@ -1049,7 +1049,7 @@
             if (hasCsAudio) { U.toast('YouTube uvádí českou audio stopu' + (height ? ' · ' + height + 'p' : '') + '.', 3000); }
             else if (hasCsSubs) { U.toast('České titulky dostupné v přehrávači' + (height ? ' · ' + height + 'p' : '') + '.', 3000); }
             else { U.toast((height ? 'Video ' + height + 'p. ' : '') + 'České titulky nejsou potvrzené.', 3000); }
-            playTrailer(id, title);
+            playTrailer(id, title, hasCsAudio ? 'cs' : '');
         });
     }
     // Manually search for a Czech trailer if neither TMDB nor the metadata addon
@@ -1158,16 +1158,17 @@
     }
 
     // label: what the trailer is of (an episode's or a season's), else the title's name
-    function playTrailer(ytId, label) {
+    function playTrailer(ytId, label, preferredAudio) {
         var page = 'https://www.youtube.com/watch?v=' + ytId;
+        var audio = preferredAudio || ytLangFor(page);
         var meta = _d.meta, still = pageNow();
         U.spinner(true, U.t('Opening trailer…'));
         YTPlay.ensureService().then(function () {
             U.spinner(false);
             if (!still()) { return; }
             Player.play({
-                url: YTPlay.resolverUrl(page, 1080, false, ytLangFor(page)), variantUrl: YTPlay.resolverUrl(page), initialQualityHeight: 1080,
-                ytLang: ytLangFor(page), type: _d.type, id: 'trailer:' + ytId, name: (label || meta.name || meta.title || '') + '  ·  ' + U.t('Trailer'),
+                url: YTPlay.resolverUrl(page, 1080, false, audio), variantUrl: YTPlay.resolverUrl(page), initialQualityHeight: 1080,
+                ytLang: audio, type: _d.type, id: 'trailer:' + ytId, name: (label || meta.name || meta.title || '') + '  ·  ' + U.t('Trailer'),
                 poster: meta.poster, streams: [], yt: page, trailer: true
             }, function () { _d._focusTrailer = true; drawDetail(); });   // back on the page, on the Trailer button
         }, function () {
