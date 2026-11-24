@@ -269,7 +269,7 @@
         // Distinct landing state: a movie is first a beautiful synopsis and actions,
         // not a list of unlabelled streaming sources.
         if (_d.type === 'movie' && _d.mode === 'info' && !_d.live && !_d.addonType) {
-            s.className += ' nf-movie-landing';
+            if ((' ' + s.className + ' ').indexOf(' nf-movie-landing ') === -1) { s.className += ' nf-movie-landing'; }
         } else {
             s.className = s.className.replace(/\s+nf-movie-landing/g, '');
         }
@@ -588,8 +588,10 @@
             }
             // Name-only addon credits should open the person's profile as well.
             var wanted = name.toLowerCase().replace(/\s+/g, ' ').trim();
+            var page = _d;
             U.spinner(true);
             Stremio.tmdbPeople(name, 1, pageCancel()).then(function (result) {
+                if (_d !== page) { return; }
                 U.spinner(false);
                 var people = (result && result.people) || [], found = null;
                 people.some(function (p) {
@@ -600,7 +602,10 @@
                 });
                 if (found && found.id) { App.openPerson(found.id, found.name); }
                 else { App.openSearch(); searchFor(name); }
-            }, function () { U.spinner(false); App.openSearch(); searchFor(name); });
+            }, function () {
+                if (_d !== page) { return; }
+                U.spinner(false); App.openSearch(); searchFor(name);
+            });
         };
         return c;
     }
@@ -735,6 +740,7 @@
     }
     function drawPerson() {
         var s = scr('detail');
+        s.className = s.className.replace(/\s+nf-movie-landing/g, '');
         U.clear(s);
         var p = _d.person;
         s.appendChild(U.el('div', 'detail-hero'));
@@ -1000,13 +1006,12 @@
             row.appendChild(playUpButton(up));
         }
         var tr = trailerPill(); if (tr) { row.appendChild(tr); }
+        var mp = morePill(); if (mp) { row.appendChild(mp); }
         var np = U.el('div', 'pill focusable', nowPlayingLabel('series', _d.meta.id || _d.id));
         np.__onselect = function () { toggleNowPlaying('series', _d.meta); _d._focusNp = true; drawDetail(); };
         if (_d._focusNp) { _d._epFocus = np; _d._focusNp = false; }
         row.appendChild(np);
         libraryPills('series', _d.meta.id || _d.id).forEach(function (lp) { row.appendChild(lp); });
-        var mp = morePill();
-        if (mp) { row.appendChild(mp); }
         var rp = ratingsPill();
         if (rp) { row.appendChild(rp); }
         var cp = csfdPill(); if (cp) { row.appendChild(cp); }
