@@ -62,7 +62,7 @@
             streamId: id, streamLabel: (preview && (preview.name || preview.title)) || '', streams: null,
             exitToBack: true, live: true, channels: channels || null };
         var s = scr('detail');
-        s.className = s.className.replace(/\s+nf-movie-landing/g, '');
+        s.className = s.className.replace(/\s+nf-movie-landing|\s+nf-series-landing|\s+nf-cast-view/g, '');
         U.clear(s);
         s.appendChild(U.el('div', 'detail-hero'));
         s.appendChild(buildTopMenu('detail'));
@@ -269,10 +269,10 @@
 
         // Distinct landing state: a movie is first a beautiful synopsis and actions,
         // not a list of unlabelled streaming sources.
-        if (_d.type === 'movie' && _d.mode === 'info' && !_d.live && !_d.addonType) {
-            if ((' ' + s.className + ' ').indexOf(' nf-movie-landing ') === -1) { s.className += ' nf-movie-landing'; }
-        } else {
-            s.className = s.className.replace(/\s+nf-movie-landing/g, '');
+        s.className = s.className.replace(/\s+nf-movie-landing|\s+nf-series-landing/g, '');
+        if (_d.mode === 'info' && !_d.live && !_d.addonType) {
+            if (_d.type === 'movie') { s.className += ' nf-movie-landing'; }
+            else if (_d.type === 'series') { s.className += ' nf-series-landing'; }
         }
         s.className = s.className.replace(/\s+nf-cast-view/g, '');
         if (_d.mode === 'more') { s.className += ' nf-cast-view'; }
@@ -293,8 +293,8 @@
 
         var body = U.el('div', 'detail-body');
         body.__noScroll = true;   // clipped, never scrolled: the text doesn't shift when focus reaches the buttons
-        if (_d.type === 'movie' && _d.mode === 'info' && !_d.live && !_d.addonType) {
-            body.appendChild(U.el('div', 'nf-detail-eyebrow', 'NYMIND CINEMA  /  FILM'));
+        if (_d.mode === 'info' && !_d.live && !_d.addonType && (_d.type === 'movie' || _d.type === 'series')) {
+            body.appendChild(U.el('div', 'nf-detail-eyebrow', 'NYMIND CINEMA  /  ' + (_d.type === 'movie' ? 'FILM' : 'SERIÁL')));
         }
         body.appendChild(titleNode(meta));
         var ep = shownEpisode();   // (an episode's page: its sources, or its Cast & more)
@@ -525,8 +525,8 @@
             tmdbNotice(rows, Stremio.hasTmdb && Stremio.hasTmdb() ?
                 'Pro tento typ obsahu není dostupné rozšířené TMDB. Zobrazují se údaje od poskytovatele.' :
                 'TMDB není v této instalaci Nymind Cinema nastavené. Bez vlastního TMDB v3 API klíče se zobrazují jen jména herců bez fotografií a doporučení.', Stremio.hasTmdb && Stremio.hasTmdb() ? null : 'settings');
-            appendBasicFacts(rows, page.meta);
             if (!theirs()) { rows.appendChild(U.el('div', 'row-empty', 'Pro tento titul nejsou další herci uvedeni.')); }
+            appendBasicFacts(rows, page.meta);
             focusLoaded(rows); return panel;
         }
         if (ep && /^tt\d+$/.test(page.id || '')) {   // an episode's: its own people (the show's when TMDB has nothing for it)
@@ -553,7 +553,12 @@
         metadata.then(function (x) {
             if (_d !== page || _d.mode !== 'more') { return; }
             U.clear(rows);
-            appendBasicFacts(rows, page.meta);
+            var richCast = !!(x && x.cast && x.cast.length);
+            if (richCast) {
+                rows.appendChild(U.el('div', 'nf-cast-hint', 'HERCI A TVŮRCI  ·  OK = profil a filmografie  ·  šipkami zobrazíš další'));
+                rows.appendChild(buildRow('Herci a tvůrci', x.cast.map(personCard)));
+            }
+            var own = !richCast && theirs();
             if (x && x.facts) {
                 var f = x.facts;
                 var info = [f.original ? 'Originální název: ' + f.original : '',
@@ -572,11 +577,7 @@
                 if (info.length) { rows.appendChild(U.el('div', 'nf-more-facts', info.join('    ·    '))); }
                 if (f.tagline) { rows.appendChild(U.el('div', 'nf-tmdb-tagline', '„' + f.tagline + '“')); }
             }
-            if (x && x.cast && x.cast.length) {
-                rows.appendChild(U.el('div', 'nf-cast-hint', 'HERCI A TVŮRCI   ·   OK = profil, fotografie a filmografie   ·   ↓ = další obsah'));
-                rows.appendChild(buildRow('Herci a tvůrci', x.cast.map(personCard)));
-            }
-            var own = !(x && x.cast && x.cast.length) && theirs();
+            appendBasicFacts(rows, page.meta);
             if (x && x.collection && x.collection.parts && x.collection.parts.length) {
                 rows.appendChild(buildRow('Filmy ze stejné série', x.collection.parts.map(tmdbCard)));
             }
@@ -594,9 +595,9 @@
         }, function (err) {
             if (_d !== page || (err && err.cancelled)) { return; }
             U.clear(rows);
-            appendBasicFacts(rows, page.meta);
             tmdbNotice(rows, 'Nepodařilo se spojit s TMDB. Zkontroluj internet, platnost TMDB v3 klíče nebo zkus vyhledávání zopakovat.', 'retry');
             var fallback = theirs();
+            appendBasicFacts(rows, page.meta);
             if (!fallback) { rows.appendChild(U.el('div', 'row-empty', 'Od poskytovatele nejsou dostupné další informace.')); }
             focusLoaded(rows);
         });
@@ -821,7 +822,7 @@
     }
     function drawPerson() {
         var s = scr('detail');
-        s.className = s.className.replace(/\s+nf-movie-landing/g, '');
+        s.className = s.className.replace(/\s+nf-movie-landing|\s+nf-series-landing|\s+nf-cast-view/g, '');
         U.clear(s);
         var p = _d.person;
         s.appendChild(U.el('div', 'detail-hero'));
