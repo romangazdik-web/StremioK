@@ -1,7 +1,7 @@
 {
   "name": "stremiok",
-  "version": "2.5.13",
-  "description": "Nymind Cinema fullscreen TV details and cast: rich TMDB facts, portraits and recommendations when key available, explicit setup/retry when not.",
+  "version": "2.5.14",
+  "description": "Faster opening of titles using catalog previews; verified actor portraits from TMDB or key-free Wikipedia fallback; clean silhouette where no real photo exists.",
   "packageType": "app",
   "appName": "StremioK",
   "appPath": "index.html",
