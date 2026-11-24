@@ -517,7 +517,7 @@
         // the addon's people: where TMDB has none (or there's no TMDB key); true if there were any
         function theirs() {
             var added = appendAddonPeople(rows, page.meta);
-            if (added && Stremio.hasTmdb && Stremio.hasTmdb()) { enrichAddonPeople(rows, page); }
+            if (added) { enrichAddonPeople(rows, page); }
             return added;
         }
         if (!withTmdb()) {
@@ -658,8 +658,8 @@
         var c = U.el('div', 'card person-card focusable');
         c.setAttribute('data-id', 'name:' + name);
         c.setAttribute('data-person-name', name);
-        var initials = name.split(/\s+/).slice(0, 2).map(function (part) { return part.charAt(0).toUpperCase(); }).join('');
-        c.appendChild(U.el('div', 'fallback person-fallback', initials || '?'));
+        // The anonymous silhouette is intentional only when no verified image exists.
+        c.appendChild(U.el('div', 'fallback person-fallback nf-person-silhouette'));
         var cap = U.el('div', 'cap');
         cap.appendChild(U.el('div', 'cap-name', name));
         if (role) { cap.appendChild(U.el('div', 'cap-sub', role)); }
@@ -691,44 +691,53 @@
         };
         return c;
     }
-    // If the metadata addon supplies names only, enrich a few visible actors lazily.
-    // Never flood an older Tizen TV with dozens of parallel portrait searches.
+    // Keep a visible fallback portrait until the real image has loaded. No
+    // synthetic faces or guessed photographs of an unrelated person.
+    function attachPortrait(card, url) {
+        if (!card || !card.parentNode || card.querySelector('img.poster')) { return; }
+        var src = U.cardImage(url, 'cast');
+        if (!src) { return; }
+        var fallback = card.querySelector('.fallback');
+        var img = U.el('img', 'poster');
+        img.onload = function () { if (fallback) { fallback.style.display = 'none'; } };
+        img.onerror = function () { img.style.display = 'none'; };
+        card.insertBefore(img, fallback || card.firstChild);
+        U.deferImage(img, src, true);
+    }
+
+    // Key-free Wikipedia photo as fallback. For an exact actor/director name
+    // Wikipedia returns a verified biography portrait; for other people,
+    // preserve the clean anonymous silhouette. At most two requests at once.
     function enrichAddonPeople(container, page) {
-        if (!Stremio.tmdbPeople || !Stremio.hasTmdb || !Stremio.hasTmdb()) { return; }
         var cards = container.querySelectorAll('.person-card[data-person-name]');
-        var limit = Math.min(8, cards.length), next = 0, active = 0;
+        var limit = Math.min(10, cards.length), next = 0, active = 0;
+        if (!Stremio.wikiPersonPhoto && !(Stremio.hasTmdb && Stremio.hasTmdb())) { return; }
         function pump() {
-            if (_d !== page || _d.mode !== 'more') { return; }
+            if (_d !== page || page.mode !== 'more') { return; }
             while (active < 2 && next < limit) {
                 (function (card) {
                     active++;
                     var name = card.getAttribute('data-person-name') || '';
-                    Stremio.tmdbPeople(name, 1, pageCancel()).then(function (result) {
-                        if (_d !== page || _d.mode !== 'more') { return; }
-                        var want = name.toLowerCase().replace(/\s+/g, ' ').trim();
-                        var people = (result && result.people) || [];
-                        var found = null;
-                        people.some(function (p) {
-                            if (p && (p.name || '').toLowerCase().replace(/\s+/g, ' ').trim() === want) {
-                                found = p; return true;
-                            }
-                            return false;
-                        });
-                        if (!found || !found.id) { return; }
-                        card.setAttribute('data-id', 'person:' + found.id);
-                        card.__onselect = function () { App.openPerson(found.id, found.name); };
-                        if (found.photo) {
-                            var src = U.cardImage(found.photo, 'cast');
-                            if (src) {
-                                var fallback = card.querySelector('.fallback');
-                                var img = U.el('img', 'poster');
-                                img.onload = function () { if (fallback) { fallback.style.display = 'none'; } };
-                                img.onerror = function () { img.style.display = 'none'; };
-                                card.insertBefore(img, fallback || card.firstChild);
-                                U.deferImage(img, src);
-                            }
-                        }
-                    }, function () {}).then(function () { active--; pump(); });
+                    var hasTmdb = Stremio.hasTmdb && Stremio.hasTmdb() && Stremio.tmdbPeople;
+                    var wiki = Stremio.wikiPersonPhoto ? Stremio.wikiPersonPhoto(name) : Promise.resolve('');
+                    wiki.then(function (photo) {
+                        if (_d !== page || page.mode !== 'more') { return null; }
+                        if (photo) { attachPortrait(card, photo); return null; }
+                        if (!hasTmdb) { return null; }
+                        return Stremio.tmdbPeople(name, 1, pageCancel()).then(function (result) {
+                            if (_d !== page || page.mode !== 'more') { return; }
+                            var want = name.toLowerCase().replace(/\s+/g, ' ').trim();
+                            var people = (result && result.people) || [], found = null;
+                            people.some(function (p) {
+                                if (p && (p.name || '').toLowerCase().replace(/\s+/g, ' ').trim() === want) { found = p; return true; }
+                                return false;
+                            });
+                            if (!found || !found.id) { return; }
+                            card.setAttribute('data-id', 'person:' + found.id);
+                            card.__onselect = function () { App.openPerson(found.id, found.name); };
+                            if (found.photo) { attachPortrait(card, found.photo); }
+                        }, function () {});
+                    }, function () {}).then(function () { active--; pump(); }, function () { active--; pump(); });
                 })(cards[next++]);
             }
         }
@@ -753,12 +762,12 @@
             var img = U.el('img', 'poster');
             img.onerror = function () {
                 img.style.display = 'none';
-                if (!c.querySelector('.fallback')) { c.insertBefore(U.el('div', 'fallback person-fallback', (p.name || '?').slice(0, 1).toUpperCase()), c.firstChild); }
+                if (!c.querySelector('.fallback')) { c.insertBefore(U.el('div', 'fallback person-fallback nf-person-silhouette'), c.firstChild); }
             };
             c.appendChild(img);
             U.deferImage(img, photo);
         } else {
-            c.appendChild(U.el('div', 'fallback person-fallback', (p.name || '?').slice(0, 1).toUpperCase()));
+            c.appendChild(U.el('div', 'fallback person-fallback nf-person-silhouette'));
         }
         var cap = U.el('div', 'cap');
         cap.appendChild(U.el('div', 'cap-name', p.name));
