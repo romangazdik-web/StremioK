@@ -439,7 +439,11 @@
         var page = _d;
         var ep = shownEpisode();
         // the addon's people: where TMDB has none (or there's no TMDB key); true if there were any
-        function theirs() { return appendAddonPeople(rows, page.meta); }
+        function theirs() {
+            var added = appendAddonPeople(rows, page.meta);
+            if (added && Stremio.hasTmdb && Stremio.hasTmdb()) { enrichAddonPeople(rows, page); }
+            return added;
+        }
         if (!withTmdb()) { U.clear(rows); theirs(); focusLoaded(rows); return panel; }
         if (ep && /^tt\d+$/.test(page.id || '')) {   // an episode's: its own people (the show's when TMDB has nothing for it)
             Stremio.tmdbEpisodeCast(page.id, seasonOf(ep), ep.episode).then(function (people) {
@@ -464,6 +468,11 @@
         metadata.then(function (x) {
             if (_d !== page || _d.mode !== 'more') { return; }
             U.clear(rows);
+            if (x && x.facts) {
+                var info = [x.facts.year ? 'Rok: ' + x.facts.year : '', x.facts.rating ? 'TMDB: ' + x.facts.rating + '/10' : '',
+                    x.facts.genre || '', x.facts.original ? 'Originální název: ' + x.facts.original : ''].filter(Boolean);
+                if (info.length) { rows.appendChild(U.el('div', 'nf-more-facts', info.join('    ·    '))); }
+            }
             if (x && x.cast && x.cast.length) {
                 rows.appendChild(U.el('div', 'nf-cast-hint', 'HERCI A TVŮRCI   ·   OK = profil, fotografie a filmografie   ·   ↓ = další obsah'));
                 rows.appendChild(buildRow('Herci a tvůrci', x.cast.map(personCard)));
@@ -528,6 +537,7 @@
     function namedPersonCard(name, role) {
         var c = U.el('div', 'card person-card focusable');
         c.setAttribute('data-id', 'name:' + name);
+        c.setAttribute('data-person-name', name);
         c.appendChild(U.el('div', 'fallback', name));
         var cap = U.el('div', 'cap');
         cap.appendChild(U.el('div', 'cap-name', name));
@@ -535,6 +545,49 @@
         c.appendChild(cap);
         c.__onselect = function () { App.openSearch(); searchFor(name); };
         return c;
+    }
+    // If the metadata addon supplies names only, enrich a few visible actors lazily.
+    // Never flood an older Tizen TV with dozens of parallel portrait searches.
+    function enrichAddonPeople(container, page) {
+        if (!Stremio.tmdbPeople || !Stremio.hasTmdb || !Stremio.hasTmdb()) { return; }
+        var cards = container.querySelectorAll('.person-card[data-person-name]');
+        var limit = Math.min(8, cards.length), next = 0, active = 0;
+        function pump() {
+            if (_d !== page || _d.mode !== 'more') { return; }
+            while (active < 2 && next < limit) {
+                (function (card) {
+                    active++;
+                    var name = card.getAttribute('data-person-name') || '';
+                    Stremio.tmdbPeople(name, 1, pageCancel()).then(function (result) {
+                        if (_d !== page || _d.mode !== 'more') { return; }
+                        var want = name.toLowerCase().replace(/\\s+/g, ' ').trim();
+                        var people = (result && result.people) || [];
+                        var found = null;
+                        people.some(function (p) {
+                            if (p && (p.name || '').toLowerCase().replace(/\\s+/g, ' ').trim() === want) {
+                                found = p; return true;
+                            }
+                            return false;
+                        });
+                        if (!found || !found.id) { return; }
+                        card.setAttribute('data-id', 'person:' + found.id);
+                        card.__onselect = function () { App.openPerson(found.id, found.name); };
+                        if (found.photo) {
+                            var src = U.cardImage(found.photo, 'cast');
+                            if (src) {
+                                var fallback = card.querySelector('.fallback');
+                                var img = U.el('img', 'poster');
+                                img.onload = function () { if (fallback) { fallback.style.display = 'none'; } };
+                                img.onerror = function () { img.style.display = 'none'; };
+                                card.insertBefore(img, fallback || card.firstChild);
+                                U.deferImage(img, src);
+                            }
+                        }
+                    }, function () {}).then(function () { active--; pump(); });
+                })(cards[next++]);
+            }
+        }
+        pump();
     }
     // Rows that arrive after the page is drawn: focus their first card (or, coming back to
     // this page, the card you left from).
