@@ -522,10 +522,24 @@
         return p;
     }
 
+    // Optional Cinemeta genre matches, loaded after the film and cast.
+    function loadGenreRecommendations(rows, page) {
+        if (!Stremio.genreRecommendations || !page || !page.meta) { return; }
+        var own = addonLinks(page.meta), meta = Object.assign({}, page.meta);
+        if (!Array.isArray(meta.genres) || !meta.genres.length) { meta.genres = own.genres; }
+        if (!meta.genres || !meta.genres.length) { return; }
+        Stremio.genreRecommendations(page.type, page.id, meta, pageCancel()).then(function (items) {
+            if (_d !== page || page.mode !== 'more' || !rows.parentNode || !items || !items.length) { return; }
+            rows.appendChild(buildRow('Ze stejného žánru · ' + meta.genres[0], items.map(function (m) {
+                return posterCard(m, page.type);
+            })));
+        }, function () {});
+    }
+
     function morePanel() {
         var panel = U.el('div', 'list-panel more-panel');
         var rows = U.el('div', 'more-rows');
-        rows.appendChild(U.el('div', 'row-empty', 'Načítám fotografie herců, tvůrce a podobné tituly z TMDB…'));
+        rows.appendChild(U.el('div', 'row-empty', 'Načítám herce a doplňující informace…'));
         panel.appendChild(rows);
         var page = _d;
         var ep = shownEpisode();
@@ -537,11 +551,9 @@
         }
         if (!withTmdb()) {
             U.clear(rows);
-            tmdbNotice(rows, Stremio.hasTmdb && Stremio.hasTmdb() ?
-                'Pro tento typ obsahu není dostupné rozšířené TMDB. Zobrazují se údaje od poskytovatele.' :
-                'TMDB v3 API klíč není v této instalaci nastavený. Fotografie herců zkouším doplnit z ověřených profilů Wikipedie; pro úplné obsazení a podobné tituly je potřeba platný TMDB API klíč.', Stremio.hasTmdb && Stremio.hasTmdb() ? null : 'settings');
-            if (!theirs()) { rows.appendChild(U.el('div', 'row-empty', 'Pro tento titul nejsou další herci uvedeni.')); }
+            if (!theirs()) { rows.appendChild(U.el('div', 'row-empty', 'Obsazení zatím není v metadatech dostupné.')); }
             appendBasicFacts(rows, page.meta);
+            loadGenreRecommendations(rows, page);
             focusLoaded(rows); return panel;
         }
         if (ep && /^tt\d+$/.test(page.id || '')) {   // an episode's: its own people (the show's when TMDB has nothing for it)
@@ -598,7 +610,7 @@
             }
             if (x && x.similar && x.similar.length) {
                 rows.appendChild(buildRow('Podobné filmy a seriály', x.similar.map(tmdbCard)));
-            }
+            } else { loadGenreRecommendations(rows, page); }
             if (!x) { tmdbNotice(rows, 'Tento film nebo seriál se nepodařilo jednoznačně dohledat v TMDB podle názvu či identifikátoru. Jména jsou z doplňku.', 'retry'); }
             else if ((!x.cast || !x.cast.length) && (!x.similar || !x.similar.length)) {
                 tmdbNotice(rows, 'TMDB pro tento konkrétní titul neuvádí fotografie herců ani podobné filmy.', null);
@@ -614,6 +626,7 @@
             var fallback = theirs();
             appendBasicFacts(rows, page.meta);
             if (!fallback) { rows.appendChild(U.el('div', 'row-empty', 'Od poskytovatele nejsou dostupné další informace.')); }
+            loadGenreRecommendations(rows, page);
             focusLoaded(rows);
         });
         return panel;
