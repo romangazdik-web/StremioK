@@ -2311,12 +2311,12 @@
     function filterPill(kind, rows) {
         var f = filterOf(), opts = filterOptions(kind, rows);
         if (opts.length < 2 && !f[kind]) { return null; }   // (no choice to make)
-        var label = kind === 'addon' ? U.t('Addon: {which}', { which: f.addon || U.t('All') }) : U.t('Resolution: {which}', { which: f.res ? GROUP_TITLES[f.res] : U.t('All') });
+        var label = kind === 'addon' ? U.t('Addon: {which}', { which: f.addon || 'Vše' }) : U.t('Resolution: {which}', { which: f.res ? GROUP_TITLES[f.res] : 'Vše' });
         var p = U.el('div', 'pill focusable filter-pill', label + '  ▾');
         if (_d._focusPill === 'filter-' + kind) { _d._epFocus = p; _d._focusPill = null; }
         p.__onselect = function () {
             var total = rows.filter(function (r) { return matchFilter(r, filterOf(), kind) && (kind === 'addon' || r.group !== 'where'); }).length;
-            pickList(kind === 'addon' ? U.t('Sources from') : U.t('Resolution'), [['', U.t('All') + '  ·  ' + total]].concat(opts.map(function (o) { return [o[0], o[1] + '  ·  ' + o[2]]; })), f[kind], function (k) {
+            pickList(kind === 'addon' ? 'Zdroje od doplňku' : 'Rozlišení', [['', 'Vše' + '  ·  ' + total]].concat(opts.map(function (o) { return [o[0], o[1] + '  ·  ' + o[2]]; })), f[kind], function (k) {
                 var now = filterOf();
                 _d.filter = { addon: kind === 'addon' ? k : now.addon, res: kind === 'res' ? k : now.res };
                 _d._focusPill = 'filter-' + kind;
@@ -2340,12 +2340,12 @@
         // ▶ Play best: the top of the ranking (focused when the page opens), within the filter
         var best = allRows.length ? bestRow(filterRows(allRows)) : null;
         if (best) {
-            var pb = U.el('div', 'pill focusable play-best', '▶  ' + (howHere() ? U.t('Play best from the start') : U.t('Play best')) + '  ·  ' + describeRow(best));
+            var pb = U.el('div', 'pill focusable play-best', '▶  ' + (howHere() ? 'Přehrát nejlepší od začátku' : 'Přehrát nejlepší') + '  ·  ' + describeRow(best));
             pb.__onselect = function () { startPlayback(best.st, _d.streamId, _d.streamLabel || _d.meta.name, howHere()); };
             var place = !howHere() && savedPlace(_d.streamId);
             if (place) {   // hold OK: resuming, or from the start
                 pb.__onlongpress = function () {
-                    pickList(_d.streamLabel || _d.meta.name || '', [['resume', U.t('Play best, resuming at {at}', { at: U.fmtTime(place.position) })], ['start', U.t('Play best from the start')]], null, function (k) {
+                    pickList(_d.streamLabel || _d.meta.name || '', [['resume', U.t('Play best, resuming at {at}', { at: U.fmtTime(place.position) })], ['start', 'Přehrát nejlepší od začátku']], null, function (k) {
                         startPlayback(best.st, _d.streamId, _d.streamLabel || _d.meta.name, k === 'start' ? { fromStart: true } : null);
                     });
                 };
@@ -2380,11 +2380,11 @@
         var panel = U.el('div', 'list-panel streams-panel');
         var listScroll = U.el('div', 'list-scroll');
         if (_d.streams === null) {
-            panel.appendChild(U.el('div', 'detail-meta', U.t('Loading sources…')));
+            panel.appendChild(U.el('div', 'detail-meta', 'Načítám zdroje…'));
             return panel;
         }
         if (!_d.streams.length) {   // (asked again from here: an addon may have been slow or down)
-            var none = U.el('div', 'detail-meta no-sources', Stremio.hasStreamAddons && !Stremio.hasStreamAddons() ? U.t('No sources found. Add a stream addon in Settings.') : U.t('No sources found.'));
+            var none = U.el('div', 'detail-meta no-sources', Stremio.hasStreamAddons && !Stremio.hasStreamAddons() ? 'Nebyly nalezeny zdroje. Přidej doplněk pro přehrávání v Nastavení.' : 'Nebyly nalezeny žádné zdroje.');
             if (_d.embedded) { panel.appendChild(none); return panel; }
             listScroll.appendChild(none);   // (in the list, above Re-scan: the list sits at the panel's top)
             (Stremio.streamNotes ? Stremio.streamNotes(addonType(), _d.streamId) : []).forEach(function (n) {   // (why, when an addon says: AIOStreams)
@@ -2394,8 +2394,8 @@
                 listScroll.appendChild(note);
             });
             var again = U.el('div', 'stream focusable rescan-row');
-            again.appendChild(document.createTextNode(U.t('↻  Re-scan for sources')));
-            again.appendChild(U.el('span', 's-sub', U.t('Ask all stream addons again')));
+            again.appendChild(document.createTextNode('↻  Obnovit zdroje'));
+            again.appendChild(U.el('span', 's-sub', 'Znovu načíst ze všech doplňků'));
             again.__onselect = function () { rescanStreams(); };
             if (!_d._epFocus) { _d._epFocus = again; }
             listScroll.appendChild(again);
@@ -2519,8 +2519,8 @@
         // file's own embedded stream, which no stream addon provides.
         if (!_d.embedded) {
             rescan = U.el('div', 'stream focusable rescan-row');
-            rescan.appendChild(document.createTextNode(U.t('↻  Re-scan for sources')));
-            rescan.appendChild(U.el('span', 's-sub', U.t('Refresh the list from all stream addons')));
+            rescan.appendChild(document.createTextNode('↻  Obnovit zdroje'));
+            rescan.appendChild(U.el('span', 's-sub', 'Obnovit seznam ze všech doplňků'));
             rescan.__onselect = function () { rescanStreams(); };
             listScroll.appendChild(rescan);
         }
