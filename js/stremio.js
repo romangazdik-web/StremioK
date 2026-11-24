@@ -1461,6 +1461,66 @@ var Stremio = (function () {
         return task;
     }
 
+    // Actor profiles without a TMDB account. Wikipedia provides the portrait and
+    // short verified biography; no guesses from name-only title searches.
+    var _wikiProfiles = U.lru(45);
+    function wikiPersonProfile(name, cancel) {
+        name = ('' + (name || '')).replace(/\s+/g, ' ').trim();
+        if (!name || name.length > 90) { return Promise.resolve(null); }
+        var key = 'person:' + name.toLowerCase(), cached = _wikiProfiles.get(key);
+        if (cached) { return cached; }
+        function read(lang) {
+            var url = 'https://' + lang + '.wikipedia.org/w/api.php?action=query&format=json&formatversion=2&origin=*&redirects=1' +
+                '&prop=description%7Cpageimages%7Cextracts%7Cpageprops&piprop=thumbnail&pithumbsize=420' +
+                '&exintro=1&explaintext=1&exsentences=8&titles=' + encodeURIComponent(name);
+            return U.getJSON(url, 6500, undefined, cancel, null, null, true).then(function (res) {
+                var p = (((res || {}).query || {}).pages || [])[0];
+                if (!p || p.missing) { return null; }
+                var title = (p.title || '').replace(/\s*\([^)]*\)$/, '').toLowerCase().trim();
+                if (title !== name.toLowerCase()) { return null; }
+                var desc = p.description || '';
+                if (!/actor|actress|filmmaker|film director|performer|actriz|director|herec|herečka|režisér|režisérka/i.test(desc)) { return null; }
+                return { name: name, photo: (p.thumbnail && p.thumbnail.source) || '',
+                    bio: (p.extract || '').slice(0, 2800), meta: desc,
+                    wiki: lang, qid: (p.pageprops && p.pageprops.wikibase_item) || '',
+                    movies: [], series: [] };
+            }, function () { return null; });
+        }
+        var task = read('cs').then(function (p) { return p || read('en'); })
+            .then(function (p) { return p || read('es'); })
+            .then(function (p) { return p; }, function () { return null; });
+        _wikiProfiles.set(key, task);
+        return task;
+    }
+
+    // Optional selected acting filmography from Wikidata, limited to verified
+    // IMDb movie IDs. It is not a complete filmography and never blocks the profile.
+    var _wikiCredits = U.lru(32);
+    function wikiFilmography(qid, cancel) {
+        if (!/^Q\d+$/.test(qid || '')) { return Promise.resolve([]); }
+        var cached = _wikiCredits.get(qid);
+        if (cached) { return cached; }
+        var sparql = 'SELECT ?item ?itemLabel ?imdb ?date WHERE { ' +
+            '?item wdt:P161 wd:' + qid + ' ; wdt:P31 wd:Q11424 ; wdt:P345 ?imdb . ' +
+            'OPTIONAL { ?item wdt:P577 ?date . } ' +
+            'SERVICE wikibase:label { bd:serviceParam wikibase:language "cs,en". } ' +
+            '} ORDER BY DESC(?date) LIMIT 16';
+        var url = 'https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(sparql);
+        var task = U.getJSON(url, 7500, undefined, cancel, null, null, true).then(function (res) {
+            var seen = {}, out = [], rows = (((res || {}).results || {}).bindings || []);
+            rows.forEach(function (r) {
+                var imdb = r.imdb && r.imdb.value, name = r.itemLabel && r.itemLabel.value;
+                if (!/^tt\d+$/.test(imdb || '') || !name || seen[imdb]) { return; }
+                seen[imdb] = true;
+                out.push({ id: imdb, type: 'movie', name: name.slice(0, 100),
+                    releaseInfo: r.date && r.date.value ? r.date.value.slice(0, 4) : '' });
+            });
+            return out;
+        }, function () { return []; });
+        _wikiCredits.set(qid, task);
+        return task;
+    }
+
     // imdb id (tt..) -> TMDB id of a 'movie' or 'tv' title (null: not on TMDB, or unreachable).
     function tmdbFind(imdbId, kind, cancel) {
         if (!tmdbKey() || !imdbId) { return Promise.resolve(null); }
@@ -2634,7 +2694,7 @@ var Stremio = (function () {
         getIntroSegments: getIntroSegments, tmdbFind: tmdbFind,
         tmdbValidate: tmdbValidate, mdblistValidate: mdblistValidate, omdbValidate: omdbValidate,
         tmdbFindTvId: tmdbFindTvId, tmdbSeasonEpisodes: tmdbSeasonEpisodes, tmdbImg: tmdbImg,
-        wikiPersonPhoto: wikiPersonPhoto, tmdbTitleExtras: tmdbTitleExtras, tmdbTitleExtrasByName: tmdbTitleExtrasByName, tmdbTitleExtrasForMeta: tmdbTitleExtrasForMeta, tmdbExtrasById: tmdbExtrasById, tmdbEpisodeCast: tmdbEpisodeCast, tmdbEpisodeTrailer: tmdbEpisodeTrailer, setHideWords: setHideWords, hideWordHit: hideWordHit, normalizeAddonUrl: normalizeManifestUrl, debridOf: debridOf, addonOrigin: addonOrigin, setAddonOrigin: setAddonOrigin, parseSetupList: parseSetupList, applySetupEntries: applySetupEntries, exportGroups: exportGroups, exportSetup: exportSetup, sizeLimitHit: sizeLimitHit, setSizeLimit: setSizeLimit, gbText: gbText, runtimeMinutes: runtimeMinutes, tmdbPeople: tmdbPeople, tmdbPerson: tmdbPerson, tmdbBrowse: tmdbBrowse, tmdbTitleTrailers: tmdbTitleTrailers, tmdbProviders: tmdbProviders, tmdbProvidersKept: tmdbProvidersKept, tmdbGenres: tmdbGenres, tmdbWhereToWatch: tmdbWhereToWatch, watchRegion: watchRegion, autoWatchRegion: autoWatchRegion, tmdbImdbId: tmdbImdbId, findFilm: findFilm, hasTmdb: function () { return !!tmdbKey(); },
+        wikiPersonPhoto: wikiPersonPhoto, wikiPersonProfile: wikiPersonProfile, wikiFilmography: wikiFilmography, tmdbTitleExtras: tmdbTitleExtras, tmdbTitleExtrasByName: tmdbTitleExtrasByName, tmdbTitleExtrasForMeta: tmdbTitleExtrasForMeta, tmdbExtrasById: tmdbExtrasById, tmdbEpisodeCast: tmdbEpisodeCast, tmdbEpisodeTrailer: tmdbEpisodeTrailer, setHideWords: setHideWords, hideWordHit: hideWordHit, normalizeAddonUrl: normalizeManifestUrl, debridOf: debridOf, addonOrigin: addonOrigin, setAddonOrigin: setAddonOrigin, parseSetupList: parseSetupList, applySetupEntries: applySetupEntries, exportGroups: exportGroups, exportSetup: exportSetup, sizeLimitHit: sizeLimitHit, setSizeLimit: setSizeLimit, gbText: gbText, runtimeMinutes: runtimeMinutes, tmdbPeople: tmdbPeople, tmdbPerson: tmdbPerson, tmdbBrowse: tmdbBrowse, tmdbTitleTrailers: tmdbTitleTrailers, tmdbProviders: tmdbProviders, tmdbProvidersKept: tmdbProvidersKept, tmdbGenres: tmdbGenres, tmdbWhereToWatch: tmdbWhereToWatch, watchRegion: watchRegion, autoWatchRegion: autoWatchRegion, tmdbImdbId: tmdbImdbId, findFilm: findFilm, hasTmdb: function () { return !!tmdbKey(); },
         mdblistRatings: mdblistRatings,
         omdbSeasonRatings: omdbSeasonRatings,
         loadAddons: loadAddons, listCatalogs: listCatalogs, getCatalog: getCatalog,
