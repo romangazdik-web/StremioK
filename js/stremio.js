@@ -1455,9 +1455,12 @@ var Stremio = (function () {
     // Avoid choosing a different film when only a fuzzy search result exists.
     function tmdbTitleExtrasByName(type, title, year, cancel) {
         var kind = type === 'series' ? 'tv' : 'movie', q = ('' + (title || '')).trim();
-        var yr = parseInt(year, 10) || 0;
+        var embeddedYear = q.match(/\s*\((19|20)\d{2}\)\s*$/);
+        var yr = parseInt(year, 10) || (embeddedYear ? parseInt(embeddedYear[0].replace(/[^\d]/g, ''), 10) : 0);
+        if (embeddedYear) { q = q.slice(0, embeddedYear.index).trim(); }
         if (!tmdbKey() || !q || q.length > 140) { return Promise.resolve(null); }
-        var suffix = '&query=' + encodeURIComponent(q) + (yr ? '&' + (kind === 'movie' ? 'year' : 'first_air_date_year') + '=' + yr : '');
+        var suffix = '&query=' + encodeURIComponent(q) + '&language=cs-CZ' +
+            (yr ? '&' + (kind === 'movie' ? 'year' : 'first_air_date_year') + '=' + yr : '');
         function norm(x) {
             x = ('' + (x || '')).toLowerCase();
             if (x.normalize) { try { x = x.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); } catch (e) {} }
