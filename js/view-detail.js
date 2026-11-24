@@ -1019,6 +1019,36 @@
             if (still()) { U.toast(YTPlay.unavailableMessage('trailer'), 6000); }
         });
     }
+    // Validate quality for manually found YouTube trailers without loading extra
+    // video probes for every poster. The embedded YouTube service returns an HLS master.
+    function previewSearchedTrailer(id, title) {
+        if (!/^[A-Za-z0-9_-]{11}$/.test(id)) { return; }
+        var page = _d, youtube = 'https://www.youtube.com/watch?v=' + id;
+        U.spinner(true, 'Ověřuji rozlišení a české titulky…');
+        var master = U.getText(YTPlay.resolverUrl(youtube), 22000, 524288, null, true).then(function (t) {
+            var max = 0, re = /RESOLUTION=\d+x(\d+)/g, m;
+            while ((m = re.exec(t || '')) !== null) { if (+m[1] > max) { max = +m[1]; } }
+            return max;
+        }, function () { return 0; });
+        var info = U.getJSON(YTPlay.infoUrl(youtube), 22000, 524288, null, true).then(function (r) {
+            return r || null;
+        }, function () { return null; });
+        Promise.all([master, info]).then(function (both) {
+            U.spinner(false);
+            if (page !== _d) { return; }
+            var height = both[0], metadata = both[1] || {};
+            if (height && height < 720) {
+                U.toast('Tento trailer má pouze ' + height + 'p. Vyber jiný, aby byl aspoň HD.', 5000);
+                return;
+            }
+            var hasCsSubs = (metadata.captions || []).some(function (c) { return /^cs(?:-|$)/i.test(c.lang || ''); });
+            var hasCsAudio = (metadata.audio || []).some(function (a) { return /^cs(?:-|$)/i.test(a.lang || ''); });
+            if (hasCsAudio) { U.toast('YouTube uvádí českou audio stopu' + (height ? ' · ' + height + 'p' : '') + '.', 3000); }
+            else if (hasCsSubs) { U.toast('České titulky dostupné v přehrávači' + (height ? ' · ' + height + 'p' : '') + '.', 3000); }
+            else { U.toast((height ? 'Video ' + height + 'p. ' : '') + 'České titulky nejsou potvrzené.', 3000); }
+            playTrailer(id, title);
+        });
+    }
     // Manually search for a Czech trailer if neither TMDB nor the metadata addon
     // provided one. We offer real YouTube videos, never synthetic trailer URLs.
     function findTrailerBySearch(english) {
@@ -1047,8 +1077,7 @@
             if (!english) { opts.push(['search-en', 'Hledat i originální trailery (HD)']); }
             pickList('Vyber trailer · ' + title, opts, null, function (id) {
                 if (id === 'search-en') { findTrailerBySearch(true); return; }
-                U.toast('HD a české titulky podle dostupnosti videa na YouTube.', 2800);
-                playTrailer(id, title);
+                previewSearchedTrailer(id, title);
             });
         }, function () {
             U.spinner(false);
