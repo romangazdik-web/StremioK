@@ -1460,7 +1460,7 @@ var Stremio = (function () {
         var suffix = '&query=' + encodeURIComponent(q) + (yr ? '&' + (kind === 'movie' ? 'year' : 'first_air_date_year') + '=' + yr : '');
         function norm(x) {
             x = ('' + (x || '')).toLowerCase();
-            if (x.normalize) { try { x = x.normalize('NFD').replace(/[\\u0300-\\u036f]/g, ''); } catch (e) {} }
+            if (x.normalize) { try { x = x.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); } catch (e) {} }
             return x.replace(/[^a-z0-9]+/g, '');
         }
         return tmdbGet('/search/' + kind, suffix, cancel).then(function (r) {
