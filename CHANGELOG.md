@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.5.15 — 2026-11-24 (Nymind Cinema)
+- **Cinemeta-first Cast & Info:** no automatic TMDB API requests when opening a title. A separately labelled opt-in lets a viewer explicitly ask for TMDB data when a key exists.
+- **Actor profiles without TMDB:** pressing OK on a name-only Cinemeta cast card opens a biography with a reused verified portrait, where available, from Wikipedia. Selected acting film credits are fetched from Wikidata when supported; missing data is reported rather than invented.
+- **Genre recommendations without TMDB:** a title's active metadata catalog can provide poster cards with overlapping genres, labelled as genre matches rather than personalized recommendations.
+- **Faster title entry:** catalog artwork and synopsis show immediately; full metadata arrives later. Movie stream searches begin only when Přehrát is selected.
+- **Czech navigation:** common menu, title, season, watchlist, library and source-selection actions have Czech labels.
+- **Tizen 3 (2017):** portrait and biography UI uses lightweight CSS and bounded background fetching. Existing player, source chooser and trailer search remain intact.
+- **Limits:** Wikipedia and Wikidata coverage vary; films without verified actor pictures or IMDb-linked film credits still show safe fallbacks.
+
+
 What changed in each version of StremioK, newest first. How everything works is in the
 [user guide](docs/USER-GUIDE.md).
 
