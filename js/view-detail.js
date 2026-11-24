@@ -539,7 +539,7 @@
             U.clear(rows);
             tmdbNotice(rows, Stremio.hasTmdb && Stremio.hasTmdb() ?
                 'Pro tento typ obsahu není dostupné rozšířené TMDB. Zobrazují se údaje od poskytovatele.' :
-                'TMDB není v této instalaci Nymind Cinema nastavené. Bez vlastního TMDB v3 API klíče se zobrazují jen jména herců bez fotografií a doporučení.', Stremio.hasTmdb && Stremio.hasTmdb() ? null : 'settings');
+                'TMDB v3 API klíč není v této instalaci nastavený. Fotografie herců zkouším doplnit z ověřených profilů Wikipedie; pro úplné obsazení a podobné tituly je potřeba platný TMDB API klíč.', Stremio.hasTmdb && Stremio.hasTmdb() ? null : 'settings');
             if (!theirs()) { rows.appendChild(U.el('div', 'row-empty', 'Pro tento titul nejsou další herci uvedeni.')); }
             appendBasicFacts(rows, page.meta);
             focusLoaded(rows); return panel;
