@@ -955,11 +955,28 @@ var ViewParts = {};
     // What a title's hold-OK menu offers, wherever it's held (a poster; the player's Cast & more,
     // in its own menu): -> Promise of { name, items: [[key, label]], run(key) } — Details, Add to
     // / Remove from Continue Watching, Mark watched / unwatched (a series: when its episodes load).
+    // Real ČSFD ratings are not supplied by the Stremio catalog.
+    // Link to ČSFD without fabricating a percentage.
+    function csfdLookup(meta) {
+        if (!meta) { return; }
+        var title = (meta.name || meta.title || '').replace(/\s*\(\d{4}\)\s*$/, '').trim();
+        if (!title) { return; }
+        var csfdId = meta.csfdId || meta.csfd_id || '';
+        var url = /^\d{1,10}$/.test('' + csfdId)
+            ? 'https://www.csfd.cz/film/' + csfdId + '/'
+            : 'https://www.csfd.cz/hledat/?q=' + encodeURIComponent(title);
+        qrModal('ČSFD · ' + title, url, [
+            'Naskenuj QR kód telefonem a otevři filmové informace na ČSFD.',
+            'Pokud se zobrazí hledání, vyber správný film nebo seriál podle roku.'
+        ]);
+    }
+    V.csfdLookup = csfdLookup;
     function titleActions(meta, type) {
         return Stremio.getMeta(type, meta.id).then(null, function () { return null; }).then(function (full) {
             var m = Object.assign({ id: meta.id, type: type }, meta, full || {});
             var eps = (type === 'series') ? (m.videos || []) : null;
             var opts = [['details', U.t('Details')]];
+            if (type === 'movie' || type === 'series') { opts.push(['csfd', 'ČSFD · recenze a hodnocení']); }
             if (type === 'movie' || eps.length) {
                 opts.push(['np', inNowPlaying(type, m.id) ? U.t('Remove from Continue Watching') : U.t('Add to Continue Watching')]);
             }
@@ -975,6 +992,7 @@ var ViewParts = {};
             if (canRate) { opts.push(['rate', mine ? U.t('Your rating: {n} · change', { n: mine }) : U.t('Rate on Trakt')]); }
             return { name: m.name || m.title || '', items: opts, run: function (v) {
                 if (v === 'details') { App.openDetail(type, m.id, meta); }
+                else if (v === 'csfd') { csfdLookup(m); }
                 else if (v === 'np') { toggleNowPlaying(type, m); }
                 else if (/^lib:/.test(v)) { toggleLibrary(type, m, v.slice(4)); }
                 else if (v === 'watched') { setTitleWatched(type, m, !watched); }
