@@ -382,7 +382,7 @@
     // ================= SETTINGS (sectioned) =================
     var _settingsSection = 'menu';
 
-    function settingsRoot() { _settingsSection = 'menu'; renderSettings(); }
+    function settingsRoot(section) { _settingsSection = section === 'integrations' ? 'integrations' : 'menu'; renderSettings(); }
 
     // Focus the first item in the settings content (not the top menu) so UP reaches the menu.
     function focusSettings() {
