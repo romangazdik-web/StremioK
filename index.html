@@ -2061,6 +2061,306 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
       top: 130px !important;
     }
     </style>
+
+    <!-- Nymind Cinema 2.5.13: TV-wide detail layout and real cast browsing. -->
+    <style id="nymind-cinema-2513">
+    /* Movie: backdrop uses the full TV; text and controls have their own readable zones. */
+    #app #screen-detail.nf-movie-landing .detail-hero {
+      background-position: 70% 38% !important;
+      background-size: cover !important;
+      height: 100% !important;
+    }
+    #app #screen-detail.nf-movie-landing .detail-hero .shade {
+      background:
+        linear-gradient(90deg, #08090d 2%, rgba(8,9,13,.97) 18%, rgba(8,9,13,.89) 34%, rgba(8,9,13,.48) 58%, rgba(8,9,13,.08) 90%),
+        linear-gradient(0deg, #08090d 0%, rgba(8,9,13,.55) 15%, transparent 46%),
+        linear-gradient(180deg, rgba(7,8,11,.72), transparent 21%) !important;
+    }
+    #app #screen-detail.nf-movie-landing .detail-body {
+      top: 147px !important;
+      left: 111px !important;
+      right: 66px !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      width: auto !important;
+      overflow: visible !important;
+    }
+    #app #screen-detail.nf-movie-landing .nf-detail-eyebrow {
+      font-size: 16px !important;
+      letter-spacing: 3px !important;
+      margin-bottom: 12px !important;
+      color: #f26670 !important;
+    }
+    #app #screen-detail.nf-movie-landing .detail-title {
+      max-width: 1060px !important;
+      font-size: 66px !important;
+      line-height: 1.06 !important;
+      margin-bottom: 17px !important;
+    }
+    #app #screen-detail.nf-movie-landing .detail-title.has-logo {
+      max-width: 980px !important;
+      height: 119px !important;
+      margin-bottom: 14px !important;
+    }
+    #app #screen-detail.nf-movie-landing .detail-logo {
+      max-width: 770px !important;
+      max-height: 115px !important;
+    }
+    #app #screen-detail.nf-movie-landing .detail-meta {
+      max-width: 1250px !important;
+      font-size: 21px !important;
+      line-height: 28px !important;
+      margin-bottom: 8px !important;
+    }
+    #app #screen-detail.nf-movie-landing .detail-desc {
+      max-width: 1090px !important;
+      max-height: 160px !important;
+      font-size: 22px !important;
+      line-height: 32px !important;
+      margin: 12px 0 12px !important;
+      -webkit-line-clamp: 5;
+    }
+    #app #screen-detail .nf-hero-extras {
+      display: block;
+      max-width: 1280px;
+      max-height: 72px;
+      font-size: 19px;
+      line-height: 27px;
+      font-weight: normal;
+      color: #d7d9e0;
+      margin: 9px 0 15px;
+      overflow: hidden;
+      text-shadow: 0 2px 6px rgba(0,0,0,.9);
+    }
+    #app #screen-detail .nf-hero-extras:empty { display: none; }
+    #app #screen-detail.nf-movie-landing .nf-landing-actions {
+      width: 100% !important;
+      max-width: 1690px !important;
+      white-space: normal !important;
+      overflow: visible !important;
+      padding: 5px 5px 17px !important;
+      margin: 7px 0 0 !important;
+    }
+    #app #screen-detail.nf-movie-landing .nf-landing-actions .pill {
+      display: inline-block !important;
+      vertical-align: top !important;
+      padding: 10px 18px !important;
+      min-height: 33px !important;
+      line-height: 28px !important;
+      font-size: 19px !important;
+      margin: 0 8px 11px 0 !important;
+      max-width: 435px !important;
+      white-space: nowrap !important;
+      box-sizing: border-box !important;
+    }
+    /* Series: episodes remain visible, with useful summary above their browser. */
+    #app #screen-detail.nf-series-landing .detail-hero {
+      height: 100% !important;
+      background-position: 72% 23% !important;
+    }
+    #app #screen-detail.nf-series-landing .detail-hero .shade {
+      background:
+        linear-gradient(90deg, #090a0e 2%, rgba(9,10,14,.97) 27%, rgba(9,10,14,.64) 58%, rgba(9,10,14,.18) 100%),
+        linear-gradient(0deg, #090a0e 2%, rgba(9,10,14,.75) 33%, transparent 75%) !important;
+    }
+    #app #screen-detail.nf-series-landing .detail-body {
+      left: 105px !important;
+      right: 62px !important;
+      top: 108px !important;
+      max-height: 395px !important;
+    }
+    #app #screen-detail.nf-series-landing .detail-title { max-width: 1000px !important; font-size: 56px !important; }
+    #app #screen-detail.nf-series-landing .detail-desc {
+      max-width: 1200px !important;
+      max-height: 73px !important;
+      line-height: 28px !important;
+      font-size: 20px !important;
+      margin: 4px 0 6px !important;
+    }
+    #app #screen-detail.nf-series-landing .nf-hero-extras {
+      max-height: 52px !important;
+      max-width: 1200px !important;
+      font-size: 17px !important;
+      line-height: 24px !important;
+      margin: 5px 0 9px !important;
+    }
+    #app #screen-detail.nf-series-landing .series-actions {
+      overflow-x: auto !important;
+      white-space: nowrap !important;
+      max-width: 100% !important;
+    }
+    #app #screen-detail.nf-series-landing .series-actions .pill {
+      padding: 8px 13px !important;
+      font-size: 18px !important;
+      margin-right: 7px !important;
+    }
+    /* Cast & Info: cover title becomes compact, 78% of screen is cards and facts. */
+    #app #screen-detail.nf-cast-view .detail-body.more-body {
+      top: 97px !important;
+      left: 105px !important;
+      right: 50px !important;
+      max-height: 135px !important;
+      overflow: hidden !important;
+    }
+    #app #screen-detail.nf-cast-view .detail-body .detail-title {
+      max-height: 82px !important;
+      font-size: 47px !important;
+      line-height: 1.05 !important;
+      margin-bottom: 8px !important;
+    }
+    #app #screen-detail.nf-cast-view .detail-body .detail-title.has-logo {
+      height: 72px !important;
+      margin-bottom: 5px !important;
+    }
+    #app #screen-detail.nf-cast-view .detail-body .detail-logo { max-height: 72px !important; }
+    #app #screen-detail.nf-cast-view .detail-body .detail-desc,
+    #app #screen-detail.nf-cast-view .detail-body .detail-ratings { display: none !important; }
+    #app #screen-detail.nf-cast-view .detail-body .detail-meta {
+      font-size: 18px !important;
+      margin: 0 !important;
+    }
+    #app #screen-detail.nf-cast-view .more-panel {
+      top: 243px !important;
+      left: 90px !important;
+      right: 36px !important;
+      bottom: 13px !important;
+      border-top: 1px solid rgba(255,255,255,.24) !important;
+      background: rgba(9,10,14,.75) !important;
+    }
+    #app #screen-detail.nf-cast-view .more-panel .more-rows {
+      top: 0 !important;
+      bottom: 0 !important;
+      overflow-x: hidden !important;
+      overflow-y: auto !important;
+      padding: 13px 8px 58px !important;
+    }
+    #app #screen-detail.nf-cast-view .more-rows .nf-cast-hint {
+      padding: 4px 10px 9px !important;
+      font-size: 17px !important;
+      color: #e4e4e8 !important;
+    }
+    #app #screen-detail.nf-cast-view .more-rows .row-title {
+      font-size: 24px !important;
+      margin: 2px 0 5px 12px !important;
+    }
+    #app #screen-detail.nf-cast-view .more-rows .row-scroller {
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      padding: 18px 13px 25px !important;
+    }
+    #app #screen-detail.nf-cast-view .more-rows .row {
+      margin: 0 0 13px !important;
+    }
+    #app #screen-detail.nf-cast-view .more-rows .person-card {
+      display: inline-block !important;
+      position: relative !important;
+      width: 183px !important;
+      height: 273px !important;
+      margin-right: 16px !important;
+      border-radius: 11px !important;
+      border: 2px solid rgba(255,255,255,.15) !important;
+      background: #22242c !important;
+      vertical-align: top !important;
+    }
+    #app #screen-detail.nf-cast-view .more-rows .person-card .poster {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      height: 100% !important;
+      width: 100% !important;
+      display: block !important;
+      z-index: 1 !important;
+      object-fit: cover !important;
+    }
+    #app #screen-detail.nf-cast-view .more-rows .person-card .fallback {
+      display: -webkit-flex;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: absolute !important;
+      top: 0;
+      left: 0;
+      width: 100% !important;
+      height: 100% !important;
+      box-sizing: border-box !important;
+      font-size: 47px !important;
+      color: #afb5c4 !important;
+      background: #252934;
+      z-index: 0;
+    }
+    #app #screen-detail.nf-cast-view .more-rows .person-card .cap {
+      position: absolute !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      z-index: 3 !important;
+      max-height: 105px !important;
+      padding: 32px 9px 10px !important;
+      color: #fff !important;
+      background: linear-gradient(transparent,rgba(0,0,0,.96)) !important;
+    }
+    #app #screen-detail.nf-cast-view .more-rows .person-card .cap-name { font-size: 17px !important; line-height: 22px !important; }
+    #app #screen-detail.nf-cast-view .more-rows .person-card .cap-sub { font-size: 14px !important; line-height: 18px !important; }
+    #app #screen-detail.nf-cast-view .more-rows .nf-more-facts {
+      margin: 12px 10px 16px !important;
+      padding: 14px 17px !important;
+      font-size: 19px !important;
+      line-height: 29px !important;
+      white-space: normal !important;
+    }
+    #app #screen-detail.nf-cast-view .more-rows .nf-more-description {
+      font-size: 19px !important;
+      line-height: 28px !important;
+      max-width: 1450px;
+      margin: 5px 12px 26px !important;
+    }
+    #app #screen-detail.nf-cast-view .more-rows .nf-more-provider {
+      color: #959ba8;
+      font-size: 15px;
+      margin: 5px 12px 11px;
+    }
+    #app #screen-detail.nf-cast-view .more-rows .nf-tmdb-tagline {
+      font-size: 22px;
+      font-style: italic;
+      margin: 12px 12px 20px;
+      color: #e5e5ec;
+    }
+    #app #screen-detail.nf-cast-view .more-rows .nf-tmdb-notice {
+      display: block;
+      padding: 18px 20px;
+      margin: 8px 10px 18px;
+      border-left: 4px solid #e50914;
+      background: rgba(26,29,38,.98);
+      border-radius: 7px;
+      white-space: normal !important;
+      max-width: 1350px;
+    }
+    #app #screen-detail.nf-cast-view .more-rows .nf-tmdb-notice-text {
+      font-size: 19px;
+      line-height: 29px;
+      color: #f1f1f4;
+      white-space: normal;
+    }
+    #app #screen-detail.nf-cast-view .more-rows .nf-tmdb-action {
+      display: inline-block;
+      padding: 11px 18px;
+      margin: 15px 0 0;
+      border: 2px solid rgba(255,255,255,.35);
+      border-radius: 6px;
+      font-size: 19px;
+      background: #353943;
+      color: #fff;
+    }
+    #app #screen-detail.nf-cast-view .more-rows .nf-tmdb-action.focused {
+      background: #fff;
+      color: #111;
+      border-color: #e50914;
+    }
+    body.zoom-130 #app #screen-detail.nf-movie-landing .detail-body,
+    body.zoom-140 #app #screen-detail.nf-movie-landing .detail-body { top: 100px !important; }
+    body.zoom-130 #app #screen-detail.nf-cast-view .more-panel,
+    body.zoom-140 #app #screen-detail.nf-cast-view .more-panel { top: 215px !important; }
+    </style>
 </head>
 <body>
     <div id="nymind-boot" aria-label="Načítá se Nymind Cinema">
@@ -2141,7 +2441,7 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
     <script src="js/plex.js?v=2.4.3"></script>
     <script src="js/epg.js?v=2.4.3"></script>
     <script src="js/youtube.js?v=2.4.3"></script>
-    <script src="js/stremio.js?v=2.5.11"></script>
+    <script src="js/stremio.js?v=2.5.13"></script>
     <script src="js/trakt.js?v=2.4.3"></script>
     <script src="js/keys.js?v=2.4.3"></script>
     <script src="js/focus.js?v=2.5.11"></script>
@@ -2165,7 +2465,7 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
     <script src="js/view-core.js?v=2.5.9"></script>
     <script src="js/view-home.js?v=2.4.8"></script>
     <script src="js/view-guide.js?v=2.4.3"></script>
-    <script src="js/view-detail.js?v=2.5.12"></script>
+    <script src="js/view-detail.js?v=2.5.13"></script>
     <script src="js/view-search.js?v=2.5.0"></script>
     <script src="js/view-settings.js?v=2.4.3"></script>
     <script src="js/view-discover.js?v=2.4.3"></script>
