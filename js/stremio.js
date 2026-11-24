@@ -912,8 +912,12 @@ var Stremio = (function () {
                 }).slice(0, 16);
             }, function () { return []; });
         }, function () { return []; });
-        _genreRecCache.set(key, task);
-        return task;
+        var usable = task.then(function (items) {
+            if (!items || !items.length) { _genreRecCache.del(key); }
+            return items || [];
+        }, function () { _genreRecCache.del(key); return []; });
+        _genreRecCache.set(key, usable);
+        return usable;
     }
 
     // ---- Feed lists: order + show / hide, as the user sets them ----
@@ -1530,8 +1534,12 @@ var Stremio = (function () {
         var task = read('cs').then(function (p) { return p || read('en'); })
             .then(function (p) { return p || read('es'); })
             .then(function (p) { return p; }, function () { return null; });
-        _wikiProfiles.set(key, task);
-        return task;
+        var usable = task.then(function (p) {
+            if (!p) { _wikiProfiles.del(key); }
+            return p;
+        }, function () { _wikiProfiles.del(key); return null; });
+        _wikiProfiles.set(key, usable);
+        return usable;
     }
 
     // Optional selected acting filmography from Wikidata, limited to verified
@@ -1558,8 +1566,12 @@ var Stremio = (function () {
             });
             return out;
         }, function () { return []; });
-        _wikiCredits.set(qid, task);
-        return task;
+        var usable = task.then(function (items) {
+            if (!items || !items.length) { _wikiCredits.del(qid); }
+            return items || [];
+        });
+        _wikiCredits.set(qid, usable);
+        return usable;
     }
 
     // imdb id (tt..) -> TMDB id of a 'movie' or 'tv' title (null: not on TMDB, or unreachable).
