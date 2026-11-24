@@ -1547,15 +1547,28 @@ var Stremio = (function () {
     // The same, for a title known by its TMDB id (kind 'movie' | 'tv'), e.g. from a person's
     // movies and series (the player's Cast & more goes from one to the other).
     function tmdbExtrasById(kind, id, cancel) {
-        return tmdbGet('/' + kind + '/' + id, '&append_to_response=credits,recommendations,similar', cancel).then(function (d) {
+        return tmdbGet('/' + kind + '/' + id, '&append_to_response=credits,recommendations,similar&language=cs-CZ', cancel).then(function (d) {
+            // TMDB's recommendations may exist but contain no posters: merge similar titles too.
+            var rec = ((d.recommendations && d.recommendations.results) || []);
+            var also = ((d.similar && d.similar.results) || []);
+            var seenTitle = {}, suggestions = [];
+            rec.concat(also).forEach(function (r) {
+                if (!r || !r.id || !r.poster_path || '' + r.id === '' + id || seenTitle[r.id]) { return; }
+                if (suggestions.length >= 24) { return; }
+                seenTitle[r.id] = true;
+                suggestions.push(tmdbItem(r, kind));
+            });
             var out = {
                 cast: ((d.credits && d.credits.cast) || []).slice(0, 20).map(function (c) {
                     return { id: c.id, name: c.name, character: c.character || '', photo: tmdbImg(c.profile_path, 'w185') };
                 }),
-                similar: (((d.recommendations && d.recommendations.results) || []).length
-                    ? d.recommendations.results : ((d.similar && d.similar.results) || []))
-                    .filter(function (r) { return r.poster_path; }).slice(0, 20)
-                    .map(function (r) { return tmdbItem(r, kind); }),
+                similar: suggestions,
+                facts: {
+                    original: d.original_title || d.original_name || '',
+                    year: (d.release_date || d.first_air_date || '').slice(0, 4),
+                    genre: (d.genres || []).slice(0, 4).map(function (g) { return g.name; }).join(' · '),
+                    rating: typeof d.vote_average === 'number' && d.vote_count > 0 ? d.vote_average.toFixed(1) : ''
+                },
                 collection: null
             };
             // crew worth listing next to the cast: directors / creators
