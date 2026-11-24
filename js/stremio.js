@@ -1587,6 +1587,19 @@ var Stremio = (function () {
                 if (parts.length > 1) { out.collection = { name: c.name || coll.name, parts: parts }; }
                 return out;
             }, function () { return out; });
+        }).then(function (out) {
+            if (out && out.similar && out.similar.length) { return out; }
+            // An occasional TMDB append_to_response payload lacks recommendations
+            // despite the standalone endpoint returning them. Retry only in that case.
+            return tmdbGet('/' + kind + '/' + id + '/similar', '&language=cs-CZ', cancel).then(function (r) {
+                if (!out) { return out; }
+                var seen = {};
+                out.similar = ((r && r.results) || []).filter(function (x) {
+                    if (!x || !x.id || !x.poster_path || '' + x.id === '' + id || seen[x.id]) { return false; }
+                    seen[x.id] = true; return true;
+                }).slice(0, 18).map(function (x) { return tmdbItem(x, kind); });
+                return out;
+            }, function () { return out; });
         });
     }
 
