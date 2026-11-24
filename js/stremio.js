@@ -1432,8 +1432,8 @@ var Stremio = (function () {
     // actor/director/performer: never substitute an unrelated person by fuzzy search.
     var _wikiPhotoCache = U.lru(80);
     function wikiPersonPhoto(name) {
-        name = ('' + (name || '')).replace(/\\s+/g, ' ').trim();
-        if (!name || name.length > 90 || !/^[^<>\\[\\]{}|]+$/.test(name)) { return Promise.resolve(''); }
+        name = ('' + (name || '')).replace(/\s+/g, ' ').trim();
+        if (!name || name.length > 90 || /[<>|]/.test(name)) { return Promise.resolve(''); }
         var key = name.toLowerCase();
         var saved = _wikiPhotoCache.get(key);
         if (saved !== undefined) { return saved; }
@@ -1445,7 +1445,7 @@ var Stremio = (function () {
                 if (!pages.length) { return ''; }
                 var page = pages[0];
                 if (!page || page.missing || !page.thumbnail || !page.thumbnail.source) { return ''; }
-                var title = (page.title || '').replace(/\\s*\\([^)]*\\)$/, '').toLowerCase().trim();
+                var title = (page.title || '').replace(/\s*\([^)]*\)$/, '').toLowerCase().trim();
                 var target = name.toLowerCase().trim();
                 if (title !== target) { return ''; }
                 var d = page.description || '';
