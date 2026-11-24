@@ -681,7 +681,7 @@
         c.appendChild(cap);
         c.__onselect = function () {
             if (!Stremio.hasTmdb || !Stremio.hasTmdb() || !Stremio.tmdbPeople) {
-                App.openSearch(); searchFor(name); return;
+                App.openPerson('wiki:' + encodeURIComponent(name), name); return;
             }
             // Name-only addon credits should open the person's profile as well.
             var wanted = name.toLowerCase().replace(/\s+/g, ' ').trim();
@@ -837,49 +837,115 @@
     }
 
     // ----- a person's page (from the cast row) -----
+    // A verified Wikidata film credit has an IMDb ID but no poster. Use a compact
+    // text tile until its ordinary Cinemeta title page loads, never fabricate artwork.
+    function wikiCreditCard(m) {
+        var c = U.el('div', 'card focusable nf-film-credit');
+        c.setAttribute('data-id', m.id);
+        c.appendChild(U.el('div', 'nf-film-credit-tag', 'FILM'));
+        c.appendChild(U.el('div', 'nf-film-credit-name', m.name || 'Film'));
+        if (m.releaseInfo) { c.appendChild(U.el('div', 'nf-film-credit-year', m.releaseInfo)); }
+        c.__onselect = function () { App.openDetail('movie', m.id, m); };
+        c.__onplay = c.__onselect;
+        return c;
+    }
+
+    // Actor profile by exact name when only Cinemeta is active; TMDB numeric IDs
+    // keep the original combined-credits workflow when explicitly configured.
     function renderPerson(personId, name) {
         newPage();
-        _d = { mode: 'person', type: 'person', id: 'person:' + personId, personId: personId, meta: { name: name || '' }, person: null };
+        var wiki = /^wiki:/.test('' + personId);
+        _d = { mode: 'person', type: 'person', id: 'person:' + personId,
+            personId: personId, meta: { name: name || '' },
+            person: { name: name || '', photo: '', bio: 'Načítám životopis…',
+                meta: '', movies: [], series: [], source: wiki ? 'wikipedia' : 'tmdb' },
+            personLoading: true, creditLoading: false };
         drawPerson();
         var page = _d;
-        U.spinner(true);
+        if (wiki) {
+            var actual = name || '';
+            try { actual = decodeURIComponent(('' + personId).slice(5)) || actual; } catch (e) {}
+            Stremio.wikiPersonProfile(actual, pageCancel()).then(function (p) {
+                if (_d !== page) { return; }
+                page.personLoading = false;
+                if (!p) {
+                    page.person = { name: actual, photo: '', bio: 'Ověřený životopis se nepodařilo najít. Můžeš vyhledat tituly podle jména.',
+                        meta: 'Profil není dostupný na Wikipedii', movies: [], series: [], source: 'wikipedia' };
+                    drawPerson(); return;
+                }
+                p.source = 'wikipedia';
+                p.bio = p.bio || 'Na Wikipedii není dostupný stručný životopis.';
+                page.person = p;
+                page.creditLoading = !!p.qid;
+                drawPerson();
+                if (p.qid && Stremio.wikiFilmography) {
+                    Stremio.wikiFilmography(p.qid, pageCancel()).then(function (films) {
+                        if (_d !== page) { return; }
+                        page.creditLoading = false;
+                        page.person.movies = films || [];
+                        drawPerson();
+                    }, function () { if (_d === page) { page.creditLoading = false; drawPerson(); } });
+                }
+            }, function () {
+                if (_d !== page) { return; }
+                page.personLoading = false;
+                page.person.bio = 'Profil momentálně není dostupný. Zkus vyhledat tituly podle jména.';
+                drawPerson();
+            });
+            return;
+        }
         Stremio.tmdbPerson(personId, pageCancel()).then(function (p) {
-            U.spinner(false);
             if (_d !== page) { return; }
-            _d.person = p;
+            page.personLoading = false;
+            p.source = 'tmdb';
+            page.person = p;
             drawPerson();
         }, function () {
-            U.spinner(false);
-            if (_d === page) { U.toast(U.t('Couldn\'t load this person from TMDB.')); }
+            if (_d !== page) { return; }
+            page.personLoading = false;
+            page.person.bio = 'Profil se nepodařilo načíst.';
+            drawPerson();
         });
     }
     function drawPerson() {
-        var s = scr('detail');
-        s.className = s.className.replace(/\s+nf-movie-landing|\s+nf-series-landing|\s+nf-cast-view/g, '');
+        var s = scr('detail'), previous = Focus.current();
+        if (previous && s.contains(previous)) { _d._restoreKey = focusKey(previous); }
+        s.className = s.className.replace(/\s+nf-movie-landing|\s+nf-series-landing|\s+nf-cast-view|\s+nf-person-view/g, '') + ' nf-person-view';
         U.clear(s);
-        var p = _d.person;
+        var p = _d.person || {}, wiki = p.source === 'wikipedia';
         s.appendChild(U.el('div', 'detail-hero'));
         s.appendChild(buildTopMenu('detail'));
-        if (p && p.photo) {
+        if (p.photo) {
             var ph = U.el('div', 'person-photo');
             U.deferBg(ph, U.cardImage(p.photo, 'profile'), true);
             s.appendChild(ph);
         }
         var body = U.el('div', 'detail-body more-body person-body');
         body.__noScroll = true;
-        body.appendChild(U.el('div', 'detail-title', (p && p.name) || _d.meta.name));
-        body.appendChild(U.el('div', 'detail-meta', (p && p.meta) || ''));
-        body.appendChild(U.el('div', 'detail-desc', (p && p.bio) || ''));
+        body.appendChild(U.el('div', 'nf-person-overline', wiki ? 'OSOBNOST  ·  WIKIPEDIE' : 'OSOBNOST  ·  TMDB'));
+        body.appendChild(U.el('div', 'detail-title', p.name || _d.meta.name));
+        body.appendChild(U.el('div', 'detail-meta', p.meta || ''));
+        body.appendChild(U.el('div', 'detail-desc', p.bio || 'Životopis není dostupný.'));
         s.appendChild(body);
         var panel = U.el('div', 'list-panel more-panel');
         var rows = U.el('div', 'more-rows');
-        panel.appendChild(rows);
-        s.appendChild(panel);
-        if (p) {
-            if (p.movies.length) { rows.appendChild(buildRow(U.t('Movies'), p.movies.map(tmdbCard))); }
-            if (p.series.length) { rows.appendChild(buildRow(U.t('Series'), p.series.map(tmdbCard))); }
-            if (!p.movies.length && !p.series.length) { rows.appendChild(U.el('div', 'row-empty', U.t('No titles listed on TMDB.'))); }
+        panel.appendChild(rows); s.appendChild(panel);
+        if (wiki) {
+            if (p.movies && p.movies.length) {
+                rows.appendChild(buildRow('Vybraná filmografie · Wikidata', p.movies.map(wikiCreditCard)));
+            } else if (_d.creditLoading) {
+                rows.appendChild(U.el('div', 'row-empty', 'Ověřuji vybranou filmografii…'));
+            } else if (!_d.personLoading) {
+                rows.appendChild(U.el('div', 'nf-person-hint', 'Kompletní filmografie z tohoto zdroje není k dispozici.'));
+            }
+        } else {
+            if (p.movies && p.movies.length) { rows.appendChild(buildRow('Filmy', p.movies.map(tmdbCard))); }
+            if (p.series && p.series.length) { rows.appendChild(buildRow('Seriály', p.series.map(tmdbCard))); }
         }
+        var search = U.el('div', 'pill focusable nf-person-search', '⌕  Hledat tituly se jménem herce');
+        search.__onselect = function () { App.openSearch(); searchFor(p.name || _d.meta.name); };
+        rows.appendChild(search);
+        if (wiki) { rows.appendChild(U.el('div', 'nf-person-hint', 'Výběr filmů pochází z Wikidat; vyhledávání používá tvé aktivní katalogy.')); }
         Focus.setScope(s, rows.querySelector('.focusable') || undefined);
         restoreFocusKey(s);
     }
