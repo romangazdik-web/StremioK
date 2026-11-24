@@ -124,13 +124,15 @@
             }
         });
 
-        // On a movie landing page, skip the "Play" button and load sources automatically
-        // (series still shows the episode browser; each episode loads its own sources).
+        // Nymind Cinema: OK on a film opens its cinematic detail page. The Play
+        // button opens sources; only the remote's dedicated PLAY key can skip it.
+        // Series still opens its episode browser.
         function afterMeta() {
             asEpisodeList();
             var files = embeddedFiles(_d.meta);
             var ep = playBest && target ? (_d.meta.videos || []).filter(function (v) { return v.id === target; })[0] : null;
-            if (_d.type === 'movie') { openStreams(_d.id, _d.meta.name || _d.meta.title, false, playBest ? PLAY_KEY : null); }
+            if (_d.type === 'movie' && playBest) { openStreams(_d.id, _d.meta.name || _d.meta.title, false, PLAY_KEY); }
+            else if (_d.type === 'movie') { drawDetail(); }
             else if (files.length === 1) { openEmbedded(files[0]); }
             else if (ep) { _d.season = (ep.season === undefined ? 1 : ep.season); openStreams(ep.id, epName(ep), false, PLAY_KEY); }
             else { drawDetail(); }
@@ -264,6 +266,13 @@
             _d.streams = sortStreams(_d.streams);
         }
 
+        // Distinct landing state: a movie is first a beautiful synopsis and actions,
+        // not a list of unlabelled streaming sources.
+        if (_d.type === 'movie' && _d.mode === 'info' && !_d.live && !_d.addonType) {
+            s.className += ' nf-movie-landing';
+        } else {
+            s.className = s.className.replace(/\s+nf-movie-landing/g, '');
+        }
         var listed = _d.mode === 'streams' || (_d.mode === 'info' && _d.type === 'series');   // (a source list, an episode list)
         var hero = U.el('div', 'detail-hero' + (listed ? ' hero-full' : ''));   // (a list: over the whole backdrop)
         var bg = meta.background || meta.poster;
@@ -281,6 +290,9 @@
 
         var body = U.el('div', 'detail-body');
         body.__noScroll = true;   // clipped, never scrolled: the text doesn't shift when focus reaches the buttons
+        if (_d.type === 'movie' && _d.mode === 'info' && !_d.live && !_d.addonType) {
+            body.appendChild(U.el('div', 'nf-detail-eyebrow', 'NYMIND CINEMA  /  FILM'));
+        }
         body.appendChild(titleNode(meta));
         var ep = shownEpisode();   // (an episode's page: its sources, or its Cast & more)
         var bits = [];
@@ -416,8 +428,9 @@
             (_d.meta.name || _d.meta.title));
     }
     function morePill() {
-        if (!withTmdb() && !hasAddonPeople(_d.meta)) { return null; }
-        var p = U.el('div', 'pill focusable more-pill', U.t('ⓘ  Cast & more'));
+        if (!_d || !_d.meta || _d.live || _d.addonType || (_d.type !== 'movie' && _d.type !== 'series')) { return null; }
+        // A metadata-only film must still have a useful information page.
+        var p = U.el('div', 'pill focusable more-pill', 'ⓘ  Herci a informace');
         p.__onselect = function () { _d.moreFrom = _d.mode; _d.mode = 'more'; drawDetail(); };
         if (_d._focusPill === 'more') { _d._epFocus = p; _d._focusPill = null; }
         return p;
@@ -444,7 +457,14 @@
             if (added && Stremio.hasTmdb && Stremio.hasTmdb()) { enrichAddonPeople(rows, page); }
             return added;
         }
-        if (!withTmdb()) { U.clear(rows); theirs(); focusLoaded(rows); return panel; }
+        if (!withTmdb()) {
+            U.clear(rows);
+            appendBasicFacts(rows, page.meta);
+            if (!theirs()) {
+                rows.appendChild(U.el('div', 'row-empty', 'Fotografie herců a podobné filmy vyžadují aktivní TMDB klíč v Nastavení → Obsah → Integrace.'));
+            }
+            focusLoaded(rows); return panel;
+        }
         if (ep && /^tt\d+$/.test(page.id || '')) {   // an episode's: its own people (the show's when TMDB has nothing for it)
             Stremio.tmdbEpisodeCast(page.id, seasonOf(ep), ep.episode).then(function (people) {
                 if (_d !== page || _d.mode !== 'more') { return; }
@@ -468,6 +488,7 @@
         metadata.then(function (x) {
             if (_d !== page || _d.mode !== 'more') { return; }
             U.clear(rows);
+            appendBasicFacts(rows, page.meta);
             if (x && x.facts) {
                 var info = [x.facts.year ? 'Rok: ' + x.facts.year : '', x.facts.rating ? 'TMDB: ' + x.facts.rating + '/10' : '',
                     x.facts.genre || '', x.facts.original ? 'Originální název: ' + x.facts.original : ''].filter(Boolean);
@@ -493,6 +514,7 @@
         }, function (err) {
             if (_d !== page || (err && err.cancelled)) { return; }
             U.clear(rows);
+            appendBasicFacts(rows, page.meta);
             var fallback = theirs();
             rows.insertBefore(U.el('div', 'row-empty', fallback ?
                 'TMDB se nepodařilo načíst, proto jsou dostupná pouze jména z doplňku. Zkontroluj integraci TMDB.' :
@@ -501,6 +523,23 @@
         });
         return panel;
     }
+    // Facts are useful even when TMDB lookup fails or the title has a non-IMDb ID.
+    function appendBasicFacts(rows, meta) {
+        meta = meta || {};
+        var bits = [];
+        var own = addonLinks(meta);
+        var year = meta.releaseInfo || meta.year || '';
+        var genres = (meta.genres && meta.genres.length) ? meta.genres : own.genres;
+        if (year) { bits.push('Vydání: ' + year); }
+        if (meta.runtime) { bits.push('Délka: ' + meta.runtime); }
+        if (genres && genres.length) { bits.push('Žánry: ' + genres.join(', ')); }
+        if (meta.imdbRating || own.imdb) { bits.push('IMDb: ' + (meta.imdbRating || own.imdb)); }
+        if (bits.length) { rows.appendChild(U.el('div', 'nf-more-facts', bits.join('    ·    '))); }
+        if (meta.description) {
+            rows.appendChild(U.el('div', 'nf-more-description', meta.description));
+        }
+    }
+
     // The addon's own people, genres and IMDb rating for a title (its links — cast, directors,
     // writers, genres, imdb — or the older cast / director / writer lists): shown where TMDB
     // gives none (no key, or nothing for the title).
@@ -543,7 +582,26 @@
         cap.appendChild(U.el('div', 'cap-name', name));
         if (role) { cap.appendChild(U.el('div', 'cap-sub', role)); }
         c.appendChild(cap);
-        c.__onselect = function () { App.openSearch(); searchFor(name); };
+        c.__onselect = function () {
+            if (!Stremio.hasTmdb || !Stremio.hasTmdb() || !Stremio.tmdbPeople) {
+                App.openSearch(); searchFor(name); return;
+            }
+            // Name-only addon credits should open the person's profile as well.
+            var wanted = name.toLowerCase().replace(/\s+/g, ' ').trim();
+            U.spinner(true);
+            Stremio.tmdbPeople(name, 1, pageCancel()).then(function (result) {
+                U.spinner(false);
+                var people = (result && result.people) || [], found = null;
+                people.some(function (p) {
+                    if (p && (p.name || '').toLowerCase().replace(/\s+/g, ' ').trim() === wanted) {
+                        found = p; return true;
+                    }
+                    return false;
+                });
+                if (found && found.id) { App.openPerson(found.id, found.name); }
+                else { App.openSearch(); searchFor(name); }
+            }, function () { U.spinner(false); App.openSearch(); searchFor(name); });
+        };
         return c;
     }
     // If the metadata addon supplies names only, enrich a few visible actors lazily.
@@ -1244,12 +1302,19 @@
         return btn;
     }
     function movieActions() {
-        var row = U.el('div', 'btn-row');
-        var play = U.el('div', 'pill focusable', U.t('▶  Play'));
-        play.__onselect = function () { openStreams(_d.id, _d.meta.name, false, AUTO); };
-        play.__onplay = function () { openStreams(_d.id, _d.meta.name, false, PLAY_KEY); };
+        var row = U.el('div', 'btn-row nf-landing-actions');
+        var play = U.el('div', 'pill focusable nf-primary-play', '▶  Přehrát');
+        // OK opens the source chooser. Dedicated PLAY may still auto-play the best.
+        play.__onselect = function () { openStreams(_d.id, _d.meta.name || _d.meta.title, false, null); };
+        play.__onplay = function () { openStreams(_d.id, _d.meta.name || _d.meta.title, false, PLAY_KEY); };
         row.appendChild(play);
         var tr = trailerPill(); if (tr) { row.appendChild(tr); }
+        var mp = morePill(); if (mp) { row.appendChild(mp); }
+        var npId = _d.meta.id || _d.id;
+        var np = U.el('div', 'pill focusable nf-library-action', nowPlayingLabel('movie', npId));
+        np.__onselect = function () { toggleNowPlaying('movie', _d.meta); np.textContent = nowPlayingLabel('movie', npId); };
+        row.appendChild(np);
+        libraryPills('movie', npId).forEach(function (lp) { row.appendChild(lp); });
         var cp = csfdPill(); if (cp) { row.appendChild(cp); }
         return row;
     }
@@ -2600,10 +2665,8 @@
         return best;
     }
 
-    // Return true if BACK was handled inside detail (streams -> episode list). Only a
-    // series has a page behind its source list. For a movie (or a multi-source live
-    // channel) the source list IS the page: returning false lets App.back() leave
-    // detail and go straight back to the grid, instead of to a page with only "Play".
+    // BACK from film sources now returns to the film detail card. Live channels
+    // keep their existing direct-to-sources behavior.
     function hasEpisodeList() {
         return !!(_d && _d.type === 'series' && _d.meta && _d.meta.videos && _d.meta.videos.length);
     }
@@ -2615,9 +2678,9 @@
             drawDetail();
             return true;
         }
-        if (_d && _d.mode === 'streams' && hasEpisodeList()) {
+        if (_d && _d.mode === 'streams' && (hasEpisodeList() || (_d.type === 'movie' && !_d.live && !_d.addonType))) {
             _d.mode = 'info';
-            _d.target = _d.streamId;   // (on the episode it was)
+            if (hasEpisodeList()) { _d.target = _d.streamId; }   // (on the episode it was)
             drawDetail();
             return true;
         }
