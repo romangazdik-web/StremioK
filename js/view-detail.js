@@ -339,7 +339,7 @@
             var factsLine = U.el('div', 'nf-hero-extras');
             body.appendChild(factsLine);
             fillHeroExtras(factsLine, _d);
-            if (!_d._waitingMeta && Stremio.hasTmdb && Stremio.hasTmdb()) {
+            if (!_d._waitingMeta && _d._tmdbRequested && Stremio.hasTmdb && Stremio.hasTmdb()) {
                 (function (page, line) {
                     ensureTmdbExtras(page).then(function () {
                         if (_d === page && page.mode === 'info' && line.parentNode) { fillHeroExtras(line, page); }
@@ -502,7 +502,7 @@
     // ----- "Cast & more": cast & more, the collection a film belongs to, more like this -----
     // (TMDB's, with a key; the people the addon names where TMDB has none, or with no key)
     function withTmdb() {
-        return !!(Stremio.hasTmdb && Stremio.hasTmdb() && _d && !_d.addonType &&
+        return !!(_d && _d._tmdbRequested && Stremio.hasTmdb && Stremio.hasTmdb() && !_d.addonType &&
             (_d.type === 'movie' || _d.type === 'series') && _d.meta &&
             (_d.meta.name || _d.meta.title));
     }
@@ -555,6 +555,11 @@
             if (!theirs()) { rows.appendChild(U.el('div', 'row-empty', 'Obsazení zatím není v metadatech dostupné.')); }
             appendBasicFacts(rows, page.meta);
             loadGenreRecommendations(rows, page);
+            if (Stremio.hasTmdb && Stremio.hasTmdb()) {
+                var opt = U.el('div', 'pill focusable nf-tmdb-opt', 'Načíst rozšířené údaje z TMDB (volitelné)');
+                opt.__onselect = function () { page._tmdbRequested = true; drawDetail(); };
+                rows.appendChild(opt);
+            }
             focusLoaded(rows); return panel;
         }
         if (ep && /^tt\d+$/.test(page.id || '')) {   // an episode's: its own people (the show's when TMDB has nothing for it)
@@ -694,29 +699,8 @@
         if (role) { cap.appendChild(U.el('div', 'cap-sub', role)); }
         c.appendChild(cap);
         c.__onselect = function () {
-            if (!Stremio.hasTmdb || !Stremio.hasTmdb() || !Stremio.tmdbPeople) {
-                App.openPerson('wiki:' + encodeURIComponent(name), name, (c.querySelector('img.poster') || {}).src || ''); return;
-            }
-            // Name-only addon credits should open the person's profile as well.
-            var wanted = name.toLowerCase().replace(/\s+/g, ' ').trim();
-            var page = _d;
-            U.spinner(true);
-            Stremio.tmdbPeople(name, 1, pageCancel()).then(function (result) {
-                if (_d !== page) { return; }
-                U.spinner(false);
-                var people = (result && result.people) || [], found = null;
-                people.some(function (p) {
-                    if (p && (p.name || '').toLowerCase().replace(/\s+/g, ' ').trim() === wanted) {
-                        found = p; return true;
-                    }
-                    return false;
-                });
-                if (found && found.id) { App.openPerson(found.id, found.name); }
-                else { App.openSearch(); searchFor(name); }
-            }, function () {
-                if (_d !== page) { return; }
-                U.spinner(false); App.openSearch(); searchFor(name);
-            });
+            var img = c.querySelector('img.poster');
+            App.openPerson('wiki:' + encodeURIComponent(name), name, img && img.src ? img.src : '');
         };
         return c;
     }
@@ -747,7 +731,7 @@
                 (function (card) {
                     active++;
                     var name = card.getAttribute('data-person-name') || '';
-                    var hasTmdb = Stremio.hasTmdb && Stremio.hasTmdb() && Stremio.tmdbPeople;
+                    var hasTmdb = !!(page._tmdbRequested && Stremio.hasTmdb && Stremio.hasTmdb() && Stremio.tmdbPeople);
                     var wiki = Stremio.wikiPersonPhoto ? Stremio.wikiPersonPhoto(name) : Promise.resolve('');
                     wiki.then(function (photo) {
                         if (_d !== page || page.mode !== 'more') { return null; }
@@ -1414,7 +1398,7 @@
         // TMDB's trailers for the title (a key, an IMDb id): asked for once a page; when they come,
         // the page is drawn again with them
         var meta = _d.meta, page = _d, imdb = (meta && (meta.imdb_id || meta._imdbId)) || (/^tt\d+$/.test(_d.id || '') ? _d.id : '');
-        if (_d.tmdbTrailers === undefined && !_d.collection && !_d.addonType && /^tt\d+$/.test(imdb || '') && Stremio.tmdbTitleTrailers && Stremio.hasTmdb && Stremio.hasTmdb()) {
+        if (_d._tmdbRequested && _d.tmdbTrailers === undefined && !_d.collection && !_d.addonType && /^tt\d+$/.test(imdb || '') && Stremio.tmdbTitleTrailers && Stremio.hasTmdb && Stremio.hasTmdb()) {
             _d.tmdbTrailers = null;
             Stremio.tmdbTitleTrailers(_d.type, imdb, ['cs', 'sk'].concat(prefLangs()), pageCancel()).then(function (list) {
                 if (_d !== page) { return; }
