@@ -877,6 +877,7 @@
         if (mp) { row.appendChild(mp); }
         var rp = ratingsPill();
         if (rp) { row.appendChild(rp); }
+        var cp = csfdPill(); if (cp) { row.appendChild(cp); }
         return row;
     }
     function playUpButton(up) {
@@ -1085,12 +1086,19 @@
         });
     }
 
+    function csfdPill() {
+        if (_d.live || _d.addonType || !(_d.type === 'movie' || _d.type === 'series') || !_d.meta) { return null; }
+        var btn = U.el('div', 'pill focusable csfd-pill', 'ČSFD  ·  hodnocení a recenze');
+        btn.__onselect = function () { if (V.csfdLookup) { V.csfdLookup(_d.meta); } };
+        return btn;
+    }
     function movieActions() {
         var row = U.el('div', 'btn-row');
         var play = U.el('div', 'pill focusable', U.t('▶  Play'));
         play.__onselect = function () { openStreams(_d.id, _d.meta.name, false, AUTO); };
         play.__onplay = function () { openStreams(_d.id, _d.meta.name, false, PLAY_KEY); };
         row.appendChild(play);
+        var cp = csfdPill(); if (cp) { row.appendChild(cp); }
         return row;
     }
 
@@ -1947,6 +1955,7 @@
             var emp = morePill();
             if (emp) { row.appendChild(emp); }
         }
+        var cp = csfdPill(); if (cp) { row.appendChild(cp); }
         return row;
     }
 
