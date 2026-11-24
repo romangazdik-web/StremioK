@@ -410,7 +410,11 @@
 
     // ----- "Cast & more": cast & more, the collection a film belongs to, more like this -----
     // (TMDB's, with a key; the people the addon names where TMDB has none, or with no key)
-    function withTmdb() { return Stremio.hasTmdb() && /^tt\d+$/.test(_d.id || ''); }
+    function withTmdb() {
+        return !!(Stremio.hasTmdb && Stremio.hasTmdb() && _d && !_d.addonType &&
+            (_d.type === 'movie' || _d.type === 'series') && _d.meta &&
+            (_d.meta.name || _d.meta.title));
+    }
     function morePill() {
         if (!withTmdb() && !hasAddonPeople(_d.meta)) { return null; }
         var p = U.el('div', 'pill focusable more-pill', U.t('ⓘ  Cast & more'));
@@ -437,7 +441,7 @@
         // the addon's people: where TMDB has none (or there's no TMDB key); true if there were any
         function theirs() { return appendAddonPeople(rows, page.meta); }
         if (!withTmdb()) { U.clear(rows); theirs(); focusLoaded(rows); return panel; }
-        if (ep) {   // an episode's: its own people (the show's when TMDB has nothing for it)
+        if (ep && /^tt\d+$/.test(page.id || '')) {   // an episode's: its own people (the show's when TMDB has nothing for it)
             Stremio.tmdbEpisodeCast(page.id, seasonOf(ep), ep.episode).then(function (people) {
                 if (_d !== page || _d.mode !== 'more') { return; }
                 U.clear(rows);
@@ -456,7 +460,12 @@
             });
             return panel;
         }
-        Stremio.tmdbTitleExtras(page.type, page.id, pageCancel()).then(function (x) {
+        var metadata = /^tt\d+$/.test(page.id || '') ?
+            Stremio.tmdbTitleExtras(page.type, page.id, pageCancel()).then(function (found) {
+                if (found && found.cast && found.cast.length) { return found; }
+                return Stremio.tmdbTitleExtrasByName(page.type, page.meta.name || page.meta.title, page.meta.year || page.meta.releaseInfo, pageCancel());
+            }) : Stremio.tmdbTitleExtrasByName(page.type, page.meta.name || page.meta.title, page.meta.year || page.meta.releaseInfo, pageCancel());
+        metadata.then(function (x) {
             if (_d !== page || _d.mode !== 'more') { return; }
             U.clear(rows);
             if (x && x.cast.length) { rows.appendChild(buildRow(U.t('Cast & more'), x.cast.map(personCard))); }
@@ -534,11 +543,14 @@
         var photo = U.cardImage(p.photo, 'cast');   // (null unless a usable http(s) link)
         if (photo) {
             var img = U.el('img', 'poster');
-            img.onerror = function () { img.style.display = 'none'; };
+            img.onerror = function () {
+                img.style.display = 'none';
+                if (!c.querySelector('.fallback')) { c.insertBefore(U.el('div', 'fallback person-fallback', (p.name || '?').slice(0, 1).toUpperCase()), c.firstChild); }
+            };
             c.appendChild(img);
             U.deferImage(img, photo);
         } else {
-            c.appendChild(U.el('div', 'fallback', p.name));
+            c.appendChild(U.el('div', 'fallback person-fallback', (p.name || '?').slice(0, 1).toUpperCase()));
         }
         var cap = U.el('div', 'cap');
         cap.appendChild(U.el('div', 'cap-name', p.name));
@@ -866,13 +878,12 @@
         } else {
             row.appendChild(playUpButton(up));
         }
+        var tr = trailerPill(); if (tr) { row.appendChild(tr); }
         var np = U.el('div', 'pill focusable', nowPlayingLabel('series', _d.meta.id || _d.id));
         np.__onselect = function () { toggleNowPlaying('series', _d.meta); _d._focusNp = true; drawDetail(); };
         if (_d._focusNp) { _d._epFocus = np; _d._focusNp = false; }
         row.appendChild(np);
         libraryPills('series', _d.meta.id || _d.id).forEach(function (lp) { row.appendChild(lp); });
-        var tp = trailerPill();
-        if (tp) { row.appendChild(tp); }
         var mp = morePill();
         if (mp) { row.appendChild(mp); }
         var rp = ratingsPill();
@@ -944,7 +955,7 @@
             if (t && t.source && (!t.type || /trailer|teaser/i.test(t.type))) { add(t.source, t.name, { lang: /^[a-z]{2}$/.test(t.lang || '') ? t.lang : undefined }); }
         });
         ((_d && _d.meta === meta && _d.tmdbTrailers) || []).forEach(function (t) { add(t.id, t.name, { lang: t.lang, date: t.date, official: t.official }); });
-        var mine = out.some(function (t) { return t.lang; }) ? prefLangs() : [];   // (your settings read only when there's a language to go by)
+        var mine = out.some(function (t) { return t.lang; }) ? ['cs', 'sk'].concat(prefLangs()) : [];   // (your settings read only when there's a language to go by)
         function rank(t) {
             var r;
             if (!t.name) { r = 1; }
@@ -1008,13 +1019,49 @@
             if (still()) { U.toast(YTPlay.unavailableMessage('trailer'), 6000); }
         });
     }
+    // Manually search for a Czech trailer if neither TMDB nor the metadata addon
+    // provided one. We offer real YouTube videos, never synthetic trailer URLs.
+    function findTrailerBySearch(english) {
+        if (typeof YouTube === 'undefined' || !YouTube.catalog || typeof YTPlay === 'undefined') {
+            U.toast('Vyhledávání trailerů vyžaduje službu YouTube.'); return;
+        }
+        var page = _d, meta = page.meta || {}, title = meta.name || meta.title || '';
+        if (!title) { return; }
+        var year = ('' + (meta.year || meta.releaseInfo || '')).match(/(?:19|20)\d{2}/);
+        var query = title + (year ? ' ' + year[0] : '') + (english ? ' official trailer HD' : ' oficiální trailer česky HD');
+        U.spinner(true, 'Hledám ' + (english ? 'další' : 'české') + ' trailery…');
+        YouTube.catalog('ytk_search_videos', { search: query, skip: 0 }).then(function (items) {
+            if (_d !== page) { U.spinner(false); return; }
+            U.spinner(false);
+            var list = (items || []).filter(function (m) {
+                return /^ytk:v:[A-Za-z0-9_-]{11}$/.test(m.id || '') && /trailer|teaser|upout[aá]vka|uk[aá]zka|traileru/i.test(m.name || '');
+            }).slice(0, 8);
+            if (!list.length) {
+                if (!english) { findTrailerBySearch(true); }
+                else { U.toast('Pro tento titul jsem na YouTube nenašel vhodný trailer.'); }
+                return;
+            }
+            var opts = list.map(function (m) {
+                return [m.id.slice(6), (m.name || 'Trailer').slice(0, 95)];
+            });
+            if (!english) { opts.push(['search-en', 'Hledat i originální trailery (HD)']); }
+            pickList('Vyber trailer · ' + title, opts, null, function (id) {
+                if (id === 'search-en') { findTrailerBySearch(true); return; }
+                U.toast('HD a české titulky podle dostupnosti videa na YouTube.', 2800);
+                playTrailer(id, title);
+            });
+        }, function () {
+            U.spinner(false);
+            if (_d === page) { U.toast('Vyhledávání YouTube teď neodpovídá.', 3500); }
+        });
+    }
     function trailerPill() {
         // TMDB's trailers for the title (a key, an IMDb id): asked for once a page; when they come,
         // the page is drawn again with them
         var meta = _d.meta, page = _d, imdb = (meta && (meta.imdb_id || meta._imdbId)) || (/^tt\d+$/.test(_d.id || '') ? _d.id : '');
         if (_d.tmdbTrailers === undefined && !_d.collection && !_d.addonType && /^tt\d+$/.test(imdb || '') && Stremio.tmdbTitleTrailers && Stremio.hasTmdb && Stremio.hasTmdb()) {
             _d.tmdbTrailers = null;
-            Stremio.tmdbTitleTrailers(_d.type, imdb, prefLangs(), pageCancel()).then(function (list) {
+            Stremio.tmdbTitleTrailers(_d.type, imdb, ['cs', 'sk'].concat(prefLangs()), pageCancel()).then(function (list) {
                 if (_d !== page) { return; }
                 var before = trailersOf(meta).length;
                 page.tmdbTrailers = list || [];
@@ -1026,14 +1073,21 @@
             }, function () { if (_d === page) { page.tmdbTrailers = []; } });
         }
         var list = trailersOf(_d.meta);
-        if (!list.length || typeof YTPlay === 'undefined') { return null; }
-        var p = U.el('div', 'pill focusable trailer-pill', '▶  ' + U.t('Trailer') + (list.length > 1 ? '  (' + list.length + ')' : ''));
-        p.__onselect = function () { playTrailers(list, true); };
-        if (list.length > 1) {   // hold OK: the list, to pick one
-            p.__onlongpress = function () {
-                pickList(U.t('Trailers'), list.map(function (t, i) { return ['' + i, trailerLabel(t)]; }), '', function (k) { playTrailers([list[+k]], false); });
-            };
-        }
+        if (typeof YTPlay === 'undefined') { return null; }
+        var p = U.el('div', 'pill focusable trailer-pill', list.length ?
+            '▶  Trailer' + (list.length > 1 ? ' (' + list.length + ')' : '') : '⌕  Najít trailer');
+        p.__onselect = function () {
+            if (list.length) { playTrailers(list, true); } else { findTrailerBySearch(false); }
+        };
+        // Long OK offers another Czech search even if TMDB already has trailers.
+        p.__onlongpress = function () {
+            var opts = list.map(function (t, i) { return ['' + i, trailerLabel(t)]; });
+            opts.push(['search-cz', 'Najít český trailer na YouTube']);
+            pickList('Trailery · ' + (meta.name || meta.title || ''), opts, '', function (k) {
+                if (k === 'search-cz') { findTrailerBySearch(false); return; }
+                playTrailers([list[+k]], false);
+            });
+        };
         if (_d._focusTrailer) { _d._epFocus = p; _d._focusTrailer = false; }
         return p;
     }
@@ -1098,6 +1152,7 @@
         play.__onselect = function () { openStreams(_d.id, _d.meta.name, false, AUTO); };
         play.__onplay = function () { openStreams(_d.id, _d.meta.name, false, PLAY_KEY); };
         row.appendChild(play);
+        var tr = trailerPill(); if (tr) { row.appendChild(tr); }
         var cp = csfdPill(); if (cp) { row.appendChild(cp); }
         return row;
     }
@@ -1936,6 +1991,9 @@
             if (!_d._epFocus && !_d._keepStream) { _d._epFocus = pb; }
             row.appendChild(pb);
         }
+        if (!_d.live && _d.meta && (_d.type === 'movie' || _d.type === 'series')) {
+            var tr = trailerPill(); if (tr) { row.appendChild(tr); }
+        }
         if (allRows.length && !_d.live) {
             ['addon', 'res'].forEach(function (kind) { var fp = filterPill(kind, allRows); if (fp) { row.appendChild(fp); } });
         }
@@ -1945,13 +2003,9 @@
             np.__onselect = function () { toggleNowPlaying('movie', _d.meta); np.textContent = nowPlayingLabel('movie', npId); };
             row.appendChild(np);
             libraryPills('movie', npId).forEach(function (mlp) { row.appendChild(mlp); });
-            var tp = trailerPill();
-            if (tp) { row.appendChild(tp); }
             var mp = morePill();
             if (mp) { row.appendChild(mp); }
         } else if (shownEpisode()) {   // an episode's page: its trailer (TMDB's), its own Cast & more
-            var etp = episodeTrailerPill(row, shownEpisode());
-            if (etp) { row.appendChild(etp); }
             var emp = morePill();
             if (emp) { row.appendChild(emp); }
         }
@@ -1989,6 +2043,10 @@
         // Long lists (150+ sources across addons) are drawn in batches: DOWN near the end
         // of what's drawn adds the next batch, like the Home rows. Each group (Played
         // before, 4K, 1080p, …) starts with its heading.
+        var header = U.el('div', 'nf-sources-guide');
+        header.appendChild(U.el('div', 'nf-sources-guide-title', 'ZDROJE K PŘEHRÁNÍ  ·  ' + _d.streams.length));
+        header.appendChild(U.el('div', 'nf-sources-guide-note', '↑ ↓  výběr zdroje    ·    OK přehrát    ·    podržet OK další možnosti'));
+        listScroll.appendChild(header);
         var heading = streamsHeading();
         if (heading) { listScroll.appendChild(U.el('div', 'stream-for', heading)); }
         serverNow(_d.streams);   // (a page kept from before: its torrents follow the streaming server set now)
