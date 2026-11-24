@@ -121,38 +121,52 @@ var Focus = (function () {
                 }
             }
         }
-        /* Nymind Cinema: each stream is one row in the vertically scrollable
-           source list. Never jump across a group heading or into the sidebar. */
+        /* Nymind Cinema: spatial movement restricted to the two-column source grid.
+           Full-width group headings break index parity; navigation must use real
+           card geometry, not n+2 arithmetic. */
         if ((dir === 'DOWN' || dir === 'UP' || dir === 'LEFT' || dir === 'RIGHT') &&
             _scope.id === 'screen-detail') {
             var streamPanel = _scope.querySelector('.streams-panel');
             if (streamPanel) {
                 var streamList = streamPanel.querySelector('.list-scroll');
                 var streamRows = streamList ? streamList.querySelectorAll('.stream.focusable') : [];
-                var inStream = !!(streamList && streamList.contains(_current));
                 var streamBody = _scope.querySelector('.streams-body');
+                var inStream = !!(streamList && streamList.contains(_current));
                 if (dir === 'DOWN' && streamBody && streamBody.contains(_current) && streamRows.length) {
                     setFocus(streamRows[0]); return;
                 }
                 if (inStream) {
-                    if (dir === 'LEFT' || dir === 'RIGHT') { return; }
-                    for (var si = 0; si < streamRows.length; si++) {
-                        if (streamRows[si] !== _current) { continue; }
-                        if (dir === 'DOWN' && typeof _current.__navDOWN === 'function') {
-                            _current.__navDOWN();
-                            streamRows = streamList.querySelectorAll('.stream.focusable');
-                        }
-                        var next = dir === 'DOWN' ? si + 1 : si - 1;
-                        if (next >= 0 && next < streamRows.length) {
-                            setFocus(streamRows[next]); return;
-                        }
-                        if (dir === 'UP') {
-                            var actions = streamBody ? streamBody.querySelector('.streams-actions') : null;
-                            var firstAction = actions && actions.querySelector('.focusable');
-                            if (firstAction) { setFocus(firstAction); }
-                        }
-                        return;
+                    // Long lists add further entries only near their last rows.
+                    if (dir === 'DOWN' && typeof _current.__navDOWN === 'function') {
+                        _current.__navDOWN();
+                        streamRows = streamList.querySelectorAll('.stream.focusable');
                     }
+                    var here = _current.getBoundingClientRect();
+                    var hx = (here.left + here.right) / 2;
+                    var hy = (here.top + here.bottom) / 2;
+                    var candidate = null, score = Infinity;
+                    for (var si = 0; si < streamRows.length; si++) {
+                        var next = streamRows[si];
+                        if (next === _current) { continue; }
+                        var rect = next.getBoundingClientRect();
+                        if (!rect.width || !rect.height) { continue; }
+                        var dx = (rect.left + rect.right) / 2 - hx;
+                        var dy = (rect.top + rect.bottom) / 2 - hy;
+                        var value = Infinity;
+                        if (dir === 'DOWN' && dy > 18) { value = dy * 4 + Math.abs(dx); }
+                        if (dir === 'UP' && dy < -18) { value = -dy * 4 + Math.abs(dx); }
+                        if (dir === 'RIGHT' && dx > 18 && Math.abs(dy) < here.height * 0.46) { value = dx + Math.abs(dy) * 4; }
+                        if (dir === 'LEFT' && dx < -18 && Math.abs(dy) < here.height * 0.46) { value = -dx + Math.abs(dy) * 4; }
+                        if (value < score) { score = value; candidate = next; }
+                    }
+                    if (candidate) { setFocus(candidate); return; }
+                    if (dir === 'UP') {
+                        var actions = streamBody ? streamBody.querySelector('.streams-actions') : null;
+                        var firstAction = actions && actions.querySelector('.focusable');
+                        if (firstAction) { setFocus(firstAction); }
+                    }
+                    // At the other edges, never let focus jump to the launcher sidebar.
+                    return;
                 }
             }
         }
