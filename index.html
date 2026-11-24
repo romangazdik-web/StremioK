@@ -1631,6 +1631,36 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
 #app #screen-detail .series-panel .ep.ep-row {background:#202126!important}
 #app #screen-detail .series-panel .ep.ep-row.focused {background:#34353a!important}
     </style>
+    <!-- Nymind Cinema 2.5.9: use all available width in Objevovat. -->
+    <style id="nymind-discover-fullwidth-259">
+    #app #screen-discover .discover-grid {
+        display: -webkit-flex !important;
+        display: flex !important;
+        -webkit-flex-wrap: wrap !important;
+        flex-wrap: wrap !important;
+        box-sizing: border-box !important;
+    }
+    /* Wide posters: 4 balanced columns instead of small 340px fixed-width cards. */
+    #app #screen-discover .discover-grid .card.landscape {
+        -webkit-flex: 0 0 calc((100% - 72px) / 4) !important;
+        flex: 0 0 calc((100% - 72px) / 4) !important;
+        width: calc((100% - 72px) / 4) !important;
+        height: 232px !important;
+        margin-right: 18px !important;
+        margin-bottom: 22px !important;
+        box-sizing: border-box !important;
+    }
+    /* Upright posters: 6 columns in the same width. */
+    #app #screen-discover .discover-grid .card:not(.landscape):not(.person-card) {
+        -webkit-flex: 0 0 calc((100% - 96px) / 6) !important;
+        flex: 0 0 calc((100% - 96px) / 6) !important;
+        width: calc((100% - 96px) / 6) !important;
+        height: 345px !important;
+        margin-right: 16px !important;
+        margin-bottom: 24px !important;
+        box-sizing: border-box !important;
+    }
+    </style>
 </head>
 <body>
     <div id="nymind-boot" aria-label="Načítá se Nymind Cinema">
@@ -1732,10 +1762,10 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
     <script src="js/nuvio-import.js?v=2.4.3"></script>
     <script src="js/nuvio-sync.js?v=2.4.3"></script>
     <script src="js/stremio-sync.js?v=2.4.3"></script>
-    <script src="js/view-core.js?v=2.5.3"></script>
+    <script src="js/view-core.js?v=2.5.9"></script>
     <script src="js/view-home.js?v=2.4.8"></script>
     <script src="js/view-guide.js?v=2.4.3"></script>
-    <script src="js/view-detail.js?v=2.5.8"></script>
+    <script src="js/view-detail.js?v=2.5.9"></script>
     <script src="js/view-search.js?v=2.5.0"></script>
     <script src="js/view-settings.js?v=2.4.3"></script>
     <script src="js/view-discover.js?v=2.4.3"></script>
