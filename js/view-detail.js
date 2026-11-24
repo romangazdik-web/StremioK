@@ -475,7 +475,7 @@
         if (action) {
             var button = U.el('div', 'pill focusable nf-tmdb-action', action === 'settings' ? '⚙  Nastavit TMDB API klíč' : '↻  Zkusit načíst znovu');
             button.__onselect = function () {
-                if (action === 'settings') { App.openSettings(); }
+                if (action === 'settings') { App.openSettings('integrations'); }
                 else { if (_d) { _d._extrasPromise = null; _d._tmdbExtras = null; drawDetail(); } }
             };
             box.appendChild(button);
