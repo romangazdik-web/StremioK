@@ -1882,6 +1882,185 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
       padding: 8px 15px 12px;
     }
     </style>
+
+    <!-- Nymind Cinema 2.5.12: dedicated cinematic movie landing + browsable cast. -->
+    <style id="nymind-cinema-2512">
+    /* 2017 Tizen-compatible Netflix-inspired movie landing, no animated overlays. */
+    #app #screen-detail.nf-movie-landing {
+      background: #08090d !important;
+    }
+    #app #screen-detail.nf-movie-landing .detail-hero {
+      background-position: 75% center !important;
+      background-size: cover !important;
+      height: 100% !important;
+    }
+    #app #screen-detail.nf-movie-landing .detail-hero .shade {
+      background:
+        linear-gradient(90deg,#090a0e 0%,rgba(9,10,14,.97) 21%,rgba(9,10,14,.87) 38%,rgba(9,10,14,.43) 69%,rgba(9,10,14,.08) 100%),
+        linear-gradient(0deg,#090a0e 0%,rgba(9,10,14,.58) 18%,transparent 60%),
+        linear-gradient(180deg,rgba(7,8,11,.65),transparent 27%) !important;
+    }
+    #app #screen-detail.nf-movie-landing .detail-body {
+      left: 88px !important;
+      right: 37% !important;
+      top: 194px !important;
+      max-height: none !important;
+      min-height: 350px !important;
+      z-index: 4 !important;
+      overflow: visible !important;
+    }
+    #app #screen-detail .nf-detail-eyebrow {
+      display: block;
+      color: #f16068;
+      font-size: 18px;
+      line-height: 26px;
+      letter-spacing: 3px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+    #app #screen-detail.nf-movie-landing .detail-title {
+      font-size: 65px !important;
+      line-height: 1.04 !important;
+      letter-spacing: -1.9px !important;
+      max-width: 900px !important;
+      margin-bottom: 19px !important;
+      text-shadow: 0 4px 16px rgba(0,0,0,.78) !important;
+    }
+    #app #screen-detail.nf-movie-landing .detail-title.has-logo {
+      height: 110px !important;
+      margin-bottom: 20px !important;
+    }
+    #app #screen-detail.nf-movie-landing .detail-logo {
+      max-height: 105px !important;
+      max-width: 660px !important;
+    }
+    #app #screen-detail.nf-movie-landing .detail-meta {
+      font-size: 22px !important;
+      line-height: 30px !important;
+      margin-bottom: 16px !important;
+      color: #e4e4e7 !important;
+      max-width: 900px !important;
+    }
+    #app #screen-detail.nf-movie-landing .detail-desc {
+      font-size: 23px !important;
+      line-height: 33px !important;
+      max-height: 165px !important;
+      max-width: 850px !important;
+      margin: 18px 0 24px !important;
+      color: #e8e9eb !important;
+      display: -webkit-box !important;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 5;
+      overflow: hidden !important;
+    }
+    #app #screen-detail.nf-movie-landing .nf-landing-actions {
+      margin-top: 18px !important;
+      width: 100% !important;
+      padding: 8px 4px 14px !important;
+      border: 0 !important;
+    }
+    #app #screen-detail.nf-movie-landing .nf-landing-actions .pill {
+      border-radius: 7px !important;
+      font-size: 20px !important;
+      font-weight: bold !important;
+      min-height: 38px;
+      padding: 13px 22px !important;
+      background: rgba(55,57,64,.95) !important;
+      color: #fafafa !important;
+      border: 2px solid rgba(255,255,255,.15) !important;
+    }
+    #app #screen-detail.nf-movie-landing .nf-landing-actions .nf-primary-play {
+      color: #111 !important;
+      background: #f8f8fa !important;
+      border-color: #f8f8fa !important;
+    }
+    #app #screen-detail.nf-movie-landing .nf-landing-actions .pill.focused {
+      background: #fff !important;
+      color: #111 !important;
+      border-color: #e50914 !important;
+      box-shadow: 0 0 0 3px rgba(229,9,20,.42) !important;
+    }
+    /* Give Cast & Info a real content area with scrollable poster rows. */
+    #app #screen-detail .detail-body.more-body {
+      top: 108px !important;
+      max-height: 245px !important;
+      overflow: hidden !important;
+    }
+    #app #screen-detail .more-panel {
+      top: 363px !important;
+      bottom: 20px !important;
+      left: 72px !important;
+      right: 72px !important;
+      background: rgba(8,9,13,.5);
+      border-top: 1px solid rgba(255,255,255,.13);
+      overflow: hidden !important;
+    }
+    #app #screen-detail .more-panel .more-rows {
+      top: 0 !important;
+      bottom: 0 !important;
+      padding: 14px 14px 55px !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      -webkit-overflow-scrolling: touch;
+    }
+    #app #screen-detail .more-rows .row-title {
+      font-size: 26px !important;
+      font-weight: bold !important;
+      color: #fff !important;
+      margin: 8px 0 15px !important;
+      letter-spacing: -.3px;
+    }
+    #app #screen-detail .more-rows .row {
+      margin-bottom: 30px !important;
+      min-height: 0 !important;
+    }
+    #app #screen-detail .more-rows .person-card {
+      width: 174px !important;
+      height: 255px !important;
+      border: 2px solid rgba(255,255,255,.09) !important;
+      border-radius: 10px !important;
+      background: #24252b !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+    }
+    #app #screen-detail .more-rows .person-card.focused,
+    #app #screen-detail .more-rows .card.focused {
+      border-color: #fff !important;
+      box-shadow: 0 0 0 3px #d4111c !important;
+      background: #343640 !important;
+    }
+    #app #screen-detail .more-rows .person-card .poster {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      display: block !important;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      object-position: center top !important;
+    }
+    #app #screen-detail .more-rows .person-card .fallback {
+      min-height: 150px;
+    }
+    #app #screen-detail .more-rows .nf-more-description {
+      font-size: 20px;
+      line-height: 30px;
+      max-width: 1400px;
+      margin: 0 4px 26px;
+      color: #dedfe6;
+      white-space: normal;
+    }
+    #app #screen-detail .more-rows .row-empty {
+      font-size: 21px !important;
+      line-height: 31px !important;
+      color: #cdd0d6 !important;
+      padding: 18px !important;
+    }
+    body.zoom-130 #app #screen-detail.nf-movie-landing .detail-body,
+    body.zoom-140 #app #screen-detail.nf-movie-landing .detail-body {
+      top: 130px !important;
+    }
+    </style>
 </head>
 <body>
     <div id="nymind-boot" aria-label="Načítá se Nymind Cinema">
@@ -1986,7 +2165,7 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
     <script src="js/view-core.js?v=2.5.9"></script>
     <script src="js/view-home.js?v=2.4.8"></script>
     <script src="js/view-guide.js?v=2.4.3"></script>
-    <script src="js/view-detail.js?v=2.5.11"></script>
+    <script src="js/view-detail.js?v=2.5.12"></script>
     <script src="js/view-search.js?v=2.5.0"></script>
     <script src="js/view-settings.js?v=2.4.3"></script>
     <script src="js/view-discover.js?v=2.4.3"></script>
