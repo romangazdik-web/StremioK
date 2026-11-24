@@ -2087,7 +2087,7 @@
                     var n = rows.filter(function (r) { return r.group === lastGroup; }).length;
                     listScroll.insertBefore(U.el('div', 'stream-group', GROUP_TITLES[lastGroup] + '   ·   ' + n), rescan);
                 }
-                var node = streamNode(list[i], rows[i]);
+                var node = streamNode(list[i], rows[i], i);
                 // the list, not the buttons above it, gets initial focus (unless a button asked for it)
                 if (i === keepAt || (keepAt < 0 && i === 0 && !_d._epFocus)) { _d._epFocus = node; }
                 listScroll.insertBefore(node, rescan);
@@ -2098,11 +2098,12 @@
             function more() { if (!added) { added = true; addBatch(to); } return false; }   // then DOWN moves on as usual
             built.slice(-2).forEach(function (n) { n.__navDOWN = more; });
         }
-        function streamNode(stream, row) {
+        function streamNode(stream, row, index) {
             var playable = Stremio.isPlayable(stream);
             var opens = playable ? null : ((row && row.app !== undefined) ? (row.app || null) : whereApp(stream));
             var node = U.el('div', 'stream focusable');
             node.__streamKey = streamIdentity(stream);
+            node.appendChild(U.el('span', 'nf-stream-index', '' + (index + 1)));
             node.appendChild(U.el('div', 'nf-stream-title', Stremio.streamName(stream)));
 
             // Detail block: size + the addon's own description (languages, seeds, etc.)
