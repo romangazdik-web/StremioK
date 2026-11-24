@@ -92,10 +92,10 @@ var App = (function () {
         if (el && !(cur && el.contains(cur))) { Focus.setScope(el); }
     }
 
-    function openSettings() {
+    function openSettings(section) {
         pushFrame();
         showScreen('settings');
-        Views.settingsRoot();
+        Views.settingsRoot(section);
         focusOn('settings');
     }
 
