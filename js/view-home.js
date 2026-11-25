@@ -1564,6 +1564,7 @@
             } else if (_homeTab === 'library') {
                 buildLibraryRows(rows);
             } else if (_homeTab === 'continue') {
+                _explorerSources = [];
                 var entries = continueEntries();
                 if (entries.length) {
                     // two rows: what can be played now (your order), and Upcoming (a show's next
@@ -1572,7 +1573,6 @@
                     var art = homeArt(), now = [], soon = [];
                     entries.forEach(function (e) { var w = notOutYet(e); if (w) { soon.push({ e: e, w: w === true ? Infinity : w }); } else { now.push(e); } });
                     soon.sort(function (x, y) { return x.w - y.w; });
-                    _explorerSources = [];
                     if (now.length) { rows.appendChild(expandableLibraryRow(CW_TITLE, now.map(function (e) { return continueCard(e, art); }), explorerItems(now, 'continue'))); }
                     if (soon.length) {
                         rows.appendChild(expandableLibraryRow(UPCOMING_TITLE, soon.map(function (x) { var c = continueCard(x.e, art); c.__upcoming = true; return c; }), explorerItems(soon.map(function (x) { return x.e; }), 'continue')));
