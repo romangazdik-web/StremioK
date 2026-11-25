@@ -1266,6 +1266,30 @@
             return { value: value, type: t, id: id, kind: kind };
         });
     }
+    // Screen-efficient 5-column layout for the Watching tab. Supports normal
+    // scroll-up/down as well as the full-screen Explorer from each group.
+    function expandableContinueGrid(title, cards, items) {
+        var row = U.el('div', 'row grid-row nf-cw-grid-row');
+        var source = { title: title, items: items };
+        _explorerSources.push(source);
+        row.appendChild(U.el('div', 'row-title', title));
+        var open = U.el('div', 'nf-explorer-open nf-cw-open focusable', '▦  Zobrazit vše');
+        open.__onselect = function () { openExplorer('source', _explorerSources.indexOf(source), open); };
+        open.__goUP = function () { return scr('home').querySelector('.nf-actions .nf-play:not([style*="none"]), .nf-actions .nf-explore-all') || false; };
+        open.__goDOWN = function () { return cards[0] || false; };
+        row.appendChild(open);
+        var grid = U.el('div', 'card-grid nf-cw-card-grid');
+        cards.forEach(function (card, i) {
+            card.className += ' nf-cw-card';
+            card.__goLEFT = function () { return i % 5 ? cards[i - 1] : false; };
+            card.__goRIGHT = function () { return i % 5 !== 4 ? cards[i + 1] || false : false; };
+            card.__goUP = function () { return i >= 5 ? cards[i - 5] : open; };
+            card.__goDOWN = function () { return cards[i + 5] || false; };
+            grid.appendChild(card);
+        });
+        row.appendChild(grid);
+        return row;
+    }
     function expandableLibraryRow(title, cards, items) {
         var row = buildRow(title, cards);
         var source = { title: title, items: items };
@@ -1493,6 +1517,10 @@
         if (_homeDirty) { _tabRows = {}; }   // feeds / addons / poster shape / progress changed
         _homeDirty = false;
         U.clear(s);
+        // Compact, scrollable browsing layout for Continue Watching. Keep
+        // the same top controls and focus styling as the Library tab.
+        s.className = s.className.replace(/\s+nf-continue-layout/g, '');
+        if (_homeTab === 'continue') { s.className += ' nf-continue-layout'; }
 
         if (_homeCatalogs === null) { useHomeCache(); }
         var launch = _homeTab === null;
@@ -1512,6 +1540,9 @@
         // The focused title's details, between the top menu and the rows (#home-info); Modern's
         // title tabs: large, over the backdrop (hero).
         var info = U.el('div', 'home-info' + (hero ? ' hero' : ''));
+        // The original first child indices changed once Zobrazit vše was added.
+        // Store explicit handles: no more hiding the wrong action or losing focus.
+        var heroPlay = null, heroDetails = null, heroAll = null;
         info.appendChild(U.el('div', 'home-info-title'));
         info.appendChild(U.el('div', 'home-info-meta'));
         info.appendChild(U.el('div', 'home-info-desc'));
@@ -1520,8 +1551,11 @@
             var actions = U.el('div', 'nf-actions');
             var play = U.el('div', 'nf-action nf-play focusable', '▶  Přehrát');
             var details = U.el('div', 'nf-action nf-details focusable', 'ⓘ  Informace');
+            heroPlay = play;
+            heroDetails = details;
             if (_homeTab === 'library' || _homeTab === 'continue') {
                 var all = U.el('div', 'nf-action nf-explore-all focusable', '▦  Zobrazit vše');
+                heroAll = all;
                 all.__onselect = function () { openExplorer(_homeTab === 'continue' ? 'continue' : 'all', 0, all); };
                 actions.appendChild(all);
             }
@@ -1538,6 +1572,15 @@
             };
             actions.appendChild(play);
             actions.appendChild(details);
+            // A deterministic remote-control path across all title pages.
+            // Moving UP from the first card enters these controls, not sidebar.
+            var ordered = [heroAll, play, details].filter(Boolean);
+            ordered.forEach(function (action, n) {
+                action.__goLEFT = function () { return n > 0 ? ordered[n - 1] : false; };
+                action.__goRIGHT = function () { return n + 1 < ordered.length ? ordered[n + 1] : false; };
+                action.__goUP = function () { return false; };
+                action.__goDOWN = function () { return s.querySelector('.rows .card.focusable') || false; };
+            });
             info.appendChild(actions);
         }
         s.appendChild(info);
@@ -1571,9 +1614,9 @@
                     var art = homeArt(), now = [], soon = [];
                     entries.forEach(function (e) { var w = notOutYet(e); if (w) { soon.push({ e: e, w: w === true ? Infinity : w }); } else { now.push(e); } });
                     soon.sort(function (x, y) { return x.w - y.w; });
-                    if (now.length) { rows.appendChild(expandableLibraryRow(CW_TITLE, now.map(function (e) { return continueCard(e, art); }), explorerItems(now, 'continue'))); }
+                    if (now.length) { rows.appendChild(expandableContinueGrid(CW_TITLE, now.map(function (e) { return continueCard(e, art); }), explorerItems(now, 'continue'))); }
                     if (soon.length) {
-                        rows.appendChild(expandableLibraryRow(UPCOMING_TITLE, soon.map(function (x) { var c = continueCard(x.e, art); c.__upcoming = true; return c; }), explorerItems(soon.map(function (x) { return x.e; }), 'continue')));
+                        rows.appendChild(expandableContinueGrid(UPCOMING_TITLE, soon.map(function (x) { var c = continueCard(x.e, art); c.__upcoming = true; return c; }), explorerItems(soon.map(function (x) { return x.e; }), 'continue')));
                     }
                     refreshShowInfo(entries);
                 } else {
@@ -1636,12 +1679,12 @@
         if (actions) {
             var active = !!(_heroSourceCard && screen.contains(_heroSourceCard) && m && (m.name || m.title));
             actions.style.display = (active || _homeTab === 'library' || _homeTab === 'continue') ? 'flex' : 'none';
-            if (active) {
-                actions.children[0].__meta = m;
-                actions.children[1].__meta = m;
-            }
-            if (actions.children[0]) { actions.children[0].style.display = active ? '' : 'none'; }
-            if (actions.children[1]) { actions.children[1].style.display = active ? '' : 'none'; }
+            var play = actions.querySelector('.nf-play'), details = actions.querySelector('.nf-details');
+            if (play) { play.style.display = active ? '' : 'none'; if (active) { play.__meta = m; } }
+            if (details) { details.style.display = active ? '' : 'none'; if (active) { details.__meta = m; } }
+            // Zobrazit vše must stay visible even while focus is on the left menu.
+            var all = actions.querySelector('.nf-explore-all');
+            if (all) { all.style.display = ''; }
         }
     }
     // Modern look: the focused title's backdrop behind Home, two layers taking turns, so the
