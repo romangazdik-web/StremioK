@@ -862,16 +862,42 @@
     }
 
     // ----- a person's page (from the cast row) -----
-    // A verified Wikidata film credit has an IMDb ID but no poster. Use a compact
-    // text tile until its ordinary Cinemeta title page loads, never fabricate artwork.
+    // Real poster from Cinemeta by verified IMDb ID. Until it arrives the
+    // elegant fallback remains readable; never show an unrelated cast-search hit.
     function wikiCreditCard(m) {
         var c = U.el('div', 'card focusable nf-film-credit');
         c.setAttribute('data-id', m.id);
-        c.appendChild(U.el('div', 'nf-film-credit-tag', 'FILM'));
+        var art = U.el('div', 'nf-credit-art');
+        var symbol = U.el('span', 'nf-credit-art-symbol');
+        symbol.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="72" height="72" fill="none" stroke="currentColor" stroke-width="2.8"><rect x="13" y="29" width="54" height="37" rx="5"/><path d="M13 41h54M13 29l5-16h48l-5 16M25 13l-5 16M44 13l-5 16"/><path d="M35 47l14 8-14 8Z"/></svg>';
+        art.appendChild(symbol);
+        c.appendChild(art);
+        c.appendChild(U.el('div', 'nf-film-credit-tag', m.type === 'series' ? 'SERIÁL' : 'FILM'));
         c.appendChild(U.el('div', 'nf-film-credit-name', m.name || 'Film'));
         if (m.releaseInfo) { c.appendChild(U.el('div', 'nf-film-credit-year', m.releaseInfo)); }
-        c.__onselect = function () { App.openDetail('movie', m.id, m); };
+        c.__onselect = function () { App.openDetail(m.type || 'movie', m.id, m); };
         c.__onplay = c.__onselect;
+        function showArtwork(fresh) {
+            if (!fresh) { return; }
+            if (fresh.poster) { m.poster = fresh.poster; }
+            if (fresh.background) { m.background = fresh.background; }
+            if (fresh.imdbRating) { m.imdbRating = fresh.imdbRating; }
+            if (c.querySelector('img.nf-credit-poster')) { return; }
+            var src = U.cardImage(m.poster || m.background, 'poster');
+            if (!src) { return; }
+            var img = U.el('img', 'nf-credit-poster');
+            img.onload = function () { if (c.className.indexOf(' has-poster') < 0) { c.className += ' has-poster'; } };
+            img.onerror = function () { img.style.display = 'none'; };
+            c.insertBefore(img, c.firstChild);
+            U.deferImage(img, src, true);
+        }
+        if (m.poster || m.background) { showArtwork(m); }
+        else if (Stremio.creditMetadata) {
+            Stremio.creditMetadata(m).then(function (fresh) {
+                // Update only the existing card, never rebuild the focus grid.
+                if (fresh && c.parentNode) { showArtwork(fresh); }
+            }, function () {});
+        }
         return c;
     }
 
@@ -958,7 +984,19 @@
         panel.appendChild(rows); s.appendChild(panel);
         if (wiki) {
             if (p.movies && p.movies.length) {
-                rows.appendChild(buildRow('Vybraná filmografie · Wikidata', p.movies.map(wikiCreditCard)));
+                var group = U.el('div', 'nf-person-credit-section');
+                group.appendChild(U.el('div', 'nf-person-credit-heading', 'FILMOGRAFIE  ·  OVĚŘENÉ TITULY'));
+                var grid = U.el('div', 'nf-person-credit-grid');
+                var cards = p.movies.map(wikiCreditCard);
+                cards.forEach(function (card, idx) {
+                    card.__goLEFT = function () { return idx % 4 ? (cards[idx - 1] || false) : false; };
+                    card.__goRIGHT = function () { return idx % 4 === 3 ? false : (cards[idx + 1] || false); };
+                    card.__goUP = function () { return idx >= 4 ? (cards[idx - 4] || false) : false; };
+                    card.__goDOWN = function () { return cards[idx + 4] || false; };
+                    grid.appendChild(card);
+                });
+                group.appendChild(grid);
+                rows.appendChild(group);
             } else if (_d.creditLoading) {
                 rows.appendChild(U.el('div', 'row-empty', 'Ověřuji vybranou filmografii…'));
             } else if (!_d.personLoading) {
@@ -968,8 +1006,16 @@
             if (p.movies && p.movies.length) { rows.appendChild(buildRow('Filmy', p.movies.map(tmdbCard))); }
             if (p.series && p.series.length) { rows.appendChild(buildRow('Seriály', p.series.map(tmdbCard))); }
         }
-        var search = U.el('div', 'pill focusable nf-person-search', '⌕  Hledat tituly se jménem herce');
-        search.__onselect = function () { App.openSearch(); searchFor(p.name || _d.meta.name); };
+        var search = U.el('div', 'pill focusable nf-person-search');
+        var ico = U.el('span', 'nf-person-search-icon');
+        ico.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.8" cy="10.8" r="6.5"/><path d="M16 16l5 5"/></svg>';
+        search.appendChild(ico);
+        search.appendChild(U.el('span', 'nf-person-search-label', 'Zobrazit filmy s tímto hercem'));
+        search.__onselect = function () {
+            App.openSearch();
+            if (V.searchActorFor) { V.searchActorFor(p.name || _d.meta.name, p.movies || []); }
+            else { searchFor(p.name || _d.meta.name); }
+        };
         rows.appendChild(search);
         if (wiki) { rows.appendChild(U.el('div', 'nf-person-hint', 'Výběr filmů pochází z Wikidat; vyhledávání používá tvé aktivní katalogy.')); }
         Focus.setScope(s, rows.querySelector('.focusable') || undefined);
@@ -2922,6 +2968,7 @@
     V.renderLive = renderLive;
     V.renderPerson = renderPerson;
     V.peopleCard = peopleCard;
+    V.wikiCreditCard = wikiCreditCard;
     V.tmdbCard = tmdbCard;
     V.trailerNames = function () { return _d && _d.meta ? trailersOf(_d.meta).map(function (t) { return t.name; }) : []; };   // (for tests)
     V.restoreDetail = restoreDetail;
