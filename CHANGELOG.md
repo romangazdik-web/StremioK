@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.5.18 — 2026-11-25 (Nymind Cinema)
+- **Movie detail redesign:** large consistently readable text title even when a metadata provider supplies a tiny letterbox logo; improved backdrop shading; clear metadata badges for year, runtime, rating and genres.
+- **Synopsis and credits:** film/series story receives a heading and reading column; director, cast, origin and series facts have distinct visual labels.
+- **Actions by priority:** prominent Přehrát, Trailer, Herci a informace row; visually secondary library, continue-watching, favorites and ČSFD actions below, with their existing callbacks retained.
+- **Series:** compact version preserves room for season and episode browsing.
+- **Samsung Tizen 3:** layout uses legacy-compatible CSS and no animations; no modifications to video player, Cinemeta loading, trailer handling, cast cards or remote control.
+- **Verification:** syntax and source invariants checked; final physical TV rendering requires an on-device test.
+
+
 ## 2.5.17 — 2026-11-25 (Nymind Cinema)
 - **No accidental home exits:** rapid double-BACK no longer triggers Nymind TV. The old capture listener and its 520 ms delayed synthetic single-BACK have been removed.
 - **Deliberate shortcut:** a new "Nymind TV" house icon in the Cinema sidebar launches the existing TizenBrew home module only when selected with OK.
