@@ -348,6 +348,10 @@
         var ratings = U.el('div', 'detail-ratings');
         body.appendChild(ratings);
         if (!ep) { fillRatings(ratings); }   // (the show's: not the episode's)
+        if (refined) {
+            body.appendChild(U.el('div', 'nf-detail-section-label',
+                _d.type === 'movie' ? 'PŘÍBĚH FILMU' : 'O SERIÁLU'));
+        }
         body.appendChild(U.el('div', 'detail-desc', (ep && spoilerFor(ep) === 'all') ? SPOILER_TEXT : (ep && (ep.overview || ep.description)) || meta.description || ''));
         if (_d.mode === 'info' && !_d.live && !_d.addonType && (_d.type === 'movie' || _d.type === 'series')) {
             var factsLine = U.el('div', 'nf-hero-extras');
@@ -1191,33 +1195,37 @@
         return (_d.meta.videos || []).find(function (v) { return v.id === _d.streamId; }) || null;
     }
     function seriesActions(up) {
-        var row = U.el('div', 'btn-row series-actions');
-        // The episode it would start hasn't aired yet (a show that hasn't started, or you've
-        // watched all that's out): no Play, just when it airs.
+        var row = U.el('div', 'btn-row series-actions nf-detail-action-stack');
+        var main = U.el('div', 'nf-primary-actions');
+        var secondary = U.el('div', 'nf-secondary-actions');
+        // Keep episode selection exactly as it was; only divide actions by purpose.
         var airs = airsAt(up.v);
-        if (_d.collection) {   // (the next film you haven't watched: its page)
+        if (_d.collection) {
             var open = U.el('div', 'pill focusable', '▶  Otevřít: ' + (up.v.title || up.v.name || ''));
             open.__onselect = function () { openTitle(up.v); };
-            row.appendChild(open);
+            main.appendChild(open);
             var tpc = trailerPill();
-            if (tpc) { row.appendChild(tpc); }
+            if (tpc) { main.appendChild(tpc); }
+            row.appendChild(main);
             return row;
         }
         if (!up.resume && !episodeWatched(up.v) && airs > Date.now()) {
-            row.appendChild(U.el('div', 'pill airs-pill', epCode(up.v) + ' · Premiéra ' + U.dayLabel(airs)));
-        } else {
-            row.appendChild(playUpButton(up));
-        }
-        var tr = trailerPill(); if (tr) { row.appendChild(tr); }
-        var mp = morePill(); if (mp) { row.appendChild(mp); }
+            main.appendChild(U.el('div', 'pill airs-pill', epCode(up.v) + ' · Premiéra ' + U.dayLabel(airs)));
+        } else { main.appendChild(playUpButton(up)); }
+        var tr = trailerPill(); if (tr) { main.appendChild(tr); }
+        var mp = morePill(); if (mp) { main.appendChild(mp); }
         var np = U.el('div', 'pill focusable', nowPlayingLabel('series', _d.meta.id || _d.id));
         np.__onselect = function () { toggleNowPlaying('series', _d.meta); _d._focusNp = true; drawDetail(); };
         if (_d._focusNp) { _d._epFocus = np; _d._focusNp = false; }
-        row.appendChild(np);
-        libraryPills('series', _d.meta.id || _d.id).forEach(function (lp) { row.appendChild(lp); });
-        var rp = ratingsPill();
-        if (rp) { row.appendChild(rp); }
-        var cp = csfdPill(); if (cp) { row.appendChild(cp); }
+        secondary.appendChild(np);
+        libraryPills('series', _d.meta.id || _d.id).forEach(function (lp) { secondary.appendChild(lp); });
+        var rp = ratingsPill(); if (rp) { secondary.appendChild(rp); }
+        var cp = csfdPill(); if (cp) { secondary.appendChild(cp); }
+        row.appendChild(main);
+        if (secondary.children.length) {
+            row.appendChild(U.el('div', 'nf-secondary-label', 'MOJE KNIHOVNA A DALŠÍ'));
+            row.appendChild(secondary);
+        }
         return row;
     }
     function playUpButton(up) {
