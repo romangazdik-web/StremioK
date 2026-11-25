@@ -1239,7 +1239,7 @@
     }
 
     // Switch the active home tab (from the shared top menu) and show it.
-    function setHomeTab(key) { _homeTab = key || _homeTab; _focusFirstCard = 'new'; _wantTab = null; _wantGuide = null; }
+    function setHomeTab(key) { _explorer = null; _homeTab = key || _homeTab; _focusFirstCard = 'new'; _wantTab = null; _wantGuide = null; }
     // A tab asked for whose rows are still coming (a first playlist's IPTV tab): shown when they
     // come, if Home is still on the tab it showed instead. { key, instead }
     var _wantTab = null;
@@ -1253,10 +1253,187 @@
     // refreshed in the background don't move focus.
     var CW_TITLE = U.t('Continue Watching');   // (holding OK: the corner's "Hold OK for more" says so)
     var UPCOMING_TITLE = U.t('Upcoming');
+    // ================= NYMIND FULLSCREEN LIBRARY =================
+    // This sits over Home, without creating a second player or downloading
+    // catalogs again. Keep the expanded view mounted when a title opens: BACK
+    // restores its exact card, scroll position and selected filter.
+    var _explorer = null, _explorerSources = [];
+    var EXPLORER_BATCH = 35, EXPLORER_COLUMNS = 5;
+    function explorerItems(data, kind, type) {
+        return (data || []).map(function (value) {
+            var t = type || value.type || 'movie';
+            var id = kind === 'continue' ? (value.parent || ('' + value.id).split(':')[0]) : value.id;
+            return { value: value, type: t, id: id, kind: kind };
+        });
+    }
+    function expandableLibraryRow(title, cards, items) {
+        var row = buildRow(title, cards);
+        var source = { title: title, items: items };
+        _explorerSources.push(source);
+        row.className += ' nf-explorable';
+        var open = U.el('div', 'nf-explorer-open focusable', '▦  Zobrazit vše');
+        row.insertBefore(open, row.querySelector('.row-scroller'));
+        open.__onselect = function () { openExplorer('source', _explorerSources.indexOf(source), open); };
+        open.__goDOWN = function () { return row.querySelector('.row-scroller .focusable') || false; };
+        var first = row.querySelector('.row-scroller .focusable');
+        if (first && !first.__goUP) { first.__goUP = function () { return open; }; }
+        return row;
+    }
+    function explorerTitle(filter) {
+        if (filter === 'source') {
+            var src = _explorerSources[_explorer && _explorer.sourceIndex];
+            return src ? src.title : 'Vybraný seznam';
+        }
+        return { all: 'Celá knihovna', movie: 'Všechny filmy', series: 'Všechny seriály',
+            continue: 'Pokračovat ve sledování' }[filter] || 'Knihovna';
+    }
+    function explorerList(page) {
+        var out = [], seen = {}, filter = page.filter;
+        var selected = filter === 'source' ? [_explorerSources[page.sourceIndex]] : _explorerSources;
+        (selected || []).forEach(function (source) {
+            if (!source) { return; }
+            source.items.forEach(function (item) {
+                if (filter === 'movie' && item.type !== 'movie') { return; }
+                if (filter === 'series' && item.type !== 'series') { return; }
+                if (filter === 'continue' && item.kind !== 'continue') { return; }
+                // The same movie can be in local favourites, a linked library
+                // and Continue Watching. The full overview has one card per ID.
+                var k = item.type + ':' + item.id;
+                if (filter !== 'source' && seen[k]) { return; }
+                seen[k] = 1;
+                out.push(item);
+            });
+        });
+        return out;
+    }
+    function explorerCard(item) {
+        if (item.kind === 'continue') { return continueCard(item.value, homeArt()); }
+        var m = item.value || {};
+        return posterCard(Object.assign({}, m, { _wideHome: true, type: item.type }), item.type);
+    }
+    function openExplorer(filter, sourceIndex, opener) {
+        if (_homeTab !== 'library' && _homeTab !== 'continue') { return; }
+        _explorer = { tab: _homeTab, filter: filter || 'all', sourceIndex: sourceIndex || 0,
+            opener: opener || Focus.current(), focusedIndex: 0, overlay: null };
+        drawExplorer(_explorer);
+    }
+    function backInExplorer() {
+        if (!_explorer) { return false; }
+        var page = _explorer;
+        _explorer = null;
+        if (page.overlay && page.overlay.parentNode) { page.overlay.parentNode.removeChild(page.overlay); }
+        var restore = page.opener && scr('home').contains(page.opener) ? page.opener :
+            scr('home').querySelector('.nf-explorer-open, .nf-action.focusable, .rows .card.focusable');
+        if (restore) { Focus.setScope(scr('home'), restore); }
+        return true;
+    }
+    function drawExplorer(page) {
+        if (_explorer !== page || page.tab !== _homeTab) { return; }
+        var home = scr('home');
+        if (page.overlay && page.overlay.parentNode) { page.overlay.parentNode.removeChild(page.overlay); }
+        var overlay = U.el('div', 'nf-explorer-overlay');
+        page.overlay = overlay;
+        var heading = U.el('div', 'nf-explorer-heading');
+        var caption = U.el('div', 'nf-explorer-caption', 'NYMIND CINEMA  /  KNIHOVNA');
+        var title = U.el('div', 'nf-explorer-title', explorerTitle(page.filter));
+        var hint = U.el('div', 'nf-explorer-hint', 'Šipky = procházet  ·  OK = otevřít  ·  Zpět = zavřít');
+        var close = U.el('div', 'nf-explorer-close focusable', '✕  Zavřít');
+        close.__onselect = backInExplorer;
+        heading.appendChild(caption);
+        heading.appendChild(title);
+        heading.appendChild(hint);
+        heading.appendChild(close);
+        overlay.appendChild(heading);
+        var tabs = U.el('div', 'nf-explorer-tabs');
+        overlay.appendChild(tabs);
+        var items = explorerList(page);
+        var count = U.el('div', 'nf-explorer-count',
+            items.length + (items.length === 1 ? ' titul' : (items.length >= 2 && items.length <= 4 ? ' tituly' : ' titulů')));
+        overlay.appendChild(count);
+        var scroll = U.el('div', 'nf-explorer-scroll');
+        var grid = U.el('div', 'nf-explorer-grid');
+        scroll.appendChild(grid); overlay.appendChild(scroll);
+        var cards = [], at = 0;
+        page.grid = grid; page.scroll = scroll; page.cards = cards;
+        var tabDefs = [{ key: 'all', label: 'Vše' }, { key: 'movie', label: 'Filmy' },
+            { key: 'series', label: 'Seriály' }, { key: 'continue', label: 'Sledování' }];
+        if (page.sourceIndex < _explorerSources.length && page.filter === 'source') {
+            tabDefs.unshift({ key: 'source', label: 'Tento řádek' });
+        } else if (page.sourceIndex < _explorerSources.length && page.sourceEnabled) {
+            tabDefs.unshift({ key: 'source', label: 'Tento řádek' });
+        }
+        var tabButtons = {};
+        tabDefs.forEach(function (def) {
+            var b = U.el('div', 'nf-explorer-tab focusable' + (page.filter === def.key ? ' active' : ''), def.label);
+            b.__onselect = function () { if (page.filter !== def.key) { page.filter = def.key; page.focusedIndex = 0; drawExplorer(page); } };
+            tabs.appendChild(b);
+            tabButtons[def.key] = b;
+        });
+        page.sourceEnabled = page.sourceEnabled || page.filter === 'source';
+        var currentTab = tabButtons[page.filter] || tabButtons.all;
+        close.__goDOWN = function () { return currentTab || false; };
+        function add(n) {
+            var end = Math.min(items.length, at + n);
+            for (; at < end; at++) {
+                (function (idx) {
+                    var card = explorerCard(items[idx]);
+                    card.className += ' nf-explorer-card';
+                    card.setAttribute('data-grid-index', '' + idx);
+                    card.__goLEFT = function () { return idx % EXPLORER_COLUMNS ? (cards[idx - 1] || false) : false; };
+                    card.__goRIGHT = function () {
+                        var j = idx + 1;
+                        if (j % EXPLORER_COLUMNS === 0 || j >= items.length) { return false; }
+                        if (j >= cards.length) { add(EXPLORER_BATCH); }
+                        return cards[j] || false;
+                    };
+                    card.__goUP = function () { return idx < EXPLORER_COLUMNS ? (currentTab || false) : (cards[idx - EXPLORER_COLUMNS] || false); };
+                    card.__goDOWN = function () {
+                        var j = idx + EXPLORER_COLUMNS;
+                        if (j >= items.length) { return false; }
+                        if (j >= cards.length) { add(EXPLORER_BATCH); }
+                        return cards[j] || false;
+                    };
+                    cards.push(card);
+                    grid.appendChild(card);
+                })(at);
+            }
+        }
+        add(EXPLORER_BATCH);
+        if (!items.length) { grid.appendChild(U.el('div', 'nf-explorer-empty', 'V tomto seznamu zatím nejsou žádné tituly.')); }
+        var keys = Object.keys(tabButtons);
+        keys.forEach(function (key, index) {
+            var btn = tabButtons[key];
+            btn.__goDOWN = function () { return cards[0] || false; };
+            btn.__goUP = function () { return close; };
+            btn.__goLEFT = function () { return index ? tabButtons[keys[index - 1]] : false; };
+            btn.__goRIGHT = function () { return index + 1 < keys.length ? tabButtons[keys[index + 1]] : false; };
+        });
+        home.appendChild(overlay);
+        // Restore a focused card after returning from a detail page whose
+        // watch progress changed and forced the underlying Home rows to rebuild.
+        var wanted = Math.max(0, Math.min(page.focusedIndex || 0, items.length - 1));
+        while (cards.length <= wanted && at < items.length) { add(EXPLORER_BATCH); }
+        Focus.setScope(home, cards[wanted] || currentTab || close);
+    }
+    function explorerFocus(node) {
+        var p = _explorer;
+        if (!p || !p.overlay || !p.overlay.contains(node)) { return false; }
+        if (node.getAttribute && node.hasAttribute('data-grid-index')) {
+            var index = parseInt(node.getAttribute('data-grid-index'), 10) || 0;
+            p.focusedIndex = index;
+            if (p.cards.length - index < 12 && p.cards.length < explorerList(p).length) {
+                // The next batch is added through the navigation hooks when
+                // moving DOWN/RIGHT. Do not eagerly allocate hundreds of posters.
+            }
+        }
+        return true;
+    }
+
     // Real Knihovna tab: local profile favorites, connected provider library
     // catalogs already downloaded by StremioK, and current playback progress.
     // No extra network calls and no parallel player.
     function buildLibraryRows(rows) {
+        _explorerSources = [];
         var total = 0, library = U.store.get('stremiok.nymind.favorites', {}) || {}, list = [];
         if (library && typeof library === 'object') {
             Object.keys(library).forEach(function (key) {
@@ -1267,12 +1444,12 @@
         }
         list.sort(function (a, b) { return (b.added || 0) - (a.added || 0); });
         if (list.length) {
-            rows.appendChild(buildRow('♥ Moje oblíbené', list.slice(0, 60).map(function (m) {
+            rows.appendChild(expandableLibraryRow('♥ Moje oblíbené', list.slice(0, 60).map(function (m) {
                 return posterCard({
                     id: m.id, type: m.type, name: m.name,
                     poster: m.poster, background: m.background, _wideHome: true
                 }, m.type);
-            })));
+            }), explorerItems(list, 'meta')));
             total++;
         }
         // Linked Stremio/Nuvio libraries and Trakt watchlists are already part
@@ -1283,19 +1460,19 @@
             return /Stremio Library|Nuvio Library|Watchlist|Knihovna|Moje knihovna|Biblioteca/i.test(cat.name || '');
         });
         sources.slice(0, 8).forEach(function (cat) {
-            rows.appendChild(buildRow(cat.name + ' · ' + (cat.type === 'movie' ? 'Filmy' : 'Seriály'),
+            rows.appendChild(expandableLibraryRow(cat.name + ' · ' + (cat.type === 'movie' ? 'Filmy' : 'Seriály'),
                 cat.metas.slice(0, 45).map(function (m) {
                     return posterCard(Object.assign({}, m, { _wideHome: true }), cat.type);
-                })));
+                }), explorerItems(cat.metas, 'meta', cat.type)));
             total++;
         });
         // Recent unfinished items from the existing resume system, not a copy.
         var current = continueEntries();
         if (current.length) {
             var art = homeArt();
-            rows.appendChild(buildRow('▶ Pokračovat ve sledování', current.slice(0, 30).map(function (e) {
+            rows.appendChild(expandableLibraryRow('▶ Pokračovat ve sledování', current.slice(0, 30).map(function (e) {
                 return continueCard(e, art);
-            })));
+            }), explorerItems(current, 'continue')));
             total++;
         }
         if (!total) {
@@ -1345,6 +1522,11 @@
             var actions = U.el('div', 'nf-actions');
             var play = U.el('div', 'nf-action nf-play focusable', '▶  Přehrát');
             var details = U.el('div', 'nf-action nf-details focusable', 'ⓘ  Informace');
+            if (_homeTab === 'library' || _homeTab === 'continue') {
+                var all = U.el('div', 'nf-action nf-explore-all focusable', '▦  Zobrazit vše');
+                all.__onselect = function () { openExplorer(_homeTab === 'continue' ? 'continue' : 'all', 0, all); };
+                actions.appendChild(all);
+            }
             play.__onselect = function () {
                 var c = _heroSourceCard;
                 if (c && s.contains(c)) {
@@ -1390,9 +1572,10 @@
                     var art = homeArt(), now = [], soon = [];
                     entries.forEach(function (e) { var w = notOutYet(e); if (w) { soon.push({ e: e, w: w === true ? Infinity : w }); } else { now.push(e); } });
                     soon.sort(function (x, y) { return x.w - y.w; });
-                    if (now.length) { rows.appendChild(buildRow(CW_TITLE, now.map(function (e) { return continueCard(e, art); }))); }
+                    _explorerSources = [];
+                    if (now.length) { rows.appendChild(expandableLibraryRow(CW_TITLE, now.map(function (e) { return continueCard(e, art); }), explorerItems(now, 'continue'))); }
                     if (soon.length) {
-                        rows.appendChild(buildRow(UPCOMING_TITLE, soon.map(function (x) { var c = continueCard(x.e, art); c.__upcoming = true; return c; })));
+                        rows.appendChild(expandableLibraryRow(UPCOMING_TITLE, soon.map(function (x) { var c = continueCard(x.e, art); c.__upcoming = true; return c; }), explorerItems(soon.map(function (x) { return x.e; }), 'continue')));
                     }
                     refreshShowInfo(entries);
                 } else {
@@ -1423,6 +1606,13 @@
         _renderedSig = tabSig();
         _renderedMenu = menuSig();
         if (s.querySelector('.rows .card')) { U.mark('firstCard'); }
+        if (_explorer && _explorer.tab === _homeTab) {
+            _explorer.overlay = null;
+            // A source was re-created above; sourceIndex remains valid in order.
+            _explorer.opener = s.querySelectorAll('.nf-explorer-open')[_explorer.sourceIndex] ||
+                s.querySelector('.nf-explore-all') || null;
+            drawExplorer(_explorer);
+        }
         // the strip describes the focused title only (empty while focus is in the menu)
         clearTimeout(_homeInfoTimer); _homeInfoTimer = null;
         fillHomeInfo(Focus.current() && Focus.current().__meta);
@@ -1447,11 +1637,13 @@
         var actions = info && info.querySelector('.nf-actions');
         if (actions) {
             var active = !!(_heroSourceCard && screen.contains(_heroSourceCard) && m && (m.name || m.title));
-            actions.style.display = active ? 'flex' : 'none';
+            actions.style.display = (active || _homeTab === 'library' || _homeTab === 'continue') ? 'flex' : 'none';
             if (active) {
                 actions.children[0].__meta = m;
                 actions.children[1].__meta = m;
             }
+            if (actions.children[0]) { actions.children[0].style.display = active ? '' : 'none'; }
+            if (actions.children[1]) { actions.children[1].style.display = active ? '' : 'none'; }
         }
     }
     // Modern look: the focused title's backdrop behind Home, two layers taking turns, so the
@@ -1574,6 +1766,7 @@
     }
     Focus.onFocus(function (node) {
         if (!node || !scr('home').contains(node)) { return; }
+        if (explorerFocus(node)) { return; }
         if (_homeInfoTimer) { clearTimeout(_homeInfoTimer); }
         _homeInfoTimer = setTimeout(function () { _homeInfoTimer = null; fillHomeInfo(node.__meta); }, 120);
         var row = node.parentNode && node.parentNode.parentNode;
@@ -1877,6 +2070,7 @@
     V.markHomeDirty = markHomeDirty;
     V.refreshHomeIfStale = refreshHomeIfStale;
     V.renderHome = renderHome;
+    V.backInExplorer = backInExplorer;
     V.alertNewEpisodes = alertNewEpisodes;
     V.previewTiles = previewTiles;
     V.withShowInfo = withShowInfo;
