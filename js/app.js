@@ -4,7 +4,8 @@ var App = (function () {
 
     var _current = 'home';
     var _stack = [];   // frames: { screen, focus }
-    var _lastBackAt = 0;   // debounce BACK across keydown + tizenhwkey
+    var _lastBackAt = 0;   // only dedupe the two event types for one physical press
+    var _lastBackType = '';
 
     function screenEl(name) { return U.byId('screen-' + name); }
 
@@ -175,14 +176,17 @@ var App = (function () {
         }, 500);
     }
 
-    function onKey(action) {
-        // Debounce BACK globally (before any routing): keydown(10009) and tizenhwkey both
-        // fire for one press, and during playback the first goes to the player — without
-        // this, the duplicate leaks through after exit and can close the app.
+    function onKey(action, ev) {
+        // One Samsung press can arrive as keydown AND tizenhwkey. Suppress
+        // just that duplicate, not distinct rapid presses for normal navigation.
+        // The previous 500ms global debounce made quick Back feel broken.
         if (action === 'BACK') {
-            var nowb = Date.now();
-            if (nowb - _lastBackAt < 500) { return true; }
+            var nowb = Date.now(), kind = ev && ev.type || '';
+            if (ev && ev.repeat) { return true; }
+            if (kind !== _lastBackType && nowb - _lastBackAt < 170) { return true; }
+            if (kind === _lastBackType && nowb - _lastBackAt < 70) { return true; }
             _lastBackAt = nowb;
+            _lastBackType = kind;
         }
         if (action === 'GUIDE') { guideKey(); return true; }
         if (Player.isActive()) { return Player.handleKey(action); }   // (a held OK too: the player's Cast & more has a menu behind it)
