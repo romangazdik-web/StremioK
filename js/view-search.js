@@ -70,6 +70,7 @@
 
     function renderSearch() {
         var s = scr('search');
+        s.className = s.className.replace(/\s+nf-actor-results/g, '');
         U.clear(s);
         s.appendChild(buildTopMenu('search'));   // shared top menu (UP reaches it; no Back button)
 
@@ -348,8 +349,59 @@
         }
     });
 
+    // A name is not an actor credit in Cinemeta's title-search API. Opening
+    // ordinary search with "Mahershala Ali" returned unrelated films. Display
+    // titles verified through actor's Wikidata P161 credit, and enrich them
+    // asynchronously from Cinemeta by their exact IMDb IDs.
+    function searchActorFor(name, credits) {
+        leaveSearch();
+        var s = scr('search');
+        if (!s || !s.querySelector('.search-wrap')) { return; }
+        s.className = s.className.replace(/\s+nf-actor-results/g, '') + ' nf-actor-results';
+        var previous = s.querySelector('.nf-actor-results-panel');
+        if (previous && previous.parentNode) { previous.parentNode.removeChild(previous); }
+        var area = U.el('div', 'nf-actor-results-panel');
+        area.appendChild(U.el('div', 'nf-actor-results-eyebrow', 'NYMIND CINEMA / FILMOGRAFIE'));
+        area.appendChild(U.el('div', 'nf-actor-results-title', name || 'Filmografie herce'));
+        area.appendChild(U.el('div', 'nf-actor-results-subtitle',
+            'Ověřené filmové tituly z Wikidat · plakáty doplňuje Cinemeta'));
+        var actions = U.el('div', 'nf-actor-results-actions');
+        var edit = U.el('div', 'pill focusable nf-actor-results-edit', 'Zadat vlastní hledání');
+        edit.__onselect = function () {
+            if (area.parentNode) { area.parentNode.removeChild(area); }
+            s.className = s.className.replace(/\s+nf-actor-results/g, '');
+            if (_search && _search.input) {
+                _search.input.value = '';
+                Focus.setScope(s, _search.input);
+            }
+        };
+        actions.appendChild(edit); area.appendChild(actions);
+        var items = (credits || []).filter(function (item) {
+            return item && /^tt\d+$/.test(item.id || '');
+        });
+        var list = U.el('div', 'nf-actor-results-scroll');
+        var grid = U.el('div', 'nf-actor-results-grid');
+        var cards = items.map(function (m) { return V.wikiCreditCard(m); });
+        cards.forEach(function (card, i) {
+            card.__goLEFT = function () { return i % 5 === 0 ? false : (cards[i - 1] || false); };
+            card.__goRIGHT = function () { return i % 5 === 4 ? false : (cards[i + 1] || false); };
+            card.__goUP = function () { return i < 5 ? edit : (cards[i - 5] || false); };
+            card.__goDOWN = function () { return cards[i + 5] || false; };
+            grid.appendChild(card);
+        });
+        if (!cards.length) {
+            grid.appendChild(U.el('div', 'nf-actor-results-empty',
+                'Pro tohoto herce zatím nemáme filmové kredity s ověřeným IMDb ID. Můžeš zkusit ruční hledání.'));
+        }
+        list.appendChild(grid); area.appendChild(list);
+        edit.__goDOWN = function () { return cards[0] || false; };
+        s.appendChild(area);
+        Focus.setScope(s, cards[0] || edit);
+    }
+
     // ----- published for the other parts (and js/views.js) -----
     V.renderSearch = renderSearch;
+    V.searchActorFor = searchActorFor;
     V.leaveSearch = leaveSearch;
     // Search for these words, as if typed (a person named by an addon, from a title page).
     V.searchFor = function (q) { var i = U.byId('search-input'); if (i) { i.value = q; } runSearch(q); };
