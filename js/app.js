@@ -141,6 +141,7 @@ var App = (function () {
         if (Views.isModalOpen()) { Views.closeModal(); return; }
         if (_current === 'detail' && Views.backInDetail()) { return; }
         if (_current === 'settings' && Views.backInSettings()) { return; }
+        if (_current === 'home' && Views.backInExplorer && Views.backInExplorer()) { return; }  // fullscreen Library / Watching first
         if (_current === 'home' && Views.backInLocal && Views.backInLocal()) { return; }   // (the Local tab: up a folder)
         if (toTopMenu()) { return; }
         var f = _stack.pop();
