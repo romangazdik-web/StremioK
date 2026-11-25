@@ -2542,6 +2542,37 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
       border-color: #e50914;
     }
     </style>
+
+    <!-- Nymind Cinema 2.5.16 - TV fullscreen library grid -->
+    <style id="nymind-cinema-explorer-2516">
+    #app #screen-home .row.nf-explorable{position:relative}
+    #app #screen-home .row.nf-explorable .row-title{padding-right:330px;box-sizing:border-box}
+    #app #screen-home .nf-explorer-open{position:absolute;right:86px;top:0;z-index:8;display:block;padding:7px 18px;border:2px solid rgba(255,255,255,.38);border-radius:7px;background:rgba(30,32,40,.94);color:#fff;font-size:20px;font-weight:600}
+    #app #screen-home .nf-explorer-open.focused{border-color:#fff;background:#fafafa;color:#111;box-shadow:0 0 0 3px #d61528}
+    #app #screen-home .nf-explore-all{min-width:185px;border:1px solid rgba(255,255,255,.28);background:rgba(37,39,48,.9);color:#fff}
+    #app #screen-home .nf-explore-all.focused{background:#fff;color:#111;box-shadow:0 0 0 3px #e50914}
+    #app #screen-home .nf-explorer-overlay{position:absolute!important;inset:0;width:100%!important;height:100%!important;left:0;right:0;top:0;bottom:0;z-index:999!important;background:linear-gradient(125deg,#171a23 0%,#0b0d13 50%,#08090e 100%)!important;overflow:hidden!important;color:#fff}
+    #app #screen-home .nf-explorer-heading{position:absolute;top:58px;left:96px;right:86px;height:132px}
+    #app #screen-home .nf-explorer-caption{font-size:14px;letter-spacing:3px;font-weight:700;color:#ff646e;margin-bottom:9px}
+    #app #screen-home .nf-explorer-title{font-size:50px;font-weight:700;line-height:1.12;letter-spacing:-1.6px;max-width:1230px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    #app #screen-home .nf-explorer-hint{margin-top:8px;font-size:17px;color:#aeb6c2}
+    #app #screen-home .nf-explorer-close{position:absolute;right:0;top:13px;padding:12px 22px;border:2px solid rgba(255,255,255,.35);border-radius:8px;background:#232530;color:#fff;font-size:21px}
+    #app #screen-home .nf-explorer-close.focused{background:#fff;color:#111;border-color:#ed3243}
+    #app #screen-home .nf-explorer-tabs{position:absolute;top:204px;left:96px;right:86px;height:52px;display:-webkit-flex;display:flex;overflow:hidden}
+    #app #screen-home .nf-explorer-tab{display:inline-block;padding:12px 23px;margin-right:15px;border:2px solid rgba(255,255,255,.27);background:#1e212a;color:#e1e4ea;font-size:19px;font-weight:600;line-height:25px;border-radius:8px;white-space:nowrap;box-sizing:border-box}
+    #app #screen-home .nf-explorer-tab.active{background:rgba(185,20,34,.44);border-color:#ec4e59;color:#fff}
+    #app #screen-home .nf-explorer-tab.focused{background:#fff;border-color:#fff;color:#121319;box-shadow:0 0 0 3px #cc1d2d}
+    #app #screen-home .nf-explorer-count{position:absolute;right:91px;top:221px;color:#c4c9d2;font-size:18px;pointer-events:none}
+    #app #screen-home .nf-explorer-scroll{position:absolute;top:293px;bottom:20px;left:90px;right:75px;overflow-x:hidden!important;overflow-y:auto!important;padding:4px 0 35px;box-sizing:border-box;border-top:1px solid rgba(255,255,255,.16)}
+    #app #screen-home .nf-explorer-grid{width:100%;display:-webkit-flex;display:flex;-webkit-flex-wrap:wrap;flex-wrap:wrap;-webkit-align-content:flex-start;align-content:flex-start;padding:30px 0 65px 6px;box-sizing:border-box;white-space:normal!important}
+    #app #screen-home .nf-explorer-grid .card,#app #screen-home .nf-explorer-grid .card.landscape{display:inline-block!important;position:relative!important;-webkit-flex:0 0 calc(20% - 21px)!important;flex:0 0 calc(20% - 21px)!important;width:calc(20% - 21px)!important;height:192px!important;box-sizing:border-box!important;padding:0!important;margin:0 21px 28px 0!important;border:2px solid rgba(255,255,255,.12)!important;border-radius:10px!important;background:#242632!important;box-shadow:0 9px 18px rgba(0,0,0,.22)!important;overflow:visible;vertical-align:top;-webkit-transform:none!important;transform:none!important;-webkit-transition:none!important;transition:none!important}
+    #app #screen-home .nf-explorer-grid .card .poster{width:100%!important;height:100%!important;object-fit:cover!important;border-radius:8px!important}
+    #app #screen-home .nf-explorer-grid .card .cap{max-height:96px!important;padding:29px 13px 11px!important;font-size:20px!important;line-height:25px!important;background:linear-gradient(transparent,rgba(0,0,0,.97))!important;border-radius:0 0 8px 8px}
+    #app #screen-home .nf-explorer-grid .card.focusable.focused{border-color:#fff!important;-webkit-transform:scale(1.035)!important;transform:scale(1.035)!important;box-shadow:0 0 0 4px #fff,0 0 0 7px rgba(229,9,20,.85)!important;z-index:15!important}
+    #app #screen-home .nf-explorer-grid .card .prog{height:5px!important}
+    #app #screen-home .nf-explorer-empty{padding:65px 18px;font-size:23px;color:#b8bdc7}
+    body.zoom-130 #app #screen-home .nf-explorer-grid .card,body.zoom-140 #app #screen-home .nf-explorer-grid .card{height:167px!important}
+    </style>
 </head>
 <body>
     <div id="nymind-boot" aria-label="Načítá se Nymind Cinema">
@@ -2644,7 +2675,7 @@ body.zoom-140 #screen-detail .series-body { max-height: 249px; }
     <script src="js/nuvio-sync.js?v=2.4.3"></script>
     <script src="js/stremio-sync.js?v=2.4.3"></script>
     <script src="js/view-core.js?v=2.5.15"></script>
-    <script src="js/view-home.js?v=2.4.8"></script>
+    <script src="js/view-home.js?v=2.5.16"></script>
     <script src="js/view-guide.js?v=2.4.3"></script>
     <script src="js/view-detail.js?v=2.5.15"></script>
     <script src="js/view-search.js?v=2.5.0"></script>
