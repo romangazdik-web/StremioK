@@ -1,7 +1,7 @@
 {
   "name": "stremiok",
-  "version": "2.5.15",
-  "description": "Nymind Cinema for Samsung Tizen: fast title previews, Czech UI, Cinemeta genre suggestions, verified key-free actor biographies and selected filmographies; preserves existing portraits and player.",
+  "version": "2.5.16",
+  "description": "Nymind Cinema: fullscreen library / watching explorer with per-row expand, All-Movies-Series-Watching filters, lazy TV remote grid, stable Back and original Cinemeta/player behavior.",
   "packageType": "app",
   "appName": "StremioK",
   "appPath": "index.html",
