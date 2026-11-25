@@ -1577,6 +1577,62 @@ var Stremio = (function () {
         return usable;
     }
 
+    // Load artwork for verified IMDb credits without enabling the TMDB addon.
+    // The active Cinemeta service already supports the /meta/movie/tt... endpoint.
+    // Two concurrent XHRs protect Tizen 3 from exhausting image/network resources.
+    var _cinemetaCreditCache = U.lru(220);
+    var _cinemetaCreditJobs = [], _cinemetaCreditActive = 0;
+    function creditMetadata(credit, cancel) {
+        var id = '' + ((credit && credit.id) || '');
+        var type = credit && credit.type === 'series' ? 'series' : 'movie';
+        if (!/^tt\d+$/.test(id)) { return Promise.resolve(credit || null); }
+        var key = type + ':' + id;
+        var kept = metaKept(type, id);
+        if (kept && (kept.poster || kept.background)) {
+            return Promise.resolve(Object.assign({}, credit || {}, {
+                poster: kept.poster || '', background: kept.background || '',
+                name: kept.name || credit.name, imdbRating: kept.imdbRating || ''
+            }));
+        }
+        var cache = _cinemetaCreditCache.get(key);
+        if (cache) { return cache.then(function (meta) {
+            return Object.assign({}, credit || {}, meta || {});
+        }); }
+        var task = new Promise(function (resolve) {
+            _cinemetaCreditJobs.push({ id: id, type: type, cancel: cancel, resolve: resolve });
+            pumpCinemetaCredit();
+        });
+        _cinemetaCreditCache.set(key, task);
+        return task.then(function (meta) { return Object.assign({}, credit || {}, meta || {}); });
+    }
+    function pumpCinemetaCredit() {
+        while (_cinemetaCreditActive < 2 && _cinemetaCreditJobs.length) {
+            (function (job) {
+                if (job.cancel && job.cancel.cancelled) { job.resolve(null); return; }
+                _cinemetaCreditActive++;
+                var url = 'https://v3-cinemeta.strem.io/meta/' + job.type + '/' + job.id + '.json';
+                U.getJSON(url, 6500, undefined, job.cancel, null, null, true).then(function (body) {
+                    var m = body && body.meta;
+                    // Refuse mismatched IDs. Incorrect posters are worse than honest placeholders.
+                    if (m && m.id && m.id !== job.id) { m = null; }
+                    var out = m ? {
+                        id: job.id, type: job.type,
+                        poster: m.poster || '', background: m.background || '',
+                        logo: m.logo || '', imdbRating: m.imdbRating || ''
+                    } : null;
+                    if (!out || !(out.poster || out.background)) { _cinemetaCreditCache.del(job.type + ':' + job.id); }
+                    job.resolve(out);
+                }, function () {
+                    _cinemetaCreditCache.del(job.type + ':' + job.id);
+                    job.resolve(null);
+                }).then(function () {
+                    _cinemetaCreditActive--;
+                    pumpCinemetaCredit();
+                }, function () { _cinemetaCreditActive--; pumpCinemetaCredit(); });
+            })(_cinemetaCreditJobs.shift());
+        }
+    }
+
     // imdb id (tt..) -> TMDB id of a 'movie' or 'tv' title (null: not on TMDB, or unreachable).
     function tmdbFind(imdbId, kind, cancel) {
         if (!tmdbKey() || !imdbId) { return Promise.resolve(null); }
@@ -2750,7 +2806,7 @@ var Stremio = (function () {
         getIntroSegments: getIntroSegments, tmdbFind: tmdbFind,
         tmdbValidate: tmdbValidate, mdblistValidate: mdblistValidate, omdbValidate: omdbValidate,
         tmdbFindTvId: tmdbFindTvId, tmdbSeasonEpisodes: tmdbSeasonEpisodes, tmdbImg: tmdbImg,
-        wikiPersonPhoto: wikiPersonPhoto, wikiPersonProfile: wikiPersonProfile, wikiFilmography: wikiFilmography, tmdbTitleExtras: tmdbTitleExtras, tmdbTitleExtrasByName: tmdbTitleExtrasByName, tmdbTitleExtrasForMeta: tmdbTitleExtrasForMeta, tmdbExtrasById: tmdbExtrasById, tmdbEpisodeCast: tmdbEpisodeCast, tmdbEpisodeTrailer: tmdbEpisodeTrailer, setHideWords: setHideWords, hideWordHit: hideWordHit, normalizeAddonUrl: normalizeManifestUrl, debridOf: debridOf, addonOrigin: addonOrigin, setAddonOrigin: setAddonOrigin, parseSetupList: parseSetupList, applySetupEntries: applySetupEntries, exportGroups: exportGroups, exportSetup: exportSetup, sizeLimitHit: sizeLimitHit, setSizeLimit: setSizeLimit, gbText: gbText, runtimeMinutes: runtimeMinutes, tmdbPeople: tmdbPeople, tmdbPerson: tmdbPerson, tmdbBrowse: tmdbBrowse, tmdbTitleTrailers: tmdbTitleTrailers, tmdbProviders: tmdbProviders, tmdbProvidersKept: tmdbProvidersKept, tmdbGenres: tmdbGenres, tmdbWhereToWatch: tmdbWhereToWatch, watchRegion: watchRegion, autoWatchRegion: autoWatchRegion, tmdbImdbId: tmdbImdbId, findFilm: findFilm, hasTmdb: function () { return !!tmdbKey(); },
+        wikiPersonPhoto: wikiPersonPhoto, wikiPersonProfile: wikiPersonProfile, wikiFilmography: wikiFilmography, creditMetadata: creditMetadata, tmdbTitleExtras: tmdbTitleExtras, tmdbTitleExtrasByName: tmdbTitleExtrasByName, tmdbTitleExtrasForMeta: tmdbTitleExtrasForMeta, tmdbExtrasById: tmdbExtrasById, tmdbEpisodeCast: tmdbEpisodeCast, tmdbEpisodeTrailer: tmdbEpisodeTrailer, setHideWords: setHideWords, hideWordHit: hideWordHit, normalizeAddonUrl: normalizeManifestUrl, debridOf: debridOf, addonOrigin: addonOrigin, setAddonOrigin: setAddonOrigin, parseSetupList: parseSetupList, applySetupEntries: applySetupEntries, exportGroups: exportGroups, exportSetup: exportSetup, sizeLimitHit: sizeLimitHit, setSizeLimit: setSizeLimit, gbText: gbText, runtimeMinutes: runtimeMinutes, tmdbPeople: tmdbPeople, tmdbPerson: tmdbPerson, tmdbBrowse: tmdbBrowse, tmdbTitleTrailers: tmdbTitleTrailers, tmdbProviders: tmdbProviders, tmdbProvidersKept: tmdbProvidersKept, tmdbGenres: tmdbGenres, tmdbWhereToWatch: tmdbWhereToWatch, watchRegion: watchRegion, autoWatchRegion: autoWatchRegion, tmdbImdbId: tmdbImdbId, findFilm: findFilm, hasTmdb: function () { return !!tmdbKey(); },
         mdblistRatings: mdblistRatings,
         omdbSeasonRatings: omdbSeasonRatings,
         loadAddons: loadAddons, listCatalogs: listCatalogs, getCatalog: getCatalog, genreRecommendations: genreRecommendations,
