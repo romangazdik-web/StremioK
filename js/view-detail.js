@@ -345,6 +345,14 @@
             });
         } else { metaLine.textContent = bits.join('   ·   '); }
         body.appendChild(metaLine);
+        if (refined && Stremio.czdbRating) {
+            (function (page, row) {
+                Stremio.czdbRating(meta).then(function (pct) {
+                    if (_d !== page || pct === null || !row.parentNode) { return; }
+                    row.appendChild(U.el('span', 'nf-meta-chip nf-csfd-detail', 'ČSFD ' + pct + '%'));
+                }, function () {});
+            })(_d, metaLine);
+        }
         var ratings = U.el('div', 'detail-ratings');
         body.appendChild(ratings);
         if (!ep) { fillRatings(ratings); }   // (the show's: not the episode's)
@@ -408,10 +416,83 @@
             body.appendChild(movieActions());
         }
         fitPanel(s, body);
+        if (refined && _d.type === 'movie' && _d.mode === 'info') {
+            renderRelatedMovieRow(s, body, _d);
+        }
+        wireDetailActionFocus(s);
         Focus.setScope(s, _d._epFocus || firstBelowMenu(s));
         restoreFocusKey(s);
         _d.target = null; // consume: don't re-jump after the user navigates
         _d._focusSeason = null;
+    }
+
+    // All detail action rows behave consistently: arrows stay within their
+    // visual row, DOWN reaches the next actionable row instead of the sidebar.
+    function wireDetailActionFocus(screen) {
+        var stack = screen.querySelector('.nf-detail-action-stack');
+        if (!stack) { return; }
+        var main = stack.querySelectorAll('.nf-primary-actions .pill.focusable');
+        var secondary = stack.querySelectorAll('.nf-secondary-actions .pill.focusable');
+        function nearest(targets, index) {
+            return targets.length ? targets[Math.min(index, targets.length - 1)] : false;
+        }
+        for (var i = 0; i < main.length; i++) {
+            (function (at) {
+                var b = main[at];
+                b.__goLEFT = function () { return at ? main[at - 1] : false; };
+                b.__goRIGHT = function () { return at + 1 < main.length ? main[at + 1] : false; };
+                b.__goUP = function () { return false; };
+                b.__goDOWN = function () { return nearest(secondary, at) ||
+                    screen.querySelector('.nf-related-movies .card.focusable') || false; };
+            })(i);
+        }
+        for (var j = 0; j < secondary.length; j++) {
+            (function (at) {
+                var b = secondary[at];
+                b.__goLEFT = function () { return at ? secondary[at - 1] : false; };
+                b.__goRIGHT = function () { return at + 1 < secondary.length ? secondary[at + 1] : false; };
+                b.__goUP = function () { return nearest(main, at); };
+                b.__goDOWN = function () { return screen.querySelector('.nf-related-movies .card.focusable') || false; };
+            })(j);
+        }
+    }
+
+    // Use otherwise empty lower TV space for grounded, clickable suggestions.
+    // Loaded after the film detail is already visible, never before the action
+    // buttons respond. If the title's panel is too tall, suppress this row.
+    function renderRelatedMovieRow(screen, body, page) {
+        if (!Stremio.genreRecommendations || !page.meta) { return; }
+        var meta = Object.assign({}, page.meta);
+        var extra = addonLinks(meta);
+        if ((!meta.genres || !meta.genres.length) && extra.genres.length) { meta.genres = extra.genres; }
+        if (!meta.genres || !meta.genres.length) { return; }
+        Stremio.genreRecommendations('movie', page.id, meta, pageCancel()).then(function (items) {
+            if (_d !== page || page.mode !== 'info' || !items || !items.length || !screen.parentNode) { return; }
+            var sr = screen.getBoundingClientRect(), br = body.getBoundingClientRect();
+            var zoom = U.zoom ? U.zoom() : 1;
+            // A full-height hero or large zoom may need the entire space.
+            if (br.bottom > sr.bottom - 235 * zoom) { return; }
+            var panel = U.el('div', 'nf-related-movies');
+            panel.appendChild(U.el('div', 'nf-related-title', 'DALŠÍ FILMY PODOBNÉHO ŽÁNRU'));
+            var row = U.el('div', 'nf-related-grid');
+            var cards = items.slice(0, 6).map(function (m) {
+                var card = posterCard(Object.assign({}, m, { _wideHome: true }), 'movie');
+                card.className += ' nf-related-card';
+                return card;
+            });
+            cards.forEach(function (card, idx) {
+                card.__goLEFT = function () { return idx ? cards[idx - 1] : false; };
+                card.__goRIGHT = function () { return cards[idx + 1] || false; };
+                card.__goUP = function () {
+                    return screen.querySelector('.nf-secondary-actions .pill.focusable') ||
+                        screen.querySelector('.nf-primary-actions .pill.focusable') || false;
+                };
+                card.__goDOWN = function () { return false; };
+                row.appendChild(card);
+            });
+            panel.appendChild(row);
+            screen.appendChild(panel);
+        }, function () {});
     }
 
     // The list (seasons and episodes, sources, a download's files) starts just under the text
