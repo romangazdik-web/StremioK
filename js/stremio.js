@@ -146,7 +146,7 @@ var Stremio = (function () {
 
     function getIntegrations() {
         var o = U.store.get(INTEG_KEY, {}) || {};
-        return { omdb: o.omdb || '', tmdb: o.tmdb || '', mdblist: o.mdblist || '', theintrodb: o.theintrodb || '',
+        return { omdb: o.omdb || '', tmdb: o.tmdb || '', mdblist: o.mdblist || '', czdb: o.czdb || '', theintrodb: o.theintrodb || '',
             trakt_id: o.trakt_id || '', trakt_secret: o.trakt_secret || '' };
     }
     function setIntegration(key, val) {
@@ -1633,6 +1633,96 @@ var Stremio = (function () {
         }
     }
 
+    // Verified Czech audience percentages. Cinemeta has IMDb scores, not ČSFD.
+    // CZDB is a separate opt-in independent API with explicit IMDb-id matching.
+    // With no personal key, no network request is made and nothing is fabricated.
+    // Limit lookups on old Tizen 3 (the provider may have a daily quota).
+    var _czdbCache = U.lru(140), _czdbQueue = [], _czdbActive = 0, _czdbSession = 0;
+    function czdbPercent(v, expectedSource) {
+        if (typeof v === 'string' && /^[0-9]{1,3}\s*%$/.test(v.trim())) {
+            return Math.min(100, parseInt(v, 10));
+        }
+        if (expectedSource && typeof v === 'number' && isFinite(v) && v >= 0 && v <= 100) {
+            return Math.round(v);
+        }
+        return null;
+    }
+    function parseCzdbScore(payload) {
+        if (!payload || payload === false || typeof payload !== 'object') { return null; }
+        var objects = [payload];
+        if (payload.data && typeof payload.data === 'object') { objects.push(payload.data); }
+        if (payload.movie && typeof payload.movie === 'object') { objects.push(payload.movie); }
+        if (payload.csfd && typeof payload.csfd === 'object') { objects.push(payload.csfd); }
+        for (var i = 0; i < objects.length; i++) {
+            var obj = objects[i];
+            var labels = ['csfd_rating', 'csfdRating', 'rating_percent', 'ratingPercent', 'hodnoceni_percent', 'ratingPercentage', 'percentage'];
+            for (var j = 0; j < labels.length; j++) {
+                if (Object.prototype.hasOwnProperty.call(obj, labels[j])) {
+                    var val = czdbPercent(obj[labels[j]], true);
+                    if (val !== null) { return val; }
+                }
+            }
+            // Generic "rating" is accepted only when written explicitly as a
+            // percent, never as an IMDb-like 0–10 score.
+            var raw = czdbPercent(obj.rating, false);
+            if (raw !== null) { return raw; }
+        }
+        return null;
+    }
+    function czdbRating(meta) {
+        meta = meta || {};
+        var supplied = czdbPercent(meta.csfdRating, true);
+        if (supplied === null) { supplied = czdbPercent(meta.csfd_rating, true); }
+        if (supplied !== null) { return Promise.resolve(supplied); }
+        var id = meta.id || meta._id || '', key = getIntegrations().czdb;
+        if (!key || !/^tt\d+$/.test(id)) { return Promise.resolve(null); }
+        var ck = id + ':' + key.length + ':' + key.slice(-3);
+        var cached = _czdbCache.get(ck);
+        if (cached !== undefined) { return Promise.resolve(cached); }
+        // Persist only successful results, not failures or secrets.
+        var storeKey = 'nymind.czdb.verified.' + id, saved = U.store.get(storeKey, null);
+        if (saved && saved.when && Date.now() - saved.when < 7 * 86400000 &&
+            typeof saved.pct === 'number' && saved.pct >= 0 && saved.pct <= 100) {
+            _czdbCache.set(ck, saved.pct);
+            return Promise.resolve(saved.pct);
+        }
+        if (_czdbSession >= 36) { return Promise.resolve(null); }
+        _czdbSession++;
+        var task = new Promise(function (resolve) {
+            _czdbQueue.push({ id: id, key: key, resolve: resolve });
+            pumpCzdb();
+        });
+        _czdbCache.set(ck, task);
+        return task.then(function (pct) {
+            if (pct === null) { _czdbCache.del(ck); }
+            else {
+                _czdbCache.set(ck, pct);
+                U.store.set(storeKey, { when: Date.now(), pct: pct });
+            }
+            return pct;
+        }, function () { _czdbCache.del(ck); return null; });
+    }
+    function pumpCzdb() {
+        while (_czdbActive < 2 && _czdbQueue.length) {
+            (function (job) {
+                _czdbActive++;
+                U.getJSON('https://api.czdb.cz/search?i=' + encodeURIComponent(job.id), 6500,
+                    undefined, null, { 'X-API-Key': job.key }, null, true).then(function (data) {
+                    job.resolve(parseCzdbScore(data));
+                }, function () { job.resolve(null); }).then(function () {
+                    _czdbActive--;
+                    pumpCzdb();
+                }, function () { _czdbActive--; pumpCzdb(); });
+            })(_czdbQueue.shift());
+        }
+    }
+    function czdbValidate(key) {
+        if (!key) { return Promise.resolve(false); }
+        return U.getJSON('https://api.czdb.cz/search?i=tt0111161', 6500, undefined,
+            null, { 'X-API-Key': key }, null, true)
+            .then(function (data) { return data !== false && !!data; }, function () { return false; });
+    }
+
     // imdb id (tt..) -> TMDB id of a 'movie' or 'tv' title (null: not on TMDB, or unreachable).
     function tmdbFind(imdbId, kind, cancel) {
         if (!tmdbKey() || !imdbId) { return Promise.resolve(null); }
@@ -2804,7 +2894,7 @@ var Stremio = (function () {
         getAddonUrls: getAddonUrls, manifestProblem: function (url) { return _manifestProblem[url] || ''; }, manifestDetail: function (url) { return _manifestDetail[url] || ''; }, addAddon: addAddon, removeAddon: removeAddon, moveAddon: moveAddon, streamNotes: streamNotes, keepSource: keepSource, forgetSource: forgetSource, sourceId: sourceId, hasStreamAddons: hasStreamAddons, thirdPartyNote: thirdPartyNote, refreshAddons: refreshAddons, refreshAddon: refreshAddon,
         getIntegrations: getIntegrations, setIntegration: setIntegration, getPrefs: getPrefs, setPref: setPref, addonLogo: addonLogo,
         getIntroSegments: getIntroSegments, tmdbFind: tmdbFind,
-        tmdbValidate: tmdbValidate, mdblistValidate: mdblistValidate, omdbValidate: omdbValidate,
+        tmdbValidate: tmdbValidate, mdblistValidate: mdblistValidate, omdbValidate: omdbValidate, czdbValidate: czdbValidate, czdbRating: czdbRating,
         tmdbFindTvId: tmdbFindTvId, tmdbSeasonEpisodes: tmdbSeasonEpisodes, tmdbImg: tmdbImg,
         wikiPersonPhoto: wikiPersonPhoto, wikiPersonProfile: wikiPersonProfile, wikiFilmography: wikiFilmography, creditMetadata: creditMetadata, tmdbTitleExtras: tmdbTitleExtras, tmdbTitleExtrasByName: tmdbTitleExtrasByName, tmdbTitleExtrasForMeta: tmdbTitleExtrasForMeta, tmdbExtrasById: tmdbExtrasById, tmdbEpisodeCast: tmdbEpisodeCast, tmdbEpisodeTrailer: tmdbEpisodeTrailer, setHideWords: setHideWords, hideWordHit: hideWordHit, normalizeAddonUrl: normalizeManifestUrl, debridOf: debridOf, addonOrigin: addonOrigin, setAddonOrigin: setAddonOrigin, parseSetupList: parseSetupList, applySetupEntries: applySetupEntries, exportGroups: exportGroups, exportSetup: exportSetup, sizeLimitHit: sizeLimitHit, setSizeLimit: setSizeLimit, gbText: gbText, runtimeMinutes: runtimeMinutes, tmdbPeople: tmdbPeople, tmdbPerson: tmdbPerson, tmdbBrowse: tmdbBrowse, tmdbTitleTrailers: tmdbTitleTrailers, tmdbProviders: tmdbProviders, tmdbProvidersKept: tmdbProvidersKept, tmdbGenres: tmdbGenres, tmdbWhereToWatch: tmdbWhereToWatch, watchRegion: watchRegion, autoWatchRegion: autoWatchRegion, tmdbImdbId: tmdbImdbId, findFilm: findFilm, hasTmdb: function () { return !!tmdbKey(); },
         mdblistRatings: mdblistRatings,
