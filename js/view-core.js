@@ -795,7 +795,15 @@ var ViewParts = {};
         c.__kind = kind;
         if ((kind === 'movie' || kind === 'series') && meta.id && Player.isWatched(kind, meta.id)) { markCard(c, true); }
         var rating = parseFloat(meta.imdbRating);   // (Ratings on posters: the catalog's own, nothing downloaded)
-        if (rating > 0 && rating <= 10 && Stremio.getPrefs().posterRatings) { c.appendChild(U.el('div', 'card-rating', '★ ' + rating.toFixed(1))); }   // (a series: marked watched whole, see setTitleWatched / the title page)
+        if (rating > 0 && rating <= 10 && Stremio.getPrefs().posterRatings) { c.appendChild(U.el('div', 'card-rating', '★ ' + rating.toFixed(1))); }   // genuine IMDb rating
+        // Optional verified ČSFD percentage. No simulated IMDb-to-ČSFD conversion.
+        if ((kind === 'movie' || kind === 'series') && Stremio.czdbRating) {
+            Stremio.czdbRating(meta).then(function (pct) {
+                if (pct === null || !c.parentNode) { return; }
+                var chip = U.el('div', 'nf-csfd-badge', 'ČSFD ' + pct + '%');
+                c.appendChild(chip);
+            }, function () {});
+        }
         if (kind === 'movie' || kind === 'series') { c.__onlongpress = function () { posterActions(meta, kind, c); }; }
         else if (youTubeList(meta.id)) { c.__onlongpress = function () { addYouTubeCatalog(meta); }; }   // (a channel / playlist: to your YouTube)
         else if (/^iptv:/.test(meta.id || '') && typeof EPG !== 'undefined') {   // an IPTV channel: what's on, and its schedule
