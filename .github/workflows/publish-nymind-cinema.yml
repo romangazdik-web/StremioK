@@ -39,7 +39,7 @@ jobs:
           if gh release view "${TAG}" >/dev/null 2>&1; then
             echo "GitHub release already published."
           else
-            gh release create "${TAG}" --target "${GITHUB_SHA}" --title "Nymind Cinema ${TAG}" --notes "Cinemeta movie posters for actor filmographies, actor-only film results and redesigned movie details."
+            gh release create "${TAG}" --target "${GITHUB_SHA}" --title "Nymind Cinema ${TAG}" --notes "Nymind Cinema ${TAG}: improved Continue Watching grid, remote navigation, detailed film pages, optional verified Czech film ratings and unified UI."
           fi
       - name: Purge jsDelivr URLs for the current build
         shell: bash
@@ -47,7 +47,7 @@ jobs:
           set -euo pipefail
           VERSION="$(node -p "require('./package.json').version")"
           for REV in "" "@main" "@latest" "@v${VERSION}"; do
-            for FILE in package.json index.html js/stremio.js js/view-detail.js js/view-search.js; do
+            for FILE in package.json index.html js/stremio.js js/view-detail.js js/view-search.js js/view-home.js js/view-core.js js/view-settings.js; do
               URL="https://purge.jsdelivr.net/gh/romangazdik-web/StremioK${REV}/${FILE}"
               echo "${URL}"
               curl --max-time 15 -fsSL "${URL}" || echo "Purge may be rate-limited: ${URL}"
