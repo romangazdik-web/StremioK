@@ -283,10 +283,13 @@
 
         // Distinct landing state: a movie is first a beautiful synopsis and actions,
         // not a list of unlabelled streaming sources.
-        s.className = s.className.replace(/\s+nf-movie-landing|\s+nf-series-landing/g, '');
-        if (_d.mode === 'info' && !_d.live && !_d.addonType) {
+        s.className = s.className.replace(/\s+nf-movie-landing|\s+nf-series-landing|\s+nf-detail-refined/g, '');
+        var refined = _d.mode === 'info' && !_d.live && !_d.addonType &&
+            (_d.type === 'movie' || _d.type === 'series');
+        if (refined) {
+            s.className += ' nf-detail-refined';
             if (_d.type === 'movie') { s.className += ' nf-movie-landing'; }
-            else if (_d.type === 'series') { s.className += ' nf-series-landing'; }
+            else { s.className += ' nf-series-landing'; }
         }
         s.className = s.className.replace(/\s+nf-cast-view/g, '');
         if (_d.mode === 'more') { s.className += ' nf-cast-view'; }
@@ -310,7 +313,10 @@
         if (_d.mode === 'info' && !_d.live && !_d.addonType && (_d.type === 'movie' || _d.type === 'series')) {
             body.appendChild(U.el('div', 'nf-detail-eyebrow', 'NYMIND CINEMA  /  ' + (_d.type === 'movie' ? 'FILM' : 'SERIÁL')));
         }
-        body.appendChild(titleNode(meta));
+        // TV headline must be readable. Addon logo files are frequently tiny
+        // horizontal watermarks and made the entire film look like a thumbnail.
+        body.appendChild(refined ? U.el('div', 'detail-title nf-detail-headline',
+            meta.name || meta.title || '') : titleNode(meta));
         var ep = shownEpisode();   // (an episode's page: its sources, or its Cast & more)
         var bits = [];
         if (ep) {
@@ -330,7 +336,15 @@
         }
         // Source addon names belong on the full information page, not in the
         // movie hero's title/genre line.
-        body.appendChild(U.el('div', 'detail-meta', bits.join('   ·   ')));
+        var metaLine = U.el('div', 'detail-meta' + (refined ? ' nf-detail-meta-chips' : ''));
+        if (refined) {
+            bits.forEach(function (item) {
+                var cls = 'nf-meta-chip';
+                if (item.indexOf('★') !== -1) { cls += ' nf-meta-rating'; }
+                metaLine.appendChild(U.el('span', cls, item));
+            });
+        } else { metaLine.textContent = bits.join('   ·   '); }
+        body.appendChild(metaLine);
         var ratings = U.el('div', 'detail-ratings');
         body.appendChild(ratings);
         if (!ep) { fillRatings(ratings); }   // (the show's: not the episode's)
@@ -480,7 +494,16 @@
             parts.push(Object.keys(ss).length + ' sérií · ' + count + ' epizod');
         }
         if (f.country) { parts.push('Země: ' + f.country); }
-        line.textContent = parts.join('    •    ');
+        U.clear(line);
+        parts.forEach(function (part) {
+            var at = part.indexOf(':');
+            var chip = U.el('span', 'nf-credit-item');
+            if (at > -1) {
+                chip.appendChild(U.el('span', 'nf-credit-label', part.slice(0, at + 1) + ' '));
+                chip.appendChild(U.el('span', 'nf-credit-value', part.slice(at + 1).trim()));
+            } else { chip.appendChild(U.el('span', 'nf-credit-value', part)); }
+            line.appendChild(chip);
+        });
     }
 
     // Clear status and route to the saved-key setting rather than silently showing
@@ -1487,21 +1510,28 @@
         return btn;
     }
     function movieActions() {
-        var row = U.el('div', 'btn-row nf-landing-actions');
+        var stack = U.el('div', 'btn-row nf-landing-actions nf-detail-action-stack');
+        var main = U.el('div', 'nf-primary-actions');
+        var secondary = U.el('div', 'nf-secondary-actions');
         var play = U.el('div', 'pill focusable nf-primary-play', '▶  Přehrát');
-        // OK opens the source chooser. Dedicated PLAY may still auto-play the best.
+        // Preserve all existing playback, trailers, actor profiles and library actions.
         play.__onselect = function () { openStreams(_d.id, _d.meta.name || _d.meta.title, false, null); };
         play.__onplay = function () { openStreams(_d.id, _d.meta.name || _d.meta.title, false, PLAY_KEY); };
-        row.appendChild(play);
-        var tr = trailerPill(); if (tr) { row.appendChild(tr); }
-        var mp = morePill(); if (mp) { row.appendChild(mp); }
+        main.appendChild(play);
+        var tr = trailerPill(); if (tr) { main.appendChild(tr); }
+        var mp = morePill(); if (mp) { main.appendChild(mp); }
         var npId = _d.meta.id || _d.id;
         var np = U.el('div', 'pill focusable nf-library-action', nowPlayingLabel('movie', npId));
         np.__onselect = function () { toggleNowPlaying('movie', _d.meta); np.textContent = nowPlayingLabel('movie', npId); };
-        row.appendChild(np);
-        libraryPills('movie', npId).forEach(function (lp) { row.appendChild(lp); });
-        var cp = csfdPill(); if (cp) { row.appendChild(cp); }
-        return row;
+        secondary.appendChild(np);
+        libraryPills('movie', npId).forEach(function (lp) { secondary.appendChild(lp); });
+        var cp = csfdPill(); if (cp) { secondary.appendChild(cp); }
+        stack.appendChild(main);
+        if (secondary.children.length) {
+            stack.appendChild(U.el('div', 'nf-secondary-label', 'MOJE KNIHOVNA A DALŠÍ'));
+            stack.appendChild(secondary);
+        }
+        return stack;
     }
 
     // ----- series episodes -----
