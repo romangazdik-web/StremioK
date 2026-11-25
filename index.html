@@ -3222,6 +3222,106 @@ body.zoom-140 #app #screen-home.nf-continue-layout .nf-cw-card-grid .card {
   height:151px!important;min-height:151px!important;
 }
 </style>
+
+<!-- Nymind Cinema 2.5.20: visual consistency across grid, title page and ratings -->
+<style id="nymind-cinema-2520-unified">
+/* Verified ratings: distinct source label. An IMDb 7.2 is never ČSFD 72%. */
+#app .card .nf-csfd-badge {
+  display:block;position:absolute;top:10px;left:10px;z-index:15;
+  padding:5px 9px;border-radius:5px;
+  background:rgba(176,25,43,.94);color:#fff;
+  border:1px solid rgba(255,255,255,.7);
+  font-size:15px;line-height:20px;font-weight:bold;
+  text-shadow:0 2px 3px rgba(0,0,0,.7);
+  box-shadow:0 2px 8px rgba(0,0,0,.35);
+}
+#app #screen-home .nf-home-csfd-chip {
+  display:inline-block;margin-left:14px;
+  color:#ffecef;border:1px solid rgba(230,84,106,.8);
+  border-radius:5px;padding:0 7px;
+  background:rgba(136,23,36,.75);
+  font-size:17px;line-height:23px;
+}
+#app #screen-detail.nf-detail-refined .nf-meta-chip.nf-csfd-detail{
+  color:#fff!important;border-color:rgba(235,92,115,.7)!important;
+  background:rgba(149,28,46,.83)!important;
+}
+/* Unified remote focus: no hidden/low-contrast selection on film/series cards. */
+#app #screen-home .card.focused,
+#app #screen-detail .nf-related-card.focused {
+  border-color:#fff!important;
+  box-shadow:0 0 0 3px #fff,0 0 0 6px rgba(214,21,41,.84)!important;
+  z-index:20!important;
+}
+#app #screen-home .nf-explorer-open.focused,
+#app #screen-home .nf-explore-all.focused{
+  color:#14151a!important;background:#fff!important;border-color:#fff!important;
+  box-shadow:0 0 0 3px #d31d30!important;
+}
+/* Use the bottom of the cinematic detail page for clickable recommendations,
+   only when JS verifies that the title block above has enough free space. */
+#app #screen-detail.nf-movie-landing.nf-detail-refined .nf-related-movies{
+  display:block;position:absolute;
+  left:118px;right:50px;bottom:16px;height:225px;
+  z-index:6;box-sizing:border-box;overflow:visible;
+  padding:13px 9px 0 13px;
+  background:linear-gradient(90deg,rgba(12,15,23,.88),rgba(12,15,23,.69) 65%,rgba(12,15,23,.24));
+  border-top:1px solid rgba(255,255,255,.20);
+  border-radius:8px;
+}
+#app #screen-detail.nf-movie-landing.nf-detail-refined .nf-related-title{
+  color:#e5e8ee;font-size:17px;line-height:26px;
+  font-weight:700;letter-spacing:2.1px;
+  margin-bottom:11px;
+}
+#app #screen-detail.nf-movie-landing.nf-detail-refined .nf-related-grid {
+  display:-webkit-flex;display:flex;
+  width:100%;white-space:normal;
+  -webkit-flex-wrap:nowrap;flex-wrap:nowrap;
+  box-sizing:border-box;overflow:visible;
+}
+#app #screen-detail.nf-movie-landing.nf-detail-refined .nf-related-grid .card{
+  position:relative!important;display:inline-block!important;
+  -webkit-flex:0 0 calc(16.66% - 15px)!important;
+  flex:0 0 calc(16.66% - 15px)!important;
+  width:calc(16.66% - 15px)!important;
+  height:156px!important;min-height:156px!important;
+  padding:0!important;margin:0 13px 0 0!important;
+  box-sizing:border-box!important;
+  border:2px solid rgba(255,255,255,.17)!important;
+  border-radius:8px!important;
+  background:#242935!important;
+  -webkit-transform:none!important;transform:none!important;
+  -webkit-transition:none!important;transition:none!important;
+  overflow:visible!important;
+}
+#app #screen-detail.nf-movie-landing.nf-detail-refined .nf-related-grid .card .poster{
+  width:100%!important;height:100%!important;
+  object-fit:cover!important;border-radius:6px!important;
+}
+#app #screen-detail.nf-movie-landing.nf-detail-refined .nf-related-grid .card .cap{
+  font-size:16px!important;line-height:20px!important;
+  padding:22px 10px 9px!important;
+  max-height:78px!important;
+  background:linear-gradient(transparent,rgba(0,0,0,.96))!important;
+}
+#app #screen-detail.nf-movie-landing.nf-detail-refined .nf-related-grid .card.focused{
+  border-color:#fff!important;
+  box-shadow:0 0 0 3px #fff,0 0 0 6px #d3152c!important;
+}
+/* Keep the film hero readable even when it does not have genre suggestions. */
+#app #screen-detail.nf-movie-landing.nf-detail-refined .nf-detail-action-stack{
+  margin-bottom:7px!important;
+}
+body.zoom-130 #app #screen-detail.nf-movie-landing.nf-detail-refined .nf-related-movies,
+body.zoom-140 #app #screen-detail.nf-movie-landing.nf-detail-refined .nf-related-movies {
+  height:176px!important;bottom:6px!important;
+}
+body.zoom-130 #app #screen-detail.nf-movie-landing.nf-detail-refined .nf-related-grid .card,
+body.zoom-140 #app #screen-detail.nf-movie-landing.nf-detail-refined .nf-related-grid .card {
+  height:116px!important;min-height:116px!important;
+}
+</style>
 </head>
 <body>
     <div id="nymind-boot" aria-label="Načítá se Nymind Cinema">
@@ -3302,7 +3402,7 @@ body.zoom-140 #app #screen-home.nf-continue-layout .nf-cw-card-grid .card {
     <script src="js/plex.js?v=2.4.3"></script>
     <script src="js/epg.js?v=2.4.3"></script>
     <script src="js/youtube.js?v=2.4.3"></script>
-    <script src="js/stremio.js?v=2.5.19"></script>
+    <script src="js/stremio.js?v=2.5.20"></script>
     <script src="js/trakt.js?v=2.4.3"></script>
     <script src="js/keys.js?v=2.4.3"></script>
     <script src="js/focus.js?v=2.5.11"></script>
@@ -3323,12 +3423,12 @@ body.zoom-140 #app #screen-home.nf-continue-layout .nf-cw-card-grid .card {
     <script src="js/nuvio-import.js?v=2.4.3"></script>
     <script src="js/nuvio-sync.js?v=2.4.3"></script>
     <script src="js/stremio-sync.js?v=2.4.3"></script>
-    <script src="js/view-core.js?v=2.5.17"></script>
+    <script src="js/view-core.js?v=2.5.20"></script>
     <script src="js/view-home.js?v=2.5.20"></script>
     <script src="js/view-guide.js?v=2.4.3"></script>
-    <script src="js/view-detail.js?v=2.5.19"></script>
+    <script src="js/view-detail.js?v=2.5.20"></script>
     <script src="js/view-search.js?v=2.5.19"></script>
-    <script src="js/view-settings.js?v=2.5.13"></script>
+    <script src="js/view-settings.js?v=2.5.20"></script>
     <script src="js/view-discover.js?v=2.4.3"></script>
     <script src="js/views.js?v=2.5.16"></script>
     <script src="js/app.js?v=2.5.17"></script>
