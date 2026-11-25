@@ -1535,11 +1535,6 @@
         if (_homeDirty) { _tabRows = {}; }   // feeds / addons / poster shape / progress changed
         _homeDirty = false;
         U.clear(s);
-        // Compact, scrollable browsing layout for Continue Watching. Keep
-        // the same top controls and focus styling as the Library tab.
-        s.className = s.className.replace(/\s+nf-continue-layout/g, '');
-        if (_homeTab === 'continue') { s.className += ' nf-continue-layout'; }
-
         if (_homeCatalogs === null) { useHomeCache(); }
         var launch = _homeTab === null;
         if (launch) { _homeTab = Stremio.getPrefs().startTab; }   // (a launch: Settings › Home › Start on)
@@ -1551,6 +1546,10 @@
             if (asked && (_homeLoading || _reloadOnly)) { _wantTab = { key: asked, instead: _homeTab }; }
             if (launch && asked === 'guide' && (Stremio.getPrefs().hiddenTabs || []).indexOf('guide') === -1) { _wantGuide = _homeTab; }   // (see EPG.onChange below)
         }
+
+        // Choose the compact layout AFTER resolving the startup tab.
+        s.className = s.className.replace(/\s+nf-continue-layout/g, '');
+        if (_homeTab === 'continue') { s.className += ' nf-continue-layout'; }
 
         var hero = !NO_HERO[_homeTab];   // (Nymind Red: existing cinematic backdrop on film tabs in Classic and Modern)
         if (hero) { s.appendChild(homeBackdrop(_homeTab)); }
