@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.5.19 — 2026-11-25 (Nymind Cinema)
+- **Real actor movie posters without TMDB:** verified Wikidata IMDb credits are enriched from Cinemeta `/meta/movie/tt….json`, with up to two requests running at once. Actor filmography cards update in place, preserving focus on the Samsung remote.
+- **Attractive fallback:** artwork-less titles use a dark cinematic clapperboard card with an explicit film label and year; no unrelated actor or movie pictures are guessed.
+- **Better actor filmography:** multi-column TV grid replaces narrow text-only cards. Arrows, OK and Back retain their existing semantics.
+- **Actor-only search:** “Zobrazit filmy s tímto hercem” uses a crisp SVG magnifying glass and opens titles with verified actor credits, not unrelated matches from a fuzzy search for the actor's name.
+- **v2.5.18 included:** polished movie/series detail layout is present in this release because v2.5.18 was not previously published as a GitHub tag/release.
+- **Cache busting:** index.html now requests v2.5.19 of all three changed JS files. TizenBrew delivery still depends on publishing a new release and correctly refreshing the CDN.
+
 ## 2.5.18 — 2026-11-25 (Nymind Cinema)
 - **Movie detail redesign:** large consistently readable text title even when a metadata provider supplies a tiny letterbox logo; improved backdrop shading; clear metadata badges for year, runtime, rating and genres.
 - **Synopsis and credits:** film/series story receives a heading and reading column; director, cast, origin and series facts have distinct visual labels.
