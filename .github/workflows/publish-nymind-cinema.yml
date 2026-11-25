@@ -1,0 +1,57 @@
+name: Publish Nymind Cinema release
+on:
+  push:
+    branches: [main]
+    paths:
+      - package.json
+      - .github/workflows/publish-nymind-cinema.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: nymind-cinema-publish
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.repository == 'romangazdik-web/StremioK'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create Git tag and GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(node -p "require('./package.json').version")"
+          TAG="v${VERSION}"
+          echo "Publishing ${TAG} from commit ${GITHUB_SHA}"
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
+            echo "Git tag exists."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "${TAG}" "${GITHUB_SHA}" -m "Nymind Cinema ${TAG}"
+            git push origin "refs/tags/${TAG}"
+          fi
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            echo "GitHub release already published."
+          else
+            gh release create "${TAG}" --target "${GITHUB_SHA}" --title "Nymind Cinema ${TAG}" --notes "Cinemeta movie posters for actor filmographies, actor-only film results and redesigned movie details."
+          fi
+      - name: Purge jsDelivr URLs for the current build
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(node -p "require('./package.json').version")"
+          for REV in "" "@main" "@latest" "@v${VERSION}"; do
+            for FILE in package.json index.html js/stremio.js js/view-detail.js js/view-search.js; do
+              URL="https://purge.jsdelivr.net/gh/romangazdik-web/StremioK${REV}/${FILE}"
+              echo "${URL}"
+              curl --max-time 15 -fsSL "${URL}" || echo "Purge may be rate-limited: ${URL}"
+              echo
+            done
+          done
+          echo "Purge attempts finished; a hard TV restart may still be needed."
