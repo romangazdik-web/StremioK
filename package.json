@@ -1,7 +1,7 @@
 {
   "name": "stremiok",
-  "version": "2.5.18",
-  "description": "Nymind Cinema: refined movie and series details with oversized readable titles, metadata chips, structured synopsis and credits, grouped Play/Trailer/Cast and library actions; Cinemeta, player and remote behavior unchanged.",
+  "version": "2.5.19",
+  "description": "Nymind Cinema: Cinemeta real posters for Wikidata verified actor filmography, full actor-only result grid and correct SVG search button; includes 2.5.18 film detail redesign and safe Back.",
   "packageType": "app",
   "appName": "StremioK",
   "appPath": "index.html",
