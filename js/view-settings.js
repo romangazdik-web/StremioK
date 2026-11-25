@@ -1940,6 +1940,13 @@
         wrap.appendChild(keyRow(U.t('OMDb API key'), 'omdb', U.t('OMDb API key'), Stremio.omdbValidate));
         wrap.appendChild(keyRow(U.t('TMDB API key (v3)'), 'tmdb', U.t('TMDB v3 API key'), Stremio.tmdbValidate));
         wrap.appendChild(keyRow(U.t('MDBList API key'), 'mdblist', U.t('MDBList API key'), Stremio.mdblistValidate));
+        // ČSFD percentages are not part of Cinemeta. Use an optional personal
+        // CZDB key; never relabel the IMDb score as ČSFD.
+        wrap.appendChild(keyRow('ČSFD hodnocení · CZDB API klíč', 'czdb', 'Osobní CZDB API klíč', Stremio.czdbValidate));
+        wrap.appendChild(U.el('div', 'hint',
+            'Pro procenta ČSFD potřebuješ vlastní klíč od podpora@jopa.cz (api.czdb.cz). ' +
+            'Aplikace ho uchovává pouze v TV a načítá hodnocení podle IMDb ID. ' +
+            'Bez klíče zobrazí skutečné IMDb hodnocení, ale nebude předstírat ČSFD procenta.'));
         if (Stremio.autoWatchRegion) { wrap.appendChild(regionRow()); }
 
         // Trakt: your account (StremioK is the Trakt app: nothing to set up)
