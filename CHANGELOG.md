@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.5.20 — 2026-11-25 (Nymind Cinema)
+- **Pokračovat ve sledování:** compact title summary and real vertical, five-column grid, not a single horizontally scrolling row; more titles remain visible. Upcoming episodes use the same layout below the active titles.
+- **Focusable top actions:** repaired the legacy child-index bug which mistakenly hid Přehrát / Informace after adding Zobrazit vše; fixed deterministic UP/DOWN/LEFT/RIGHT navigation through the group header and title grid.
+- **Richer title summary:** cached description, year, runtime, IMDb rating and genres accompany the resume position when metadata exists.
+- **Detail page:** uses otherwise empty space for grounded, clickable similar-genre films when there is enough room. Improved consistency of Play/Trailer/Information and library focus navigation.
+- **Verified ČSFD percentage integration:** optional personal CZDB API key (Settings → Content → Integrations). Scores are fetched by exact IMDb ID and displayed in clearly labelled poster/title badges only when the provider actually supplies a percent. The service is independent, key-protected and rate-limited; no IMDb value is relabelled as ČSFD.
+- **Privacy/performance:** API key stays on the TV, only successful percentages are cached for up to seven days, at most two requests at once and up to 36 new requests per application session. No key means no ČSFD request or invented score. A provider may impose additional CORS restrictions.
+- **Tizen 3.0:** CSS and navigation changes use lightweight, compatible constructs, with no video player, Cinemeta, TizenBrew or trailer changes.
+
+
 ## 2.5.19 — 2026-11-25 (Nymind Cinema)
 - **Real actor movie posters without TMDB:** verified Wikidata IMDb credits are enriched from Cinemeta `/meta/movie/tt….json`, with up to two requests running at once. Actor filmography cards update in place, preserving focus on the Samsung remote.
 - **Attractive fallback:** artwork-less titles use a dark cinematic clapperboard card with an explicit film label and year; no unrelated actor or movie pictures are guessed.
