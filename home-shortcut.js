@@ -1,54 +1,14 @@
 /*
- * Nymind's TV — dvojité Zpět ve StremioK (Tizen 3.x / TizenBrew)
- * Opravuje obě podoby Samsung tlačítka: keydown i tizenhwkey.
- * Jedno Zpět zachová původní navigaci StremioK; dvě do 520 ms otevřou launcher.
- * Zatím neověřeno na konkrétní televizi.
+ * Nymind TV launcher bridge / 2.5.17
+ * Removed accidental double-BACK navigation: never intercepts any remote key.
+ * StremioK handles BACK natively, including fast repeated presses.
+ * The explicit "Nymind TV" sidebar entry calls window.NymindHome.open().
+ * ES5, Tizen 3 / Chromium 47.
  */
 (function () {
   'use strict';
-
   var HOME = 'gh/romangazdik-web/nyminds-tv';
-  var DOUBLE_MS = 520;
-  var DUPLICATE_MS = 110;
-  var pendingTimer = null;
-  var pendingTarget = null;
-  var pendingKind = null;
-  var lastPhysicalKind = null;
-  var lastPhysicalAt = 0;
   var goBusy = false;
-
-  function isBack(e) {
-    if (!e) return false;
-    var c = e.keyCode || e.which;
-    return c === 10009 || c === 27 || e.key === 'Back' ||
-           e.key === 'Escape' || (e.type === 'tizenhwkey' && e.keyName === 'back');
-  }
-
-  function block(e) {
-    if (e.preventDefault) e.preventDefault();
-    if (e.stopPropagation) e.stopPropagation();
-    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-  }
-
-  function syntheticBack(kind, target) {
-    try {
-      var ev = document.createEvent('Event');
-      ev.initEvent(kind === 'tizenhwkey' ? 'tizenhwkey' : 'keydown', true, true);
-      ev.__nymindsReplayed = true;
-      if (kind === 'tizenhwkey') {
-        ev.keyName = 'back';
-        document.dispatchEvent(ev);
-      } else {
-        Object.defineProperty(ev, 'keyCode', { get: function () { return 10009; } });
-        Object.defineProperty(ev, 'which',   { get: function () { return 10009; } });
-        Object.defineProperty(ev, 'key',     { get: function () { return 'Back'; } });
-        (target && target.dispatchEvent ? target : document).dispatchEvent(ev);
-      }
-    } catch (e) {
-      if (window.console && console.warn) console.warn('Nymind: přehrání Zpět selhalo', e);
-    }
-  }
-
   function gotoHome() {
     if (goBusy) return;
     goBusy = true;
@@ -115,43 +75,6 @@
     }
   }
 
-  function onBack(e) {
-    if (e.__nymindsReplayed || !isBack(e)) return;
-    // Některé Samsungy pošlou tentýž stisk jako keydown i tizenhwkey.
-    // Druhou událost nesmíme považovat za druhé stisknutí.
-    var now = new Date().getTime();
-    var kind = e.type;
-    if (kind !== lastPhysicalKind && now - lastPhysicalAt < DUPLICATE_MS) {
-      block(e);
-      return;
-    }
-    lastPhysicalKind = kind;
-    lastPhysicalAt = now;
-    if (e.repeat || goBusy) {
-      block(e);
-      return;
-    }
-    block(e);
-    if (pendingTimer !== null) {
-      clearTimeout(pendingTimer);
-      pendingTimer = null;
-      pendingTarget = null;
-      pendingKind = null;
-      gotoHome();
-    } else {
-      pendingTarget = e.target || document;
-      pendingKind = kind;
-      pendingTimer = setTimeout(function () {
-        var t = pendingTarget, k = pendingKind;
-        pendingTimer = null;
-        pendingTarget = null;
-        pendingKind = null;
-        syntheticBack(k, t);
-      }, DOUBLE_MS);
-    }
-  }
 
-  // Capture fáze: před původním ovládáním StremioK.
-  window.addEventListener('keydown', onBack, true);
-  window.addEventListener('tizenhwkey', onBack, true);
+  window.NymindHome = { open: gotoHome };
 }());
