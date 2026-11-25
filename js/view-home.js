@@ -663,6 +663,20 @@
             ? (e.duration ? U.t('Resume at {at}  of  {length}', { at: U.fmtTime(e.position), length: U.fmtTime(e.duration) }) : U.t('Resume at {at}', { at: U.fmtTime(e.position) }))
             : e.upNext !== undefined ? (e.upNext ? U.t('Next episode: “{title}”', { title: e.upNext }) : U.t('Next episode')) + '   ·   ' + U.t('from Trakt')
             : U.t('Added, not started yet') };
+        // Use already cached Cinemeta details in the compact Watching hero;
+        // progress remains first, followed by real synopsis/year/genre when known.
+        var kept = Stremio.metaKept ? Stremio.metaKept(e.type, base) : null;
+        if (kept) {
+            var heroMeta = c.__meta;
+            heroMeta.id = base;
+            heroMeta.logo = kept.logo || '';
+            heroMeta.background = kept.background || heroMeta._bg;
+            heroMeta.releaseInfo = kept.releaseInfo || '';
+            heroMeta.runtime = kept.runtime || '';
+            heroMeta.imdbRating = kept.imdbRating || '';
+            heroMeta.genres = kept.genres || [];
+            if (kept.description) { heroMeta.description += '    ·    ' + kept.description; }
+        }
         var fresh = e.type === 'series' ? newEpisodeFor(e) : null, soon = notOutYet(e);
         if (soon) {   // (a next episode that hasn't aired: when it does)
             c.appendChild(U.el('div', 'card-new card-code', soon === true ? U.t('Not out yet') : U.t('Airs {when}', { when: U.dayLabel(soon) })));
@@ -1284,7 +1298,11 @@
             card.__goLEFT = function () { return i % 5 ? cards[i - 1] : false; };
             card.__goRIGHT = function () { return i % 5 !== 4 ? cards[i + 1] || false : false; };
             card.__goUP = function () { return i >= 5 ? cards[i - 5] : open; };
-            card.__goDOWN = function () { return cards[i + 5] || false; };
+            card.__goDOWN = function () {
+                if (cards[i + 5]) { return cards[i + 5]; }
+                var next = row.nextElementSibling;
+                return next && next.querySelector('.nf-cw-card-grid .card.focusable') || false;
+            };
             grid.appendChild(card);
         });
         row.appendChild(grid);
@@ -1779,6 +1797,15 @@
         if (ep) { bits.unshift(ep); }
         box.children[1].textContent = bits.join('   ·   ');
         box.children[2].textContent = desc;
+        if (Stremio.czdbRating && (m.id || m._id)) {
+            var token = (box.__csfdToken || 0) + 1;
+            box.__csfdToken = token;
+            Stremio.czdbRating(m).then(function (pct) {
+                if (box.__csfdToken !== token || pct === null || !box.parentNode) { return; }
+                var chip = U.el('span', 'nf-home-csfd-chip', 'ČSFD ' + pct + '%');
+                box.children[1].appendChild(chip);
+            }, function () {});
+        }
         // a program's picture from the TV guide (the Guide tab's focused one, a channel's now)
         var picSrc = m.picture || (g && g.now && g.now.picture) || '', pic = box.querySelector('.home-info-pic');
         if (!picSrc) { if (pic) { pic.className = 'home-info-pic hidden'; } box.classList.remove('has-pic'); return; }
