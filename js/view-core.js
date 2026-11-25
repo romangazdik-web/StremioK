@@ -616,7 +616,8 @@ var ViewParts = {};
             'movie': 'Filmy', 'series': 'Seriály', 'library': 'Knihovna',
             'tv': 'Živá TV', 'guide': 'TV program', 'radio': 'Rádia',
             'sport': 'Sport', 'youtube': 'YouTube', 'local': 'Moje soubory',
-            'discover': 'Objevovat', 'search': 'Hledat', 'settings': 'Nastavení'
+            'discover': 'Objevovat', 'search': 'Hledat', 'settings': 'Nastavení',
+            'nymindhome': 'Nymind TV'
         };
         return names[key] || fallback;
     }
@@ -636,7 +637,8 @@ var ViewParts = {};
           'local':'<path d="M3 7V5h7l2 2h9v12H3Z"/>',
           'discover':'<circle cx="12" cy="12" r="9"/><path d="M16 8l-3 6-5 2 3-6Z"/>',
           'search':'<circle cx="10" cy="10" r="6"/><path d="M15 15l6 6"/>',
-          'settings':'<circle cx="12" cy="12" r="3"/><path d="M10 3h4l1 3 3 1 3-1 2 4-3 2v3l2 2-3 4-3-1-2 2h-4l-1-3-3-1-3 1-2-4 3-2v-3l-2-2 3-4 3 1Z"/>'
+          'settings':'<circle cx="12" cy="12" r="3"/><path d="M10 3h4l1 3 3 1 3-1 2 4-3 2v3l2 2-3 4-3-1-2 2h-4l-1-3-3-1-3 1-2-4 3-2v-3l-2-2 3-4 3 1Z"/>',
+          'nymindhome':'<path d="M3 11L12 4L21 11V21H3V11Z"/><path d="M9 21V14H15V21"/>'
         };
         return '<svg class="nf-nav-svg" viewBox="0 0 24 24" width="29" height="29" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[key]||'<circle cx="12" cy="12" r="7"/>')+'</svg>';
     }
@@ -707,6 +709,11 @@ var ViewParts = {};
         var strip = U.el('div', 'menu-scroll nf-sidebar-list');
         strip.appendChild(tabbar);
         item('hchip', 'settings', U.t('Settings'), '⚙', function () { App.openSettings(); }, strip);
+        // An intentional launcher action replaces the unsafe global double-BACK gesture.
+        item('hchip', 'nymindhome', 'Nymind TV', '⌂', function () {
+            if (window.NymindHome && window.NymindHome.open) { window.NymindHome.open(); }
+            else { U.toast('Nymind TV nyní nelze otevřít. Zkus Domů na ovladači.'); }
+        }, strip);
         if (typeof Profiles !== 'undefined' && Profiles.count() > 1) {   // (who's watching: OK to switch)
             var me = Profiles.active() || { name: '?' }, chip = U.el('div', 'hchip pf-chip focusable');
             chip.appendChild(profileBadge(me, 'small'));
