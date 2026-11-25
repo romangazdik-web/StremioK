@@ -1421,10 +1421,8 @@
         if (node.getAttribute && node.hasAttribute('data-grid-index')) {
             var index = parseInt(node.getAttribute('data-grid-index'), 10) || 0;
             p.focusedIndex = index;
-            if (p.cards.length - index < 12 && p.cards.length < explorerList(p).length) {
-                // The next batch is added through the navigation hooks when
-                // moving DOWN/RIGHT. Do not eagerly allocate hundreds of posters.
-            }
+            // Further batches are loaded by the card's direction hooks.
+            // No full-list scan on each focus change (important on Tizen 3).
         }
         return true;
     }
