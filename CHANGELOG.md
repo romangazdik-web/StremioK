@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.5.17 — 2026-11-25 (Nymind Cinema)
+- **No accidental home exits:** rapid double-BACK no longer triggers Nymind TV. The old capture listener and its 520 ms delayed synthetic single-BACK have been removed.
+- **Deliberate shortcut:** a new "Nymind TV" house icon in the Cinema sidebar launches the existing TizenBrew home module only when selected with OK.
+- **Responsive BACK:** ordinary quick presses continue navigating normally. Keydown + tizenhwkey duplicates from the same physical button are still suppressed without globally blocking rapid presses for 500 ms.
+- **Companion TizenTube module:** its own double-BACK hook is removed in source v1.15.2-moje-tv.5; Samsung Home/TizenBrew is the deliberate return path there.
+- No changes to cast photos, Cinemeta, player, Continue Watching or the fullscreen Library.
+
+
 ## 2.5.16 — 2026-11-25 (Nymind Cinema)
 - **Fullscreen Knihovna / Sledování:** a "Zobrazit vše" action on the hero and each row opens a TV-wide five-column poster grid.
 - **Browse with Samsung remote:** arrows scroll horizontally/vertically, OK opens the original movie/series/resume action, BACK returns to the same Home row. Opening a title and returning preserves the selected grid card.
