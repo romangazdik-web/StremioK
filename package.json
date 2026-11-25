@@ -1,7 +1,7 @@
 {
   "name": "stremiok",
-  "version": "2.5.16",
-  "description": "Nymind Cinema: fullscreen library / watching explorer with per-row expand, All-Movies-Series-Watching filters, lazy TV remote grid, stable Back and original Cinemeta/player behavior.",
+  "version": "2.5.17",
+  "description": "Nymind Cinema: safe native Back navigation (no double-click launcher), explicit Nymind TV sidebar shortcut, responsive rapid Back handling; cinematic Library and Cinemeta unchanged.",
   "packageType": "app",
   "appName": "StremioK",
   "appPath": "index.html",
