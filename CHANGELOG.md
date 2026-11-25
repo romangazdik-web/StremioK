@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.5.16 — 2026-11-25 (Nymind Cinema)
+- **Fullscreen Knihovna / Sledování:** a "Zobrazit vše" action on the hero and each row opens a TV-wide five-column poster grid.
+- **Browse with Samsung remote:** arrows scroll horizontally/vertically, OK opens the original movie/series/resume action, BACK returns to the same Home row. Opening a title and returning preserves the selected grid card.
+- **Filters:** "Vše", "Filmy", "Seriály", "Sledování", and "Tento řádek" when opened from a row; duplicates are merged only in combined views.
+- **Entire local favourites list:** uses saved favourites beyond the row's 60-card preview. Connected library rows use the titles currently provided to Home by their respective addon.
+- **Performance:** initially builds 35 cards, adds more on navigation to avoid slowdowns on older 2017 Tizen devices. No change to player, cinematic detail, cast portraits, metadata or IPTV.
+
+
 ## 2.5.15 — 2026-11-24 (Nymind Cinema)
 - **Cinemeta-first Cast & Info:** no automatic TMDB API requests when opening a title. A separately labelled opt-in lets a viewer explicitly ask for TMDB data when a key exists.
 - **Actor profiles without TMDB:** pressing OK on a name-only Cinemeta cast card opens a biography with a reused verified portrait, where available, from Wikipedia. Selected acting film credits are fetched from Wikidata when supported; missing data is reported rather than invented.
