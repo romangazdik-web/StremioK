@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.5.21 — 2026-11-26 (Nymind Cinema)
+- **Filmy a Seriály:** two new recommendation rows above the existing catalogs: "Vybráno pro tebe" (genres inferred from recent Watching / local favourites when metadata allows) and "Objev něco nového" (deliberately varied discovery).
+- **Actually different catalogs:** request a genre-filtered page and a deeper paginated page from one installed catalog that supports these Stremio extras, preferably Cinemeta. Maximum two optional extra requests per hour per tab; requests are rate-limited under repeated manual refreshes.
+- **Scheduled rotation:** curated picks change about every hour while the app is active, or when returning to that tab. Use "↻ Nový výběr" at the top of Movies or Series to reshuffle immediately without reloading the entire app.
+- **No annoying repeats:** deduplicate results, deprioritize watched titles, active Watching entries and recent recommendation IDs; genre interests adapt when watching and favourite data are available.
+- **Tizen 3 remote:** UP from the first recommendation row opens the refresh button, DOWN returns to titles, and a background refresh preserves existing scroll position and focus.
+- **No extra accounts:** all lookups reuse the user's existing addon/Cinemeta catalogs. TMDB remains optional and off. Nothing changes in playback, video sources, movie detail, IPTV or Nymind TV launcher.
+- **Limits:** "new" means a fresh selection for this user, not necessarily a newly released title. The available catalog content and genre metadata determine what can actually be recommended.
+
+
 ## 2.5.20 — 2026-11-25 (Nymind Cinema)
 - **Pokračovat ve sledování:** compact title summary and real vertical, five-column grid, not a single horizontally scrolling row; more titles remain visible. Upcoming episodes use the same layout below the active titles.
 - **Focusable top actions:** repaired the legacy child-index bug which mistakenly hid Přehrát / Informace after adding Zobrazit vše; fixed deterministic UP/DOWN/LEFT/RIGHT navigation through the group header and title grid.
