@@ -266,6 +266,9 @@
     function recApply(type, rows, force) {
         if (!rows || (type !== 'movie' && type !== 'series')) { return; }
         var focus = Focus.current(), existing = rows.querySelectorAll('.nf-discovery-row');
+        var firstCatalog = rows.querySelector('.row:not(.nf-discovery-row)');
+        var oldCatalogTop = firstCatalog ? firstCatalog.offsetTop : 0;
+        var oldScroll = rows.scrollTop || 0;
         for (var i = 0; i < existing.length; i++) {
             if (!force && focus && existing[i].contains(focus)) { return; }
         }
@@ -278,6 +281,11 @@
         }
         if (r.surprise.length) {
             rows.insertBefore(recRow('✦  Objev něco nového', r.surprise, 'surprise'), anchor);
+        }
+        // Updating the recommendations above a scrolled catalog must not jerk
+        // the currently focused older row up/down.
+        if (oldScroll > 0 && firstCatalog) {
+            rows.scrollTop = Math.max(0, oldScroll + firstCatalog.offsetTop - oldCatalogTop);
         }
     }
     function recUpdateVisible(type, force) {
