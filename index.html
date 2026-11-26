@@ -3322,6 +3322,75 @@ body.zoom-140 #app #screen-detail.nf-movie-landing.nf-detail-refined .nf-related
   height:116px!important;min-height:116px!important;
 }
 </style>
+
+<!-- Nymind Cinema 2.5.21: discovery rotation, consistent TV remote interaction -->
+<style id="nymind-cinema-2521-discovery">
+#app #screen-home .nf-discovery-row {
+  position:relative !important;
+  display:block !important;
+  border-top:1px solid rgba(255,255,255,.19) !important;
+  padding-top:10px !important;
+  margin-bottom:18px !important;
+  background:linear-gradient(90deg,rgba(32,40,57,.40),rgba(13,15,25,.11) 85%,transparent) !important;
+}
+#app #screen-home .nf-discovery-row .row-title {
+  display:block !important;
+  color:#fafbff !important;
+  font-weight:700 !important;
+  font-size:26px !important;
+  line-height:36px !important;
+  margin-bottom:2px !important;
+  text-shadow:0 2px 9px rgba(0,0,0,.68);
+}
+#app #screen-home .nf-discovery-row .nf-discovery-caption {
+  color:#bdc5d4 !important;
+  font-size:17px !important;
+  line-height:24px !important;
+  font-weight:400 !important;
+  margin:0 0 13px 32px !important;
+  letter-spacing:.2px;
+}
+#app #screen-home .nf-discovery-row .row-scroller {
+  padding-top:5px !important;
+  padding-bottom:18px !important;
+}
+#app #screen-home .nf-reco-refresh {
+  display:inline-block !important;
+  width:auto !important;
+  min-width:184px !important;
+  min-height:45px !important;
+  max-width:240px !important;
+  border:2px solid rgba(255,255,255,.34) !important;
+  background:rgba(45,49,64,.89) !important;
+  color:#eff0f6 !important;
+  border-radius:8px !important;
+  box-sizing:border-box !important;
+  white-space:nowrap !important;
+  text-align:center !important;
+  font-weight:700 !important;
+  font-size:19px !important;
+  padding:9px 17px !important;
+  margin:0 10px 8px 0 !important;
+  line-height:25px !important;
+  -webkit-transition:none !important;
+  transition:none !important;
+}
+#app #screen-home .nf-reco-refresh.focused,
+#app #screen-home .nf-reco-refresh:focus {
+  color:#12141d !important;
+  background:#fff !important;
+  border-color:#fff !important;
+  box-shadow:0 0 0 3px #d21b2f !important;
+}
+body.zoom-130 #app #screen-home .nf-discovery-row .row-title,
+body.zoom-140 #app #screen-home .nf-discovery-row .row-title {
+  font-size:22px !important;line-height:30px !important;
+}
+body.zoom-130 #app #screen-home .nf-reco-refresh,
+body.zoom-140 #app #screen-home .nf-reco-refresh {
+  font-size:16px !important;min-width:156px !important;padding:7px 10px !important;
+}
+</style>
 </head>
 <body>
     <div id="nymind-boot" aria-label="Načítá se Nymind Cinema">
@@ -3424,7 +3493,7 @@ body.zoom-140 #app #screen-detail.nf-movie-landing.nf-detail-refined .nf-related
     <script src="js/nuvio-sync.js?v=2.4.3"></script>
     <script src="js/stremio-sync.js?v=2.4.3"></script>
     <script src="js/view-core.js?v=2.5.20"></script>
-    <script src="js/view-home.js?v=2.5.20"></script>
+    <script src="js/view-home.js?v=2.5.21"></script>
     <script src="js/view-guide.js?v=2.4.3"></script>
     <script src="js/view-detail.js?v=2.5.20"></script>
     <script src="js/view-search.js?v=2.5.19"></script>
