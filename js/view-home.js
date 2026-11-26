@@ -148,6 +148,221 @@
     var _tabRows = {};          // tab key -> built .rows element, re-attached on tab switches until Home is dirty
     var ROW_BATCH = 6;          // catalog rows rendered up front; more are added as focus nears the bottom
 
+    // ===== NYMIND DISCOVERY: personal but fresh, without TMDB or another account =====
+    // Catalog providers can keep "Popular" unchanged for weeks. Rotate a larger
+    // candidate pool every hour and offer an immediate manual refresh.
+    // Only two extra catalog requests per tab and window; never block the UI.
+    var RECO_WINDOW = 60 * 60 * 1000, RECO_LIMIT = 12;
+    var _reco = { movie: null, series: null };
+    function recState(type) {
+        if (_reco[type]) { return _reco[type]; }
+        var data = U.store.get('nymind.discovery.' + type, {}) || {};
+        return _reco[type] = {
+            at: typeof data.at === 'number' ? data.at : 0,
+            nonce: typeof data.nonce === 'number' ? data.nonce : 0,
+            recent: Array.isArray(data.recent) ? data.recent.slice(-50) : [],
+            pool: [], preferred: [], surprise: [],
+            loading: false, fetchedAt: 0, fetchVersion: -1
+        };
+    }
+    function recSave(type) {
+        var r = recState(type);
+        U.store.set('nymind.discovery.' + type, { at: r.at, nonce: r.nonce,
+            recent: r.recent.slice(-50) });
+    }
+    function recRandom(seed) {
+        var x = (seed || 1) >>> 0;
+        return function () {
+            x = (1664525 * x + 1013904223) >>> 0;
+            return x / 4294967296;
+        };
+    }
+    function recSeed(type, nonce) {
+        var s = type === 'movie' ? 12849 : 30477;
+        s = (s + (nonce || 0) * 16777619) >>> 0;
+        return s || 1;
+    }
+    function recBase(type) {
+        var out = [], seen = {};
+        catsForTab(type).forEach(function (cat) {
+            (cat.metas || []).slice(0, 150).forEach(function (m) {
+                if (!m || !m.id || seen[m.id] || !(m.poster || m.background)) { return; }
+                seen[m.id] = 1; out.push(m);
+            });
+        });
+        return out;
+    }
+    function recGenres(type, pool) {
+        var watched = {}, fav = U.store.get('stremiok.nymind.favorites', {}) || {};
+        try { (Player.continueList() || []).slice(0, 45).forEach(function (x) {
+            var id = ('' + (x.parent || x.id || '')).split(':')[0];
+            if (id) { watched[id] = 4; }
+        }); } catch (e) {}
+        Object.keys(fav).forEach(function (key) {
+            var f = fav[key]; if (f && f.id) { watched[f.id] = (watched[f.id] || 0) + 2; }
+        });
+        var weights = {};
+        pool.forEach(function (m) {
+            if (!watched[m.id] || !m.genres) { return; }
+            m.genres.forEach(function (genre) {
+                var g = ('' + genre).trim();
+                if (g) { weights[g] = (weights[g] || 0) + watched[m.id]; }
+            });
+        });
+        Object.keys(watched).slice(0, 24).forEach(function (id) {
+            var m = Stremio.metaKept && Stremio.metaKept(type, id);
+            if (!m || !m.genres) { return; }
+            m.genres.forEach(function (genre) {
+                var g = ('' + genre).trim();
+                if (g) { weights[g] = (weights[g] || 0) + 3; }
+            });
+        });
+        return { weights: weights, watched: watched };
+    }
+    function recChoose(type) {
+        var r = recState(type), pool = [], seen = {};
+        recBase(type).concat(r.pool || []).forEach(function (m) {
+            if (!m || !m.id || seen[m.id] || !(m.poster || m.background)) { return; }
+            seen[m.id] = 1; pool.push(m);
+        });
+        var info = recGenres(type, pool), history = {};
+        r.recent.forEach(function (id) { history[id] = true; });
+        var random = recRandom(recSeed(type, r.nonce));
+        var scored = pool.map(function (m) {
+            var matched = 0;
+            (m.genres || []).forEach(function (genre) { matched += info.weights[genre] || 0; });
+            var penalty = (history[m.id] ? 8 : 0) + (info.watched[m.id] ? 12 : 0) +
+                (Player.isWatched && Player.isWatched(type, m.id) ? 13 : 0);
+            return { m: m, matched: matched, pick: random() * 13 - penalty +
+                Math.min(matched, 15) * 1.6, discover: random() * 12 - penalty };
+        });
+        var personalized = scored.slice().sort(function (a, b) { return b.pick - a.pick; });
+        var chosen = {}, best = [];
+        personalized.forEach(function (x) {
+            if (best.length >= RECO_LIMIT) { return; }
+            best.push(x.m); chosen[x.m.id] = true;
+        });
+        var mixed = scored.slice().sort(function (a, b) { return b.discover - a.discover; });
+        var surprise = [];
+        mixed.forEach(function (x) {
+            if (surprise.length >= RECO_LIMIT || chosen[x.m.id]) { return; }
+            surprise.push(x.m);
+        });
+        // A small catalog is still useful, but never duplicate the same poster
+        // in both recommendation rows.
+        r.preferred = best; r.surprise = surprise;
+    }
+    function recRow(title, items, kind) {
+        var row = buildRow(title, items.map(function (m) {
+            return posterCard(Object.assign({}, m, { _wideHome: true }), m.type || _homeTab);
+        }));
+        row.className += ' nf-discovery-row nf-discovery-' + kind;
+        row.appendChild(U.el('div', 'nf-discovery-caption',
+            kind === 'personal' ? 'Podle tvých oblíbených žánrů a sledování' :
+                'Náhodný výběr z dalších dostupných titulů'));
+        return row;
+    }
+    function recApply(type, rows, force) {
+        if (!rows || (type !== 'movie' && type !== 'series')) { return; }
+        var focus = Focus.current(), existing = rows.querySelectorAll('.nf-discovery-row');
+        for (var i = 0; i < existing.length; i++) {
+            if (!force && focus && existing[i].contains(focus)) { return; }
+        }
+        for (var j = 0; j < existing.length; j++) {
+            if (existing[j].parentNode) { existing[j].parentNode.removeChild(existing[j]); }
+        }
+        var r = recState(type), anchor = rows.firstChild;
+        if (r.preferred.length) {
+            rows.insertBefore(recRow('✦  Vybráno pro tebe', r.preferred, 'personal'), anchor);
+        }
+        if (r.surprise.length) {
+            rows.insertBefore(recRow('✦  Objev něco nového', r.surprise, 'surprise'), anchor);
+        }
+    }
+    function recUpdateVisible(type, force) {
+        if (_homeTab !== type || _current() !== scr('home') || Player.isActive() || isModalOpen()) { return; }
+        var rows = scr('home').querySelector('.rows');
+        if (rows) { recApply(type, rows, force); }
+    }
+    function recFetch(type) {
+        var r = recState(type);
+        if (r.loading || (r.fetchedAt && Date.now() - r.fetchedAt < 15 * 60 * 1000 &&
+            r.fetchVersion === r.nonce)) { return; }
+        r.loading = true; r.fetchedAt = Date.now(); r.fetchVersion = r.nonce;
+        Stremio.catalogsForHome().then(function (cats) {
+            var remote = (cats || []).filter(function (cat) {
+                return cat.type === type && cat.addon && !cat.addon.__local;
+            });
+            remote.sort(function (a, b) {
+                var score = function (c) { return /cinemeta/i.test(
+                    (c.addon.manifest && c.addon.manifest.name) || '') ? 1 : 0; };
+                return score(b) - score(a);
+            });
+            var source = remote[0], jobs = [];
+            if (source) {
+                var extras = (source.def && source.def.extra) || [];
+                var genreSupported = extras.some(function (e) { return e && e.name === 'genre'; });
+                var skipSupported = extras.some(function (e) { return e && e.name === 'skip'; });
+                var info = recGenres(type, recBase(type)), names = Object.keys(info.weights)
+                    .sort(function (a, b) { return info.weights[b] - info.weights[a]; });
+                if (genreSupported && names.length) {
+                    var genre = names[r.nonce % Math.min(3, names.length)];
+                    jobs.push(Stremio.getCatalog(source, { genre: genre }).then(function (m) {
+                        return m || [];
+                    }, function () { return []; }));
+                }
+                if (skipSupported) {
+                    var skip = (1 + ((r.nonce * 7 + Math.floor(Date.now() / RECO_WINDOW)) % 6)) * 20;
+                    jobs.push(Stremio.getCatalog(source, { skip: skip }).then(function (m) {
+                        return m || [];
+                    }, function () { return []; }));
+                }
+            }
+            return Promise.all(jobs);
+        }).then(function (answers) {
+            r.loading = false;
+            var seen = {}, list = [];
+            (answers || []).forEach(function (items) { (items || []).forEach(function (m) {
+                if (!m || !m.id || seen[m.id]) { return; }
+                seen[m.id] = 1; list.push(m);
+            }); });
+            if (list.length) { r.pool = list.slice(0, 110); recChoose(type); recUpdateVisible(type, false); }
+        }, function () { r.loading = false; });
+    }
+    function recRotate(type, manual) {
+        var r = recState(type), now = Date.now();
+        if (!manual && r.at && now - r.at < RECO_WINDOW && r.preferred.length) {
+            if (!r.fetchedAt) { recFetch(type); }
+            return;
+        }
+        var previous = r.preferred.concat(r.surprise);
+        r.recent = r.recent.concat(previous.map(function (m) { return m.id; })).slice(-50);
+        r.at = now; r.nonce++;
+        recChoose(type);
+        recSave(type);
+        recUpdateVisible(type, true);
+        recFetch(type);
+    }
+    function recEnter(type, rows) {
+        if (type !== 'movie' && type !== 'series') { return; }
+        var r = recState(type);
+        if (!r.preferred.length) { recChoose(type); }
+        recApply(type, rows, false);
+        if (!r.at || Date.now() - r.at >= RECO_WINDOW) { recRotate(type, false); }
+        else if (!r.fetchedAt) { recFetch(type); }
+    }
+    // When the TV remains on the tab for hours, refresh only when the viewer
+    // is not focused inside a recommendation row. Otherwise keep navigation stable.
+    setInterval(function () {
+        if (document.hidden || (_homeTab !== 'movie' && _homeTab !== 'series') ||
+            _current() !== scr('home') || Player.isActive() || isModalOpen()) { return; }
+        var r = recState(_homeTab), focus = Focus.current();
+        if (Date.now() - r.at >= RECO_WINDOW &&
+            !(focus && focus.closest && focus.closest('.nf-discovery-row'))) {
+            recRotate(_homeTab, false);
+        }
+    }, 5 * 60 * 1000);
+
     // Home rows are reloaded when Home is (re)entered and they're older than this, so
     // catalogs that change on the addon side (a library, a watchlist) stay current even
     // though the TV keeps the app running for days.
@@ -1559,7 +1774,7 @@
         var info = U.el('div', 'home-info' + (hero ? ' hero' : ''));
         // The original first child indices changed once Zobrazit vše was added.
         // Store explicit handles: no more hiding the wrong action or losing focus.
-        var heroPlay = null, heroDetails = null, heroAll = null;
+        var heroPlay = null, heroDetails = null, heroAll = null, heroRefresh = null;
         info.appendChild(U.el('div', 'home-info-title'));
         info.appendChild(U.el('div', 'home-info-meta'));
         info.appendChild(U.el('div', 'home-info-desc'));
@@ -1576,6 +1791,18 @@
                 all.__onselect = function () { openExplorer(_homeTab === 'continue' ? 'continue' : 'all', 0, all); };
                 actions.appendChild(all);
             }
+            if (_homeTab === 'movie' || _homeTab === 'series') {
+                var refresh = U.el('div', 'nf-action nf-reco-refresh focusable', '↻  Nový výběr');
+                heroRefresh = refresh;
+                refresh.__onselect = function () {
+                    var type = _homeTab;
+                    recRotate(type, true);
+                    U.toast('Nabídka byla obměněna.');
+                    var btn = s.querySelector('.nf-reco-refresh');
+                    if (btn) { Focus.setScope(s, btn); }
+                };
+                actions.appendChild(refresh);
+            }
             play.__onselect = function () {
                 var c = _heroSourceCard;
                 if (c && s.contains(c)) {
@@ -1591,7 +1818,7 @@
             actions.appendChild(details);
             // A deterministic remote-control path across all title pages.
             // Moving UP from the first card enters these controls, not sidebar.
-            var ordered = [heroAll, play, details].filter(Boolean);
+            var ordered = [heroAll, heroRefresh, play, details].filter(Boolean);
             ordered.forEach(function (action, n) {
                 action.__goLEFT = function () { return n > 0 ? ordered[n - 1] : false; };
                 action.__goRIGHT = function () { return n + 1 < ordered.length ? ordered[n + 1] : false; };
@@ -1651,6 +1878,7 @@
                 _tabRows[_homeTab] = rows;
             }
         }
+        if (_homeTab === 'movie' || _homeTab === 'series') { recEnter(_homeTab, rows); }
         var again = keep ? findCard(s, keep) : null;
         var landed = false;
         var sameItem = (!firstCard && inMenu) ? menuItem(s, cur.textContent) : null;   // the menu item focus was on
@@ -1695,13 +1923,16 @@
         var actions = info && info.querySelector('.nf-actions');
         if (actions) {
             var active = !!(_heroSourceCard && screen.contains(_heroSourceCard) && m && (m.name || m.title));
-            actions.style.display = (active || _homeTab === 'library' || _homeTab === 'continue') ? 'flex' : 'none';
+            actions.style.display = (active || _homeTab === 'library' || _homeTab === 'continue' ||
+                _homeTab === 'movie' || _homeTab === 'series') ? 'flex' : 'none';
             var play = actions.querySelector('.nf-play'), details = actions.querySelector('.nf-details');
             if (play) { play.style.display = active ? '' : 'none'; if (active) { play.__meta = m; } }
             if (details) { details.style.display = active ? '' : 'none'; if (active) { details.__meta = m; } }
             // Zobrazit vše must stay visible even while focus is on the left menu.
             var all = actions.querySelector('.nf-explore-all');
             if (all) { all.style.display = ''; }
+            var refresh = actions.querySelector('.nf-reco-refresh');
+            if (refresh) { refresh.style.display = ''; }
         }
     }
     // Modern look: the focused title's backdrop behind Home, two layers taking turns, so the
