@@ -287,8 +287,9 @@
     }
     function recFetch(type) {
         var r = recState(type);
-        if (r.loading || (r.fetchedAt && Date.now() - r.fetchedAt < 15 * 60 * 1000 &&
-            r.fetchVersion === r.nonce)) { return; }
+        // The refresh button reshuffles immediately; repeat taps must not
+        // send repeated network requests to a slow TV or catalog provider.
+        if (r.loading || (r.fetchedAt && Date.now() - r.fetchedAt < 10 * 60 * 1000)) { return; }
         r.loading = true; r.fetchedAt = Date.now(); r.fetchVersion = r.nonce;
         Stremio.catalogsForHome().then(function (cats) {
             var remote = (cats || []).filter(function (cat) {
@@ -302,8 +303,9 @@
             var source = remote[0], jobs = [];
             if (source) {
                 var extras = (source.def && source.def.extra) || [];
-                var genreSupported = extras.some(function (e) { return e && e.name === 'genre'; });
-                var skipSupported = extras.some(function (e) { return e && e.name === 'skip'; });
+                var supported = (source.def && source.def.extraSupported) || [];
+                var genreSupported = extras.some(function (e) { return e && e.name === 'genre'; }) || supported.indexOf('genre') !== -1;
+                var skipSupported = extras.some(function (e) { return e && e.name === 'skip'; }) || supported.indexOf('skip') !== -1;
                 var info = recGenres(type, recBase(type)), names = Object.keys(info.weights)
                     .sort(function (a, b) { return info.weights[b] - info.weights[a]; });
                 if (genreSupported && names.length) {
