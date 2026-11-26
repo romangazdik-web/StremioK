@@ -1,7 +1,7 @@
 {
   "name": "stremiok",
-  "version": "2.5.20",
-  "description": "Nymind Cinema: scrollable five-column Continue Watching, fixed remote focus and top actions, richer film details and related titles, optional verified CSFD percent via personal CZDB API key; Cinemeta/player preserved.",
+  "version": "2.5.21",
+  "description": "Nymind Cinema: hourly rotated Movies/Series discovery with preference-weighted genres, mixed deeper Cinemeta catalog results, deterministic TV remote refresh and no extra accounts; original player/TV unaffected.",
   "packageType": "app",
   "appName": "StremioK",
   "appPath": "index.html",
