@@ -312,7 +312,7 @@
                     }, function () { return []; }));
                 }
                 if (skipSupported) {
-                    var skip = (1 + ((r.nonce * 7 + Math.floor(Date.now() / RECO_WINDOW)) % 6)) * 20;
+                    var skip = (1 + ((r.nonce * 7 + Math.floor(Date.now() / RECO_WINDOW)) % 5)) * 100;
                     jobs.push(Stremio.getCatalog(source, { skip: skip }).then(function (m) {
                         return m || [];
                     }, function () { return []; }));
