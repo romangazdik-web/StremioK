@@ -257,9 +257,10 @@
             return posterCard(Object.assign({}, m, { _wideHome: true }), m.type || _homeTab);
         }));
         row.className += ' nf-discovery-row nf-discovery-' + kind;
-        row.appendChild(U.el('div', 'nf-discovery-caption',
+        row.insertBefore(U.el('div', 'nf-discovery-caption',
             kind === 'personal' ? 'Podle tvých oblíbených žánrů a sledování' :
-                'Náhodný výběr z dalších dostupných titulů'));
+                'Náhodný výběr z dalších dostupných titulů'),
+            row.querySelector('.row-scroller'));
         return row;
     }
     function recApply(type, rows, force) {
