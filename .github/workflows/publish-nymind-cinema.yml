@@ -39,7 +39,7 @@ jobs:
           if gh release view "${TAG}" >/dev/null 2>&1; then
             echo "GitHub release already published."
           else
-            gh release create "${TAG}" --target "${GITHUB_SHA}" --title "Nymind Cinema ${TAG}" --notes "Nymind Cinema ${TAG}: improved Continue Watching grid, remote navigation, detailed film pages, optional verified Czech film ratings and unified UI."
+            gh release create "${TAG}" --target "${GITHUB_SHA}" --title "Nymind Cinema ${TAG}" --notes "Nymind Cinema ${TAG}: hourly rotating Movies/Series discovery, taste-based genre picks, deeper Cinemeta catalog pages and a remote-controlled Nový výběr action. Existing player, IPTV, cast and Continue Watching remain unchanged."
           fi
       - name: Purge jsDelivr URLs for the current build
         shell: bash
