@@ -253,9 +253,19 @@
         r.preferred = best; r.surprise = surprise;
     }
     function recRow(title, items, kind) {
-        var row = buildRow(title, items.map(function (m) {
+        var cards = items.map(function (m) {
             return posterCard(Object.assign({}, m, { _wideHome: true }), m.type || _homeTab);
-        }));
+        });
+        if (kind === 'personal') {
+            // A reliable remote path from the first row to the refresh button,
+            // rather than accidentally jumping into the left-side menu.
+            cards.forEach(function (card) {
+                card.__goUP = function () {
+                    return scr('home').querySelector('.nf-reco-refresh') || false;
+                };
+            });
+        }
+        var row = buildRow(title, cards);
         row.className += ' nf-discovery-row nf-discovery-' + kind;
         row.insertBefore(U.el('div', 'nf-discovery-caption',
             kind === 'personal' ? 'Podle tvých oblíbených žánrů a sledování' :
