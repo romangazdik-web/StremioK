@@ -1,7 +1,7 @@
 {
   "name": "stremiok",
-  "version": "2.5.21",
-  "description": "Nymind Cinema: hourly rotated Movies/Series discovery with preference-weighted genres, mixed deeper Cinemeta catalog results, deterministic TV remote refresh and no extra accounts; original player/TV unaffected.",
+  "version": "2.5.22",
+  "description": "Nymind Cinema 2.5.22: unified Nymind TV 3.0 colors, card focus, and header design; retained discovery, playback, subscriptions and subtitles.",
   "packageType": "app",
   "appName": "StremioK",
   "appPath": "index.html",
