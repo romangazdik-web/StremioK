@@ -47,7 +47,7 @@ jobs:
           set -euo pipefail
           VERSION="$(node -p "require('./package.json').version")"
           for REV in "" "@main" "@latest" "@v${VERSION}"; do
-            for FILE in package.json index.html js/stremio.js js/view-detail.js js/view-search.js js/view-home.js js/view-core.js js/view-settings.js; do
+            for FILE in package.json index.html js/stremio.js js/view-detail.js js/view-search.js js/view-home.js js/view-core.js js/view-settings.js css/nymind-premium.css; do
               URL="https://purge.jsdelivr.net/gh/romangazdik-web/StremioK${REV}/${FILE}"
               echo "${URL}"
               curl --max-time 15 -fsSL "${URL}" || echo "Purge may be rate-limited: ${URL}"
