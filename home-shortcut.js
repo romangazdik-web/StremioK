@@ -20,6 +20,7 @@
       goBusy = false;
       try { ws.close(); } catch (ignored) {}
       if (window.console && console.warn) console.warn('Nymind: TizenBrew neodpovídá');
+      try{window.location.href='https://cdn.jsdelivr.net/gh/romangazdik-web/nyminds-tv@v4.0.1/app/index.html';}catch(e){}
     }, 4500);
 
     try {
@@ -47,6 +48,7 @@
           goBusy = false;
           try { ws.close(); } catch (ignored2) {}
           if (window.console && console.warn) console.warn('Nymind: modul Moje TV nebyl nalezen');
+          try{window.location.href='https://cdn.jsdelivr.net/gh/romangazdik-web/nyminds-tv@v4.0.1/app/index.html';}catch(e){}
           return;
         }
         url = mod.appPath || mod.websiteURL;
@@ -75,6 +77,18 @@
     }
   }
 
+
+
+  /* One consistent intentional shortcut: RED -> Nymind Home.
+     Preserve native BACK and all other colored-key handling. */
+  function redHomeKey(e) {
+    var k=e.keyCode||e.which||0;
+    if(k!==403 && e.key!=='ColorF0Red')return;
+    if(e.type!=='keydown')return;
+    try{e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();}catch(ignore){}
+    gotoHome();
+  }
+  window.addEventListener('keydown',redHomeKey,true);
 
   window.NymindHome = { open: gotoHome };
 }());
