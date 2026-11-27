@@ -1,7 +1,7 @@
 {
   "name": "stremiok",
-  "version": "2.5.23",
-  "description": "Nymind Cinema 2.5.23: RED opens Nymind Home from any Cinema screen, regular BACK and player remain intact otherwise.",
+  "version": "2.5.24",
+  "description": "Nymind Cinema 2.5.24: RED opens Nymind Home via TizenBrew bridge; BACK and playback preserved, CDN shortcut purge.",
   "packageType": "app",
   "appName": "StremioK",
   "appPath": "index.html",
