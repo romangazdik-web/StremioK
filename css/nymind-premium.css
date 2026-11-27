@@ -135,3 +135,14 @@ body.look-modern.bg-light #screen-home,
 body.look-modern.bg-light #screen-home .home-bg {
     background: #f5f5f5;
 }
+
+/* NYMIND DESIGN SYSTEM 3.0 — shared visual identity, cosmetic only */
+body.look-modern:not(.bg-light) #screen-home .brand .dot{color:#8ce8db}
+body.look-modern:not(.bg-light) #screen-home .home-header .tabbar-inline{border-color:rgba(140,232,219,.28);background:rgba(10,25,34,.91)}
+body.look-modern:not(.bg-light) #screen-home .tab-pill.active,
+body.look-modern:not(.bg-light) #screen-home .home-header .hchip.active{background:rgba(92,188,175,.27);color:#e7fff9}
+body.look-modern:not(.bg-light) #screen-home .tab-pill.focusable.focused,
+body.look-modern:not(.bg-light) #screen-home .header .hchip.focusable.focused{background:#d5fff4;color:#09211e;border-color:#d5fff4}
+body.look-modern:not(.bg-light) #screen-home .home-info.hero .home-info-meta{color:#9de3d9}
+body.look-modern:not(.bg-light) #screen-home .card.focusable.focused{box-shadow:0 0 0 4px #e6fff8,0 0 0 7px rgba(140,232,219,.38)}
+body.look-modern:not(.bg-light) #screen-home .card .prog{background:#8ce8db}
