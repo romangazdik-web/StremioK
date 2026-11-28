@@ -19,6 +19,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Check title-specific deep links and TV-compatible JavaScript
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check js/app.js
+          node --check home-shortcut.js
+          grep -q 'function consumeNymindLink()' js/app.js
+          grep -q 'nymind_id' js/app.js
+          grep -q 'src="js/app.js?v=2.5.26"' index.html
       - name: Create Git tag and GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -39,7 +48,7 @@ jobs:
           if gh release view "${TAG}" >/dev/null 2>&1; then
             echo "GitHub release already published."
           else
-            gh release create "${TAG}" --target "${GITHUB_SHA}" --title "Nymind Cinema ${TAG}" --notes "Nymind Cinema ${TAG}: hourly rotating Movies/Series discovery, taste-based genre picks, deeper Cinemeta catalog pages and a remote-controlled Nový výběr action. Existing player, IPTV, cast and Continue Watching remain unchanged."
+            gh release create "${TAG}" --target "${GITHUB_SHA}" --title "Nymind Cinema ${TAG}" --notes "Nymind Cinema ${TAG}: safe IMDb-specific deep links from Nymind OS 6 into title details and updated RED Home fallback. Player, Trakt, existing catalogues, Continue Watching and IPTV remain unchanged."
           fi
       - name: Purge jsDelivr URLs for the current build
         shell: bash
@@ -47,7 +56,7 @@ jobs:
           set -euo pipefail
           VERSION="$(node -p "require('./package.json').version")"
           for REV in "" "@main" "@latest" "@v${VERSION}"; do
-            for FILE in package.json index.html js/stremio.js js/view-detail.js js/view-search.js js/view-home.js js/view-core.js js/view-settings.js css/nymind-premium.css home-shortcut.js; do
+            for FILE in package.json index.html js/app.js js/stremio.js js/view-detail.js js/view-search.js js/view-home.js js/view-core.js js/view-settings.js css/nymind-premium.css home-shortcut.js; do
               URL="https://purge.jsdelivr.net/gh/romangazdik-web/StremioK${REV}/${FILE}"
               echo "${URL}"
               curl --max-time 15 -fsSL "${URL}" || echo "Purge may be rate-limited: ${URL}"
