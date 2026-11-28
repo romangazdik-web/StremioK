@@ -1,7 +1,7 @@
 {
   "name": "stremiok",
-  "version": "2.5.25",
-  "description": "Nymind Cinema 2.5.25: shared RED Home and GREEN app switcher, native BACK and media controls intact.",
+  "version": "2.5.26",
+  "description": "Nymind Cinema 2.5.26: supports IMDb-specific deep links from Nymind OS 6.0 to direct movie/series detail pages; updated stable home fallback; unchanged player, discovery and library.",
   "packageType": "app",
   "appName": "StremioK",
   "appPath": "index.html",
