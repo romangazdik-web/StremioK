@@ -264,6 +264,37 @@ var App = (function () {
         if (typeof Profiles !== 'undefined' && Profiles.ask() && !fromTile && !switched && Views.profilePicker) { Views.profilePicker(started); return; }
         started();
     }
+    // Nymind OS -> Cinema title deep link. Reads only an explicit IMDb ID and type,
+    // after CSS/profile bootstrap, so the landing detail opens in the correct profile.
+    var _nymindLinkConsumed = false;
+    function nymindParam(name) {
+        var m = (window.location.search || '').match(new RegExp('[?&]' + name + '=([^&#]*)'));
+        if (!m) { return ''; }
+        try { return decodeURIComponent(m[1].replace(/\+/g, '%20')); } catch (ignored) { return ''; }
+    }
+    function consumeNymindLink() {
+        if (_nymindLinkConsumed) { return; }
+        var id = nymindParam('nymind_id');
+        var type = nymindParam('nymind_type');
+        var title = nymindParam('nymind_title');
+        if (!/^tt[0-9]{6,10}$/.test(id) || (type !== 'movie' && type !== 'series')) { return; }
+        _nymindLinkConsumed = true;
+        // Clear only the one-shot parameters to avoid reopening the same title on refresh.
+        try {
+            var q = window.location.search.replace(/([?&])nymind_(id|type|title)=[^&#]*/g, '$1').replace(/[?&]+$/, '').replace('?&', '?');
+            window.history.replaceState(null, document.title, window.location.pathname + q + window.location.hash);
+        } catch (ignored) {}
+        setTimeout(function () {
+            if (Player.isActive()) { return; }
+            try {
+                openDetail(type, id, { id: id, type: type, name: title || '' }, null, null);
+            } catch (err) {
+                U.log('app', 'Nymind title handoff: ' + (err && err.message || err));
+                U.toast('Nepodařilo se otevřít vybraný titul.', 3600);
+            }
+        }, 450);
+    }
+
     function started() {
         // The TV's database filled with old versions of what was saved: tidied up, once started
         setTimeout(function () { if (U.bigStore && U.bigStore.tidyIfNeeded) { U.bigStore.tidyIfNeeded(); } }, 30000);
@@ -272,6 +303,7 @@ var App = (function () {
         showScreen('home');
         Views.renderHome();
         U.mark('firstScreen');
+        consumeNymindLink();
         if (typeof LocalMedia !== 'undefined') { LocalMedia.watch(); }   // (a USB drive plugged in? the Local tab; nothing read from it)
         document.addEventListener('visibilitychange', function () { U.sessionState(document.hidden ? 'hidden' : 'running'); }, false);
         // The TV keeps the app running in the background for days: when it comes back
