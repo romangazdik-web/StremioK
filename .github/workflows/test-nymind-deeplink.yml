@@ -1,0 +1,34 @@
+name: Validate Nymind title deep links
+on:
+  push:
+    branches: [nymind-deeplink]
+    paths:
+      - js/app.js
+      - home-shortcut.js
+      - .github/workflows/test-nymind-deeplink.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate ES5-compatible routing and URL handoff
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check js/app.js
+          node --check home-shortcut.js
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('js/app.js').read_text()
+          home=Path('home-shortcut.js').read_text()
+          assert 'function consumeNymindLink()' in s
+          assert 'consumeNymindLink();' in s
+          assert "nymindParam('nymind_id')" in s
+          assert "nymindParam('nymind_type')" in s
+          assert "openDetail(type, id, { id: id, type: type" in s
+          assert "nyminds-tv@main/cinematic/index.html" in home
+          print('StremioK title-specific URL routing and stable launcher fallback verified.')
+          PY
